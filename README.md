@@ -57,10 +57,33 @@ Copy the `.env.example` file to `.env` and configure your database and other env
 cp .env.example .env
 ```
 
-### 4. Generate Application Key
+### 4. Configure Database
+
+## Option 1: Use SQLite
+
+Update your .env file:
 
 ```bash
-php artisan key:generate
+DB_CONNECTION=sqlite
+```
+
+Then create an empty SQLite file:
+
+```bash
+touch database/database.sqlite
+```
+
+## Option 2: Use MySQL
+
+Start MySQL server (e.g., via XAMPP), then update your .env file:
+
+```bash
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=lns_db
+DB_USERNAME=root
+DB_PASSWORD=
 ```
 
 ### 5. Run Migrations
@@ -75,35 +98,24 @@ php artisan migrate
 php artisan db:seed
 ```
 
-### 7. Start the Development Server
+### 7. Generate Application Key
+
+```bash
+php artisan key:generate
+```
+
+### 8. Start the Development Server
 
 ```bash
 php artisan serve
 ```
 
-### 8. Compile Assets
+### 9. Compile Assets
 
 ```bash
 npm run dev
 ```
 
-### 9. Access the Application
+### 10. Access the Application
 
 ## Open your web browser and navigate to `http://localhost:8000` to access the application.
-
-## Contributing
-
-We welcome contributions to Project LNS! Please follow the standard GitHub workflow for contributing:
-
-1. Fork the repository
-2. Create a new branch
-3. Make your changes
-4. Commit your changes
-5. Push to your fork
-6. Create a pull request
-
----
-
-## License
-
-## This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
