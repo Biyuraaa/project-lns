@@ -1,112 +1,109 @@
-Project LNS - Setup Guide
-Overview
-Project LNS is a comprehensive business management system for handling inquiries, quotations, purchase orders, and customer management. This guide will help you set up the project in your local development environment.
-Project Structure
+# Project LNS - Setup Guide
+
+## Overview
+
+**Project LNS** is a comprehensive business management system for handling inquiries, quotations, purchase orders, and customer management. This guide will help you set up the project in your local development environment.
+
+---
+
+## Project Structure
+
 The project follows standard Laravel structure with additional organization for React components:
 
-Controllers: Controllers
-Models: Models
-Routes: web.php
-React Components: Pages
-UI Components: Components
-Types: types
+-   **Controllers**: `app/Http/Controllers`
+-   **Models**: `app/Models`
+-   **Routes**: `routes/web.php`
+-   **React Components**: `resources/js/Pages`
+-   **UI Components**: `resources/js/Components`
+-   **Types**: `resources/js/types`
 
-Key Features
+---
 
-Dashboard: Overview of business metrics and activities
-Inquiry Management: Track and manage customer inquiries
-Quotation System: Create and manage quotations based on inquiries
-Purchase Order Management: Process purchase orders with file attachments
-Customer Management: Comprehensive customer database
+## Key Features
 
-Installation Steps
+-   **Dashboard**: Overview of business metrics and activities
+-   **Inquiry Management**: Track and manage customer inquiries
+-   **Quotation System**: Create and manage quotations based on inquiries
+-   **Purchase Order Management**: Process purchase orders with file attachments
+-   **Customer Management**: Comprehensive customer database
+
+---
+
+## Installation Steps
+
 Follow these steps to set up the Project LNS application in your local environment:
 
-1. Clone the Repository
-   git clone https://github.com/Biyuraaa/project-lns.git
-   cd project-lns
-2. Install Dependencies
+### 1. Clone the Repository
 
-# Install PHP dependencies
+```bash
+git clone https://github.com/Biyuraaa/project-lns.git
+cd project-lns
 
+
+```
+
+### 2. Install Dependencies
+
+```bash
 composer install
+npm install
+```
 
-# Install JavaScript dependencies
+### 3. Set Up Environment Variables
 
-npm install 3. Set Up Environment Variables
+Copy the `.env.example` file to `.env` and configure your database and other environment variables.
 
-# Create environment file
-
+```bash
 cp .env.example .env
+```
 
-# Generate application key
+### 4. Generate Application Key
 
-php artisan key:generate 4. Configure Database
-Option 1: MySQL
+```bash
+php artisan key:generate
+```
 
-# Start MySQL server (using XAMPP or other tool)
+### 5. Run Migrations
 
-# Then update your .env file:
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=lns_db
-DB_USERNAME=root
-DB_PASSWORD=
-Option 2: SQLite
-
-# Update your .env file:
-
-DB_CONNECTION=sqlite
-
-# Create empty SQLite database file
-
-touch database/database.sqlite 5. Set Up Database and Storage
-
-# Run migrations
-
+```bash
 php artisan migrate
+```
 
-# Run seeders (optional)
+### 6. Seed the Database (Optional)
 
+```bash
 php artisan db:seed
+```
 
-# Create storage symbolic link
+### 7. Start the Development Server
 
-php artisan storage:link 6. Run the Application
-
-# Terminal 1: Start Laravel server
-
+```bash
 php artisan serve
+```
 
-# Terminal 2: Compile and watch for asset changes
+### 8. Compile Assets
 
+```bash
 npm run dev
+```
 
-# For production build (instead of npm run dev)
+### 9. Access the Application
 
-npm run build
-Accessing the Application
-Once the server is running, access the application at:
+## Open your web browser and navigate to `http://localhost:8000` to access the application.
 
-http://localhost:8000
+## Contributing
 
-System Requirements
+We welcome contributions to Project LNS! Please follow the standard GitHub workflow for contributing:
 
-PHP 8.1+
-Node.js 16+
-MySQL 5.7+ or SQLite 3.8.8+
-Composer 2+
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Commit your changes
+5. Push to your fork
+6. Create a pull request
 
-Troubleshooting
-If you encounter any issues during installation, try:
+---
 
-# Clear application cache
+## License
 
-php artisan cache:clear
-php artisan config:clear
-
-# Regenerate autoload files
-
-composer dump-autoload
+## This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
