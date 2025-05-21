@@ -24,7 +24,7 @@ class StoreInquiryRequest extends FormRequest
         $rules = [
             'code' => 'required|string|max:50|unique:inquiries,code',
             'description' => 'required|string|max:2000',
-            'business_unit' => 'required|integer|min:1',
+            'business_unit_id' => 'required|exists:business_units,id',
             'inquiry_date' => 'required|date',
             'end_user_name' => 'nullable|string|max:255',
             'end_user_email' => 'nullable|email|max:255',

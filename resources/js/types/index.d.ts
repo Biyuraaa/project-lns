@@ -52,7 +52,7 @@ export interface Inquiry {
     sales: Sales;
     quotation: Quotation;
     description: string;
-    business_unit: number;
+    business_unit: BusinessUnit;
     inquiry_date: string;
     end_user_name: string;
     end_user_email: string;
@@ -60,6 +60,15 @@ export interface Inquiry {
     end_user_address: string;
     file: string;
     status: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface BusinessUnit {
+    id: number;
+    name: string;
+    description?: string;
+    inquiries: Inquiry[];
     created_at?: string;
     updated_at?: string;
 }

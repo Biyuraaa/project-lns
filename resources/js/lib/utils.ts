@@ -41,3 +41,31 @@ export const formatCurrency = (value: number): string => {
 export const formatIDRInput = (value: number): string => {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
+
+// Format file size for display
+export const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (
+        Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+    );
+};
+
+// Add these functions after the existing file handling functions
+export const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add("border-blue-400", "bg-blue-50");
+};
+
+export const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove("border-blue-400", "bg-blue-50");
+};
+
+export const getFileExtension = (filename: string): string => {
+    return filename.split(".").pop()?.toLowerCase() || "";
+};

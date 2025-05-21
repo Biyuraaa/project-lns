@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->text('description');
-            $table->integer('business_unit')->default(1);
+            $table->foreignId('business_unit_id')->nullable()->constrained('business_units')->onDelete('set null');
             $table->date('inquiry_date')->nullable();
             $table->string('end_user_name')->nullable();
             $table->string('end_user_email')->nullable();

@@ -74,5 +74,21 @@ class NegotiationController extends Controller
     public function destroy(Negotiation $negotiation)
     {
         //
+        try {
+            // Delete the quotation file if it exists
+            if ($negotiation->file) {
+                $oldFilePath = storage_path('app/public/files/negotiations/' . $negotiation->file);
+                if (file_exists($oldFilePath)) {
+                    unlink($oldFilePath);
+                }
+            }
+
+            // Delete the negotiation
+            $negotiation->delete();
+
+            return redirect()->route('negotiations.index')->with('success', 'Quotation deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete quotation: ' . $e->getMessage());
+        }
     }
 }

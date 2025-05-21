@@ -20,11 +20,6 @@ import {
     ClipboardList,
     BarChart4,
     Clock,
-    User,
-    Building2,
-    ShoppingBag,
-    HardHat,
-    UserCircle,
     Check,
     Lock,
     MoreHorizontal,
@@ -567,7 +562,7 @@ const InquiriesIndex = () => {
                                             </div>
                                         </th>
 
-                                        {/* Quantity Column */}
+                                        {/* Business Unit Column */}
                                         <th
                                             scope="col"
                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -576,7 +571,7 @@ const InquiriesIndex = () => {
                                             }
                                         >
                                             <div className="flex items-center">
-                                                Qty
+                                                Business Unit
                                                 {sortField ===
                                                     "business_unit" && (
                                                     <span className="ml-1">
@@ -689,7 +684,9 @@ const InquiriesIndex = () => {
                                                         <div className="text-sm flex items-center">
                                                             <span className="font-medium">
                                                                 {
-                                                                    inquiry.business_unit
+                                                                    inquiry
+                                                                        .business_unit
+                                                                        .name
                                                                 }
                                                             </span>
                                                         </div>

@@ -32,7 +32,14 @@ import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
 import { motion } from "framer-motion";
 import type { Inquiry, PageProps, PurchaseOrder } from "@/types";
-import { cn, formatDateForInput } from "@/lib/utils";
+import {
+    cn,
+    formatDateForInput,
+    formatFileSize,
+    getFileExtension,
+    handleDragLeave,
+    handleDragOver,
+} from "@/lib/utils";
 import {
     Select,
     SelectContent,
@@ -57,7 +64,7 @@ const PurchaseOrdersEdit = () => {
     const { data, setData, processing, errors } = useForm({
         code: purchaseOrder.code || "",
         inquiry_id: purchaseOrder.inquiry?.id?.toString() || "",
-        status: purchaseOrder.status || "pending",
+        status: purchaseOrder.status || "wip",
         amount: purchaseOrder.amount || 0,
         contract_number: purchaseOrder.contract_number || "",
         date: purchaseOrder.date || new Date().toISOString().split("T")[0],
@@ -160,33 +167,10 @@ const PurchaseOrdersEdit = () => {
         };
     }, [previewUrl]);
 
-    const removeFile = () => {
-        setData("file", null as unknown as File);
-        setCurrentFile(null);
-    };
-
     const triggerFileInput = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
-    };
-
-    // Format file size for display
-    const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return (
-            Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) +
-            " " +
-            sizes[i]
-        );
-    };
-
-    // Get file extension
-    const getFileExtension = (filename: string): string => {
-        return filename.split(".").pop()?.toLowerCase() || "";
     };
 
     // Get file icon based on extension
@@ -207,19 +191,6 @@ const PurchaseOrdersEdit = () => {
             default:
                 return <FileText className="h-5 w-5 text-gray-500" />;
         }
-    };
-
-    // Drag and drop handlers
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.add("border-green-400", "bg-green-50");
-    };
-
-    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove("border-green-400", "bg-green-50");
     };
 
     // Form validation
@@ -595,17 +566,15 @@ const PurchaseOrdersEdit = () => {
                                                     <SelectValue placeholder="Select status" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="pending">
-                                                        Pending
+                                                    <SelectItem value="wip">
+                                                        WIP (Work In Progress)
                                                     </SelectItem>
-                                                    <SelectItem value="approved">
-                                                        Approved
+                                                    <SelectItem value="ar">
+                                                        AR (Accounts Receivable)
                                                     </SelectItem>
-                                                    <SelectItem value="rejected">
-                                                        Rejected
-                                                    </SelectItem>
-                                                    <SelectItem value="completed">
-                                                        Completed
+                                                    <SelectItem value="ibt">
+                                                        IBT (Inter-Branch
+                                                        Transfer)
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -615,6 +584,10 @@ const PurchaseOrdersEdit = () => {
                                                     {errors.status}
                                                 </p>
                                             )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Current processing status of
+                                                this purchase order
+                                            </p>
                                         </div>
 
                                         {/* Inquiry Selection Field - Full width */}

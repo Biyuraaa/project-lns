@@ -11,6 +11,7 @@ use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\BusinessUnit;
 
 class InquiryController extends Controller
 {
@@ -24,7 +25,8 @@ class InquiryController extends Controller
             ->with([
                 'customer:id,name',
                 'picEngineer:id,name',
-                'sales:id,name'
+                'sales:id,name',
+                'businessUnit:id,name',
             ])
             ->get();
         return Inertia::render('Dashboard/Inquiries/Index', [
@@ -42,6 +44,7 @@ class InquiryController extends Controller
             'customers' => Customer::all(),
             'picEngineers' => User::role('pic-engineer')->get(),
             'sales' => User::role('sales')->get(),
+            'businessUnits' => BusinessUnit::all(),
         ]);
     }
 
@@ -77,7 +80,7 @@ class InquiryController extends Controller
                 'code' => $validatedData['code'],
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
-                'business_unit' => $validatedData['business_unit'],
+                'business_unit_id' => $validatedData['business_unit_id'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'end_user_name' => $validatedData['end_user_name'] ?? null, // Fixed field name
                 'end_user_email' => $validatedData['end_user_email'] ?? null,

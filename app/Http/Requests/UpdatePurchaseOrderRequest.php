@@ -26,7 +26,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
             'code' => 'required|string|max:255',
             'inquiry_id' => 'required|exists:inquiries,id',
             'amount' => 'required|numeric',
-            'status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:wip,ar,ibt',
             'contract_number' => 'nullable|string|max:255',
             'job_number' => 'nullable|string|max:255',
             'date' => 'nullable|date',

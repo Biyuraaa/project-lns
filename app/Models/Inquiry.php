@@ -17,9 +17,9 @@ class Inquiry extends Model
         'code',
         'customer_id',
         'pic_engineer_id',
+        'business_unit_id',
         'sales_id',
         'description',
-        'business_unit',
         'inquiry_date',
         'end_user_name',
         'end_user_email',
@@ -59,5 +59,10 @@ class Inquiry extends Model
     public function purchaseOrder()
     {
         return $this->hasOne(PurchaseOrder::class);
+    }
+
+    public function businessUnit()
+    {
+        return $this->belongsTo(BusinessUnit::class);
     }
 }

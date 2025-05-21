@@ -38,23 +38,36 @@ import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
 import { Switch } from "@/Components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Customer, PageProps, PicEngineer, Sales } from "@/types";
-import { cn } from "@/lib/utils";
-
+import type {
+    BusinessUnit,
+    Customer,
+    PageProps,
+    PicEngineer,
+    Sales,
+} from "@/types";
+import {
+    cn,
+    formatFileSize,
+    handleDragLeave,
+    handleDragOver,
+} from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 interface InquiriesCreateProps extends PageProps {
     customers: Customer[];
     picEngineers: PicEngineer[];
     sales: Sales[];
+    businessUnits: BusinessUnit[];
 }
 
 const InquiriesCreate = () => {
-    const { customers, picEngineers, sales } =
+    const { customers, picEngineers, sales, businessUnits } =
         usePage<InquiriesCreateProps>().props;
-
-    // Debug: Check what customer data is being received
-    useEffect(() => {
-        console.log("Customers from backend:", customers);
-    }, [customers]);
 
     // File input reference
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +82,7 @@ const InquiriesCreate = () => {
         pic_engineer_id: "",
         sales_id: "",
         description: "",
-        business_unit: 1,
+        business_unit_id: "",
         inquiry_date: defaultDate,
         new_customer: false as boolean,
         customer_name: "",
@@ -89,12 +102,6 @@ const InquiriesCreate = () => {
     const [salesSearch, setSalesSearch] = useState("");
     const [engineerSearch, setEngineerSearch] = useState("");
     const [isNewCustomer, setIsNewCustomer] = useState(false);
-    const [newCustomerData, setNewCustomerData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-    });
 
     // Dropdown visibility states
     const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
@@ -183,9 +190,8 @@ const InquiriesCreate = () => {
         const hasRequiredFields = requiredFields.every(
             (field) => field && field.toString().trim() !== ""
         );
-        const hasValidQuantity = data.business_unit > 0;
         const isValidCode = isCodeValid && data.code && data.code.trim() !== "";
-        return hasRequiredFields && hasValidQuantity && isValidCode;
+        return hasRequiredFields && isValidCode;
     };
 
     // File handling functions
@@ -204,32 +210,6 @@ const InquiriesCreate = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
-    };
-
-    // Format file size for display
-    const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return (
-            Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) +
-            " " +
-            sizes[i]
-        );
-    };
-
-    // Add these functions after the existing file handling functions
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.add("border-blue-400", "bg-blue-50");
-    };
-
-    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove("border-blue-400", "bg-blue-50");
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -295,23 +275,6 @@ const InquiriesCreate = () => {
             document.removeEventListener("drop", handleDocumentDrop);
         };
     }, []);
-
-    // Add this useEffect to ensure customers are loaded when dropdown is opened
-    useEffect(() => {
-        if (
-            customerDropdownOpen &&
-            customerSearch === "" &&
-            filteredCustomers.length === 0
-        ) {
-            // If dropdown is open but no search term and no results, show all customers
-            console.log("Showing all customers in dropdown");
-        }
-    }, [customerDropdownOpen, customerSearch, filteredCustomers]);
-
-    // Debug useEffect to monitor dropdown state
-    useEffect(() => {
-        console.log("Customer dropdown state:", customerDropdownOpen);
-    }, [customerDropdownOpen]);
 
     return (
         <AuthenticatedLayout>
@@ -483,49 +446,72 @@ const InquiriesCreate = () => {
                                             )}
                                         </div>
 
-                                        {/* Quantity Field */}
+                                        {/* Business Unit Field */}
                                         <div className="space-y-1">
                                             <Label
                                                 htmlFor="business_unit"
                                                 className="text-sm font-medium"
                                             >
-                                                Quantity{" "}
+                                                Business Unit{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
                                             </Label>
                                             <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                                                     <Package className="h-4 w-4 text-gray-400" />
                                                 </div>
-                                                <Input
-                                                    id="business_unit"
-                                                    type="number"
-                                                    min="1"
-                                                    value={data.business_unit}
-                                                    onChange={(e) =>
+                                                <Select
+                                                    value={
+                                                        data.business_unit_id.toString() ||
+                                                        ""
+                                                    }
+                                                    onValueChange={(value) =>
                                                         setData(
-                                                            "business_unit",
-                                                            Number.parseInt(
-                                                                e.target.value
-                                                            )
+                                                            "business_unit_id",
+                                                            value
                                                         )
                                                     }
-                                                    className={`pl-10 ${
-                                                        errors.business_unit
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="1"
-                                                    required
-                                                />
+                                                >
+                                                    <SelectTrigger
+                                                        className={`pl-10 ${
+                                                            errors.business_unit_id
+                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                                                        }`}
+                                                    >
+                                                        <SelectValue placeholder="Select business unit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {businessUnits.map(
+                                                            (unit) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        unit.id
+                                                                    }
+                                                                    value={unit.id.toString()}
+                                                                >
+                                                                    {unit.name}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
-                                            {errors.business_unit && (
+                                            {errors.business_unit_id && (
                                                 <p className="text-red-500 text-xs mt-1 flex items-center">
                                                     <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.business_unit}
+                                                    {errors.business_unit_id}
                                                 </p>
                                             )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {businessUnits.find(
+                                                    (unit) =>
+                                                        unit.id.toString() ===
+                                                        data.business_unit_id
+                                                )?.description ||
+                                                    "Select the business unit for this inquiry"}
+                                            </p>
                                         </div>
 
                                         {/* Customer Selection Section - Improved Version */}
