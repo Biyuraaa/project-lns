@@ -1,6 +1,6 @@
 "use client";
 
-import type { PageProps, PurchaseOrder, Inquiry } from "@/types";
+import type { PageProps, PurchaseOrder } from "@/types";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import { usePagination } from "@/hooks/use-pagination";
@@ -24,9 +24,7 @@ import {
     CheckCircle,
     XCircle,
     Building2,
-    Mail,
     ShoppingCart,
-    DollarSign,
     Briefcase,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
@@ -35,7 +33,7 @@ import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Button } from "@/Components/ui/button";
 import { Badge } from "@/Components/ui/badge";
 import { useForm } from "@inertiajs/react";
-import { format } from "date-fns";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface PurchaseOrdersIndexProps extends PageProps {
     purchaseOrders: PurchaseOrder[];
@@ -49,22 +47,6 @@ const PurchaseOrdersIndex = () => {
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [showFilters, setShowFilters] = useState(false);
     const [statusFilter, setStatusFilter] = useState("");
-
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return format(date, "MMM dd, yyyy");
-    };
-
-    // Format currency
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount);
-    };
-
     // Get status badge
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -663,7 +645,6 @@ const PurchaseOrdersIndex = () => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center text-sm font-medium">
-                                                            <DollarSign className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
                                                             <span className="text-gray-900">
                                                                 {formatCurrency(
                                                                     po.amount

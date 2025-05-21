@@ -10,7 +10,6 @@ import {
     ShoppingCart,
     FileText,
     Calendar,
-    DollarSign,
     Hash,
     Building2,
     Paperclip,
@@ -23,15 +22,15 @@ import {
     Check,
     Briefcase,
     ClipboardList,
+    Coins,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
-import { Textarea } from "@/Components/ui/textarea";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Customer, Inquiry, PageProps } from "@/types";
+import { motion } from "framer-motion";
+import type { Inquiry, PageProps } from "@/types";
 import { cn, formatIDRInput } from "@/lib/utils";
 import {
     Select,
@@ -403,7 +402,7 @@ const PurchaseOrdersCreate = () => {
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <DollarSign className="h-4 w-4 text-gray-400" />
+                                                    <Coins className="h-4 w-4 text-gray-400" />
                                                 </div>
                                                 <Input
                                                     id="amount"

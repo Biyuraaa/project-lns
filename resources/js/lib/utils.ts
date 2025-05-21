@@ -30,6 +30,14 @@ export const formatTime = (dateString: string) => {
     });
 };
 
+export const formatCurrency = (value: number): string => {
+    return value.toLocaleString("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+    });
+};
+
 export const formatIDRInput = (value: number): string => {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };

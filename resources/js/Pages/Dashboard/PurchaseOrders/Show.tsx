@@ -13,7 +13,7 @@ import {
     CardTitle,
 } from "@/Components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
-import type { PurchaseOrder, PageProps, Inquiry } from "@/types";
+import type { PurchaseOrder, PageProps } from "@/types";
 import { motion } from "framer-motion";
 import {
     Building2,
@@ -23,12 +23,9 @@ import {
     Download,
     Edit,
     FileText,
-    User,
-    UserCircle,
     Mail,
     Phone,
     MapPin,
-    ShoppingBag,
     Tag,
     CheckCircle,
     XCircle,
@@ -37,9 +34,7 @@ import {
     ExternalLink,
     AlertCircle,
     Briefcase,
-    MessageSquare,
-    DollarSign,
-    Hash,
+    Coins,
     ShoppingCart,
     FileCheck,
     Truck,
@@ -53,7 +48,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { formatDate, formatTime } from "@/lib/utils";
 
 interface PurchaseOrdersShowProps extends PageProps {
@@ -260,7 +254,7 @@ const PurchaseOrdersShow = () => {
                                             variant="outline"
                                             className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
                                         >
-                                            <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                                            <Coins className="h-3.5 w-3.5 mr-1.5" />
                                             <span>
                                                 {formatCurrency(
                                                     purchaseOrder.amount
@@ -421,7 +415,7 @@ const PurchaseOrdersShow = () => {
                                                 {/* Amount */}
                                                 <div className="mt-6 p-6 bg-green-50 rounded-lg border border-green-100">
                                                     <h3 className="text-sm font-medium text-green-700 flex items-center mb-3">
-                                                        <DollarSign className="h-4 w-4 text-green-600 mr-2" />
+                                                        <Coins className="h-4 w-4 text-green-600 mr-2" />
                                                         Purchase Order Amount
                                                     </h3>
                                                     <p className="text-3xl font-bold text-green-800">
