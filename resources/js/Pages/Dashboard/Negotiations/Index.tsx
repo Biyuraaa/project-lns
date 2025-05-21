@@ -533,7 +533,12 @@ const NegotiationsIndex = () => {
                                                             <div>
                                                                 <div className="text-sm font-medium text-gray-900">
                                                                     Negotiation
-                                                                    #
+                                                                    (
+                                                                    {negotiation
+                                                                        .quotation
+                                                                        ?.code ||
+                                                                        "QID"}
+                                                                    ) #
                                                                     {
                                                                         negotiation.id
                                                                     }
