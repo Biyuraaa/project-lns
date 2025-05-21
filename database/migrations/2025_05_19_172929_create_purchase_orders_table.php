@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->foreignId('inquiry_id')->constrained('inquiries')->onDelete('cascade');
             $table->integer('amount');
+            $table->string('file')->nullable();
             $table->enum('status', ['n/a', 'pending', 'approved', 'rejected'])->default('n/a');
             $table->string('contract_number')->nullable();
             $table->string('job_number')->nullable();

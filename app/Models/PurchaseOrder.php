@@ -19,11 +19,13 @@ class PurchaseOrder extends Model
         'status',
         'contract_number',
         'job_number',
+        'file',
         'date',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'amount' => 'integer',
     ];
 
     public function inquiry()

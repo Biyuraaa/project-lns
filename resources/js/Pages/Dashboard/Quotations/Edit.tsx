@@ -37,8 +37,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/Components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { cn, formatDate } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/Components/ui/alert";
 import {
     Select,
@@ -59,7 +59,7 @@ const QuotationEdit = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showReplaceFile, setShowReplaceFile] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         _method: "put",
         id: quotation.id,
         code: quotation.code || "",
@@ -124,26 +124,12 @@ const QuotationEdit = () => {
         };
     }, [previewUrl]);
 
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A";
-        return format(parseISO(dateString), "MMMM d, yyyy");
-    };
-
     // Check if quotation is expired
     const isExpired = () => {
         if (!quotation.due_date) return false;
         const today = new Date();
         const dueDate = parseISO(quotation.due_date);
         return today > dueDate;
-    };
-
-    // Get days until expiration
-    const getDaysUntilExpiration = () => {
-        if (!quotation.due_date) return 0;
-        const today = new Date();
-        const dueDate = parseISO(quotation.due_date);
-        return differenceInDays(dueDate, today);
     };
 
     // File icon and extensions

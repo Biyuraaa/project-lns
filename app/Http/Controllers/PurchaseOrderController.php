@@ -8,6 +8,7 @@ use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Http\Requests\UpdatePurchaseOrderRequest;
 use Inertia\Inertia;
 use App\Models\Inquiry;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PurchaseOrderController extends Controller
@@ -85,9 +86,9 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         //
-        $purchaseOrder->load([
+        $purchaseOrder->with([
             'inquiry:id,code,customer_id',
-            'inquiry.customer:id,name,email,phone',
+            'inquiry.customer',
         ]);
 
         return Inertia::render('Dashboard/PurchaseOrders/Show', [
@@ -117,7 +118,6 @@ class PurchaseOrderController extends Controller
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder)
     {
         //
-        dd($request->all());
         try {
             $validatedData = $request->validated();
             if ($request->hasFile('file')) {
@@ -135,6 +135,7 @@ class PurchaseOrderController extends Controller
                 $file->storeAs('files/purchase-orders', $filename, 'public');
                 $validatedData['file'] = $filename;
             }
+
             $purchaseOrder->update([
                 'code' => $validatedData['code'],
                 'inquiry_id' => $validatedData['inquiry_id'],
@@ -145,7 +146,10 @@ class PurchaseOrderController extends Controller
                 'job_number' => $validatedData['job_number'],
                 'date' => $validatedData['date'],
             ]);
+
+            return redirect()->route('purchaseOrders.index')->with('success', 'Purchase Order updated successfully.');
         } catch (\Exception $e) {
+            Log::error('Failed to update purchase order: ' . $e->getMessage());
             // Handle the exception
             return redirect()->back()->with('error', 'Failed to update purchase order: ' . $e->getMessage());
         }

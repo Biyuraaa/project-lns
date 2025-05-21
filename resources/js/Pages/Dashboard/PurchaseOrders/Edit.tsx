@@ -30,9 +30,9 @@ import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Customer, Inquiry, PageProps, PurchaseOrder } from "@/types";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import type { Inquiry, PageProps, PurchaseOrder } from "@/types";
+import { cn, formatDateForInput } from "@/lib/utils";
 import {
     Select,
     SelectContent,
@@ -50,11 +50,11 @@ interface PurchaseOrdersEditProps extends PageProps {
 const PurchaseOrdersEdit = () => {
     const { purchaseOrder, inquiries } =
         usePage<PurchaseOrdersEditProps>().props;
-
+    console.log(purchaseOrder);
     // File input reference
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         code: purchaseOrder.code || "",
         inquiry_id: purchaseOrder.inquiry?.id?.toString() || "",
         status: purchaseOrder.status || "pending",
@@ -63,13 +63,16 @@ const PurchaseOrdersEdit = () => {
         date: purchaseOrder.date || new Date().toISOString().split("T")[0],
         job_number: purchaseOrder.job_number || "",
         file: null as File | null,
-        _method: "PUT", // For Laravel method spoofing
+        _method: "PUT",
+        _removeFile: false as boolean,
     });
 
     // State for inquiry search and dropdown
     const [inquirySearch, setInquirySearch] = useState(
         purchaseOrder.inquiry?.code || ""
     );
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [inquiryDropdownOpen, setInquiryDropdownOpen] = useState(false);
     const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(
         purchaseOrder.inquiry || null
@@ -86,16 +89,6 @@ const PurchaseOrdersEdit = () => {
             inquiry.customer?.name?.toLowerCase().includes(searchLower)
         );
     });
-
-    // Format currency input
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(value);
-    };
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -127,13 +120,45 @@ const PurchaseOrdersEdit = () => {
         );
     };
 
-    // File handling functions
+    // Updated file handling functions
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setData("file", e.target.files[0]);
-            setCurrentFile(null);
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            setSelectedFile(file);
+            setData("file", file);
+            setData("_removeFile", false);
+
+            // Create a preview URL for the file
+            const fileUrl = URL.createObjectURL(file);
+            setPreviewUrl(fileUrl);
         }
     };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove("border-green-400", "bg-green-50");
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            setSelectedFile(file);
+            setData("file", file);
+            setData("_removeFile", false);
+
+            // Create a preview URL for the file
+            const fileUrl = URL.createObjectURL(file);
+            setPreviewUrl(fileUrl);
+        }
+    };
+
+    // Clean up preview URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const removeFile = () => {
         setData("file", null as unknown as File);
@@ -195,17 +220,6 @@ const PurchaseOrdersEdit = () => {
         e.preventDefault();
         e.stopPropagation();
         e.currentTarget.classList.remove("border-green-400", "bg-green-50");
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove("border-green-400", "bg-green-50");
-
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setData("file", e.dataTransfer.files[0]);
-            setCurrentFile(null);
-        }
     };
 
     // Form validation
@@ -403,7 +417,9 @@ const PurchaseOrdersEdit = () => {
                                                 <Input
                                                     id="date"
                                                     type="date"
-                                                    value={data.date}
+                                                    value={formatDateForInput(
+                                                        data.date
+                                                    )}
                                                     onChange={(e) =>
                                                         setData(
                                                             "date",
@@ -788,8 +804,6 @@ const PurchaseOrdersEdit = () => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* File Upload Section */}
                                 <div className="py-8">
                                     <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                                         <Paperclip className="w-5 h-5 mr-2 text-green-600" />
@@ -801,7 +815,7 @@ const PurchaseOrdersEdit = () => {
 
                                     <div className="space-y-4">
                                         {/* Current file display */}
-                                        {currentFile && (
+                                        {currentFile && !selectedFile && (
                                             <div className="mb-4">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-2">
                                                     Current Document
@@ -830,7 +844,7 @@ const PurchaseOrdersEdit = () => {
                                                     </div>
                                                     <div className="flex space-x-2">
                                                         <a
-                                                            href={`/storage/files/purchaseOrders/${currentFile}`}
+                                                            href={`/storage/files/purchase-orders/${currentFile}`}
                                                             target="_blank"
                                                             className="text-green-600 hover:text-green-800 text-sm font-medium"
                                                         >
@@ -838,10 +852,25 @@ const PurchaseOrdersEdit = () => {
                                                         </a>
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                removeFile()
-                                                            }
+                                                            onClick={() => {
+                                                                setCurrentFile(
+                                                                    null
+                                                                );
+                                                                setData(
+                                                                    "_removeFile",
+                                                                    true
+                                                                );
+                                                            }}
                                                             className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={
+                                                                triggerFileInput
+                                                            }
+                                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                                         >
                                                             Replace
                                                         </button>
@@ -850,110 +879,129 @@ const PurchaseOrdersEdit = () => {
                                             </div>
                                         )}
 
-                                        {/* File upload area */}
-                                        {(!currentFile || data.file) && (
-                                            <>
-                                                <div
-                                                    onClick={triggerFileInput}
-                                                    onDragOver={handleDragOver}
-                                                    onDragLeave={
-                                                        handleDragLeave
-                                                    }
-                                                    onDrop={handleDrop}
-                                                    className={cn(
-                                                        "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors",
-                                                        "border-gray-300 bg-gray-50 hover:bg-gray-100"
-                                                    )}
-                                                >
-                                                    <input
-                                                        ref={fileInputRef}
-                                                        type="file"
-                                                        onChange={
-                                                            handleFileChange
-                                                        }
-                                                        className="hidden"
-                                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                                                    />
-
-                                                    <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                                                        <Upload className="h-7 w-7 text-green-600" />
-                                                    </div>
-
-                                                    <h3 className="text-base font-medium text-gray-900">
-                                                        {currentFile
-                                                            ? "Replace current document"
-                                                            : "Upload PO document"}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-500 mt-1 text-center max-w-md">
-                                                        Drag and drop files
-                                                        here, or click to browse
-                                                        through your files.
-                                                        Support for PDF, Office
-                                                        documents, and images.
-                                                    </p>
-                                                </div>
-
-                                                {/* New file display */}
-                                                {data.file &&
-                                                    data.file instanceof
-                                                        File && (
-                                                        <div className="mt-4">
-                                                            <h3 className="text-sm font-medium text-gray-900 mb-2">
-                                                                New Document to
-                                                                Upload
-                                                            </h3>
-                                                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                                <div className="flex items-center space-x-3">
-                                                                    <div className="w-10 h-10 flex-shrink-0 rounded bg-white border border-gray-200 flex items-center justify-center">
-                                                                        <FileIcon className="h-5 w-5 text-gray-500" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                                                            {
-                                                                                data
-                                                                                    .file
-                                                                                    .name
-                                                                            }
-                                                                        </p>
-                                                                        <p className="text-xs text-gray-500">
-                                                                            {formatFileSize(
-                                                                                data
-                                                                                    .file
-                                                                                    .size
-                                                                            )}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    className="text-gray-500 hover:text-red-500"
-                                                                    onClick={(
-                                                                        e
-                                                                    ) => {
-                                                                        e.stopPropagation();
-                                                                        setData(
-                                                                            "file",
-                                                                            null as unknown as File
-                                                                        );
-                                                                        if (
-                                                                            currentFile
-                                                                        ) {
-                                                                            setCurrentFile(
-                                                                                currentFile
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <X className="h-5 w-5" />
-                                                                </button>
+                                        {/* New file preview */}
+                                        {selectedFile && (
+                                            <div className="mb-4">
+                                                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                                                    New Document to Upload
+                                                </h3>
+                                                <div className="bg-green-50 rounded-lg border border-green-200 p-4 flex items-center justify-between">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="w-12 h-12 flex-shrink-0 rounded-lg bg-white border border-green-200 flex items-center justify-center">
+                                                            <FileIcon className="h-6 w-6 text-green-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                                {
+                                                                    selectedFile.name
+                                                                }
+                                                            </p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <p className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                                                    {getFileExtension(
+                                                                        selectedFile.name
+                                                                    ).toUpperCase()}
+                                                                </p>
+                                                                <p className="text-xs text-gray-600">
+                                                                    {formatFileSize(
+                                                                        selectedFile.size
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                    )}
-                                            </>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50"
+                                                        onClick={() => {
+                                                            setSelectedFile(
+                                                                null
+                                                            );
+                                                            setData(
+                                                                "file",
+                                                                null
+                                                            );
+                                                            setPreviewUrl(null);
+                                                            // If we had an existing file, restore it
+                                                            if (
+                                                                purchaseOrder.file
+                                                            ) {
+                                                                setCurrentFile(
+                                                                    purchaseOrder.file
+                                                                );
+                                                                setData(
+                                                                    "_removeFile",
+                                                                    false
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        <X className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* File upload area - only show if no file selected or current file removed */}
+                                        {(!currentFile ||
+                                            selectedFile ||
+                                            data._removeFile) && (
+                                            <div
+                                                onClick={triggerFileInput}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                className={cn(
+                                                    "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors",
+                                                    "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                                                )}
+                                            >
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    onChange={handleFileChange}
+                                                    className="hidden"
+                                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                                                />
+
+                                                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                                                    <Upload className="h-7 w-7 text-green-600" />
+                                                </div>
+
+                                                <h3 className="text-base font-medium text-gray-900">
+                                                    {selectedFile
+                                                        ? "Change document"
+                                                        : currentFile
+                                                        ? "Replace current document"
+                                                        : "Upload PO document"}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 mt-1 text-center max-w-md">
+                                                    Drag and drop files here, or
+                                                    click to browse through your
+                                                    files. Support for PDF,
+                                                    Office documents, and
+                                                    images.
+                                                </p>
+
+                                                {/* File type hints */}
+                                                <div className="flex flex-wrap justify-center gap-2 mt-3">
+                                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                                        PDF
+                                                    </span>
+                                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                                        DOC/DOCX
+                                                    </span>
+                                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                                        XLS/XLSX
+                                                    </span>
+                                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                                        JPG/PNG
+                                                    </span>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-
                                 {/* Customer Information Section - if inquiry is selected */}
                                 {selectedInquiry && (
                                     <div className="py-8">
