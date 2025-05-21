@@ -6,6 +6,7 @@ use App\Models\PurchaseOrder;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Http\Requests\UpdatePurchaseOrderRequest;
+use App\Models\BusinessUnit;
 use Inertia\Inertia;
 use App\Models\Inquiry;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +24,16 @@ class PurchaseOrderController extends Controller
         $purchaseOrders = PurchaseOrder::select('purchase_orders.*')
             ->with([
                 'quotation:id,code,inquiry_id',
+                'quotation.inquiry:id,customer_id,business_unit_id',
                 'quotation.inquiry.customer:id,name,email,phone',
+                'quotation.inquiry.businessUnit:id,name'
             ])
             ->get();
+        $businessUnits = BusinessUnit::all();
 
         return Inertia::render('Dashboard/PurchaseOrders/Index', [
-            'purchaseOrders' => $purchaseOrders
+            'purchaseOrders' => $purchaseOrders,
+            'businessUnits' => $businessUnits
         ]);
     }
 

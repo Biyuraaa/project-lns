@@ -1,6 +1,6 @@
 "use client";
 
-import type { PageProps, PurchaseOrder } from "@/types";
+import type { PageProps, PurchaseOrder, BusinessUnit } from "@/types";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import { usePagination } from "@/hooks/use-pagination";
@@ -26,6 +26,7 @@ import {
     Building2,
     ShoppingCart,
     Briefcase,
+    Factory,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,16 +38,20 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface PurchaseOrdersIndexProps extends PageProps {
     purchaseOrders: PurchaseOrder[];
+    businessUnits: BusinessUnit[];
 }
 
 const PurchaseOrdersIndex = () => {
-    const { purchaseOrders } = usePage<PurchaseOrdersIndexProps>().props;
+    const { purchaseOrders, businessUnits } =
+        usePage<PurchaseOrdersIndexProps>().props;
     const [searchTerm, setSearchTerm] = useState("");
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortField, setSortField] = useState<keyof PurchaseOrder>("code");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [showFilters, setShowFilters] = useState(false);
     const [statusFilter, setStatusFilter] = useState("");
+    const [businessUnitFilter, setBusinessUnitFilter] = useState("");
+
     // Get status badge
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -80,7 +85,7 @@ const PurchaseOrdersIndex = () => {
         }
     };
 
-    // Filter purchase orders based on search term and status
+    // Filter purchase orders based on search term, status, and business unit
     const filteredPurchaseOrders = purchaseOrders.filter((po) => {
         const matchesSearch =
             po.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,7 +102,12 @@ const PurchaseOrdersIndex = () => {
 
         const matchesStatus = statusFilter === "" || po.status === statusFilter;
 
-        return matchesSearch && matchesStatus;
+        const matchesBusinessUnit =
+            businessUnitFilter === "" ||
+            po.quotation?.inquiry?.business_unit.id?.toString() ===
+                businessUnitFilter;
+
+        return matchesSearch && matchesStatus && matchesBusinessUnit;
     });
 
     // Sort purchase orders
@@ -157,10 +167,10 @@ const PurchaseOrdersIndex = () => {
         }
     };
 
-    // Reset to first page when search term or status filter changes
+    // Reset to first page when search term, status filter, or business unit filter changes
     useEffect(() => {
         pagination.goToFirstPage();
-    }, [searchTerm, statusFilter]);
+    }, [searchTerm, statusFilter, businessUnitFilter]);
 
     // Handle file icon based on extension
     const getFileIcon = (filename: string) => {
@@ -319,7 +329,7 @@ const PurchaseOrdersIndex = () => {
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Status
@@ -347,6 +357,34 @@ const PurchaseOrdersIndex = () => {
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Business Unit
+                                            </label>
+                                            <select
+                                                className="w-full h-9 rounded-md border border-gray-200 bg-gray-50 text-gray-700 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                value={businessUnitFilter}
+                                                onChange={(e) =>
+                                                    setBusinessUnitFilter(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="">
+                                                    All Business Units
+                                                </option>
+                                                {businessUnits.map((unit) => (
+                                                    <option
+                                                        key={unit.id}
+                                                        value={unit.id.toString()}
+                                                    >
+                                                        {unit.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Sort By
@@ -409,6 +447,7 @@ const PurchaseOrdersIndex = () => {
                                             onClick={() => {
                                                 setSearchTerm("");
                                                 setStatusFilter("");
+                                                setBusinessUnitFilter("");
                                                 setSortField("code");
                                                 setSortDirection("desc");
                                             }}
@@ -436,6 +475,20 @@ const PurchaseOrdersIndex = () => {
                                 <span>
                                     {" "}
                                     with status "<strong>{statusFilter}</strong>
+                                    "
+                                </span>
+                            )}
+                            {businessUnitFilter && (
+                                <span>
+                                    {" "}
+                                    in business unit "
+                                    <strong>
+                                        {businessUnits.find(
+                                            (unit) =>
+                                                unit.id.toString() ===
+                                                businessUnitFilter
+                                        )?.name || businessUnitFilter}
+                                    </strong>
                                     "
                                 </span>
                             )}
@@ -624,6 +677,29 @@ const PurchaseOrdersIndex = () => {
                                                                         "N/A"}
                                                                 </span>
                                                             </div>
+                                                            {po.quotation
+                                                                ?.inquiry
+                                                                ?.business_unit
+                                                                .id && (
+                                                                <div className="flex items-center text-sm text-gray-600">
+                                                                    <Factory className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                                                                    <span>
+                                                                        {businessUnits.find(
+                                                                            (
+                                                                                unit
+                                                                            ) =>
+                                                                                unit.id ===
+                                                                                po
+                                                                                    .quotation
+                                                                                    ?.inquiry
+                                                                                    ?.business_unit
+                                                                                    .id
+                                                                        )
+                                                                            ?.name ||
+                                                                            "Unknown"}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -699,19 +775,22 @@ const PurchaseOrdersIndex = () => {
                                                     </div>
                                                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                                                         {searchTerm ||
-                                                        statusFilter
+                                                        statusFilter ||
+                                                        businessUnitFilter
                                                             ? "No purchase orders found matching your criteria"
                                                             : "No purchase orders available"}
                                                     </h3>
                                                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                                         {searchTerm ||
-                                                        statusFilter
+                                                        statusFilter ||
+                                                        businessUnitFilter
                                                             ? "Try adjusting your search filters to see more results"
                                                             : "There are no purchase orders in the system yet"}
                                                     </p>
 
                                                     {searchTerm ||
-                                                    statusFilter ? (
+                                                    statusFilter ||
+                                                    businessUnitFilter ? (
                                                         <Button
                                                             variant="outline"
                                                             onClick={() => {
@@ -719,6 +798,9 @@ const PurchaseOrdersIndex = () => {
                                                                     ""
                                                                 );
                                                                 setStatusFilter(
+                                                                    ""
+                                                                );
+                                                                setBusinessUnitFilter(
                                                                     ""
                                                                 );
                                                             }}
