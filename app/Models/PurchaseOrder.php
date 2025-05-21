@@ -14,7 +14,7 @@ class PurchaseOrder extends Model
 
     protected $fillable = [
         'code',
-        'inquiry_id',
+        'quotation_id',
         'amount',
         'status',
         'contract_number',
@@ -28,8 +28,8 @@ class PurchaseOrder extends Model
         'amount' => 'integer',
     ];
 
-    public function inquiry()
+    public function quotation()
     {
-        return $this->belongsTo(Inquiry::class);
+        return $this->belongsTo(Quotation::class);
     }
 }

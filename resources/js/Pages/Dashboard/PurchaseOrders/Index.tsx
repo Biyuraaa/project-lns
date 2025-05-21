@@ -50,32 +50,25 @@ const PurchaseOrdersIndex = () => {
     // Get status badge
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case "pending":
+            case "wip":
                 return (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>Pending</span>
+                        <span>WIP</span>
                     </Badge>
                 );
-            case "approved":
+            case "ar":
                 return (
                     <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
                         <CheckCircle className="h-3 w-3" />
-                        <span>Approved</span>
+                        <span>AR</span>
                     </Badge>
                 );
-            case "rejected":
+            case "ibt":
                 return (
-                    <Badge className="bg-red-100 text-red-800 border-red-200 flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        <span>Rejected</span>
-                    </Badge>
-                );
-            case "completed":
-                return (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
                         <FileCheck className="h-3 w-3" />
-                        <span>Completed</span>
+                        <span>IBT</span>
                     </Badge>
                 );
             default:
@@ -95,10 +88,10 @@ const PurchaseOrdersIndex = () => {
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
             po.job_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            po.inquiry?.code
+            po.quotation?.code
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
-            po.inquiry?.customer?.name
+            po.quotation?.inquiry?.customer?.name
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase());
 
@@ -343,17 +336,14 @@ const PurchaseOrdersIndex = () => {
                                                 <option value="">
                                                     All Statuses
                                                 </option>
-                                                <option value="pending">
-                                                    Pending
+                                                <option value="wip">
+                                                    WIP (Work In Progress)
                                                 </option>
-                                                <option value="approved">
-                                                    Approved
+                                                <option value="ar">
+                                                    AR (Accounts Receivable)
                                                 </option>
-                                                <option value="rejected">
-                                                    Rejected
-                                                </option>
-                                                <option value="completed">
-                                                    Completed
+                                                <option value="ibt">
+                                                    IBT (Inter-Branch Transfer)
                                                 </option>
                                             </select>
                                         </div>
@@ -482,7 +472,7 @@ const PurchaseOrdersIndex = () => {
                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                         >
                                             <div className="flex items-center">
-                                                Inquiry Details
+                                                Quotation Details
                                             </div>
                                         </th>
                                         <th
@@ -609,15 +599,16 @@ const PurchaseOrdersIndex = () => {
                                                                 <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                                                                 <Link
                                                                     href={route(
-                                                                        "inquiries.show",
+                                                                        "quotations.show",
                                                                         po
-                                                                            .inquiry
+                                                                            .quotation
                                                                             ?.id
                                                                     )}
                                                                     className="font-medium text-blue-600 hover:underline"
                                                                 >
-                                                                    Inquiry #
-                                                                    {po.inquiry
+                                                                    Quotation #
+                                                                    {po
+                                                                        .quotation
                                                                         ?.code ||
                                                                         "N/A"}
                                                                 </Link>
@@ -625,7 +616,9 @@ const PurchaseOrdersIndex = () => {
                                                             <div className="flex items-center text-sm text-gray-600">
                                                                 <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                                                                 <span>
-                                                                    {po.inquiry
+                                                                    {po
+                                                                        .quotation
+                                                                        ?.inquiry
                                                                         ?.customer
                                                                         ?.name ||
                                                                         "N/A"}

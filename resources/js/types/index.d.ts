@@ -76,7 +76,7 @@ export interface BusinessUnit {
 export interface Quotation {
     id: number;
     code: string;
-    inquiry: Inquiry;
+    inquiry: Inquiry;    
     status: string;
     file: string;
     due_date: string;
@@ -98,7 +98,7 @@ export interface Negotiation {
 export interface PurchaseOrder {
     id: number;
     code: string;
-    inquiry: Inquiry;
+    quotation: Quotation;
     status: string;
     amount: number;
     contract_number: string;

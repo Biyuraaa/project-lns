@@ -9,6 +9,7 @@ use App\Http\Requests\UpdatePurchaseOrderRequest;
 use Inertia\Inertia;
 use App\Models\Inquiry;
 use Illuminate\Support\Facades\Log;
+use App\Models\Quotation;
 use Illuminate\Support\Str;
 
 class PurchaseOrderController extends Controller
@@ -21,8 +22,8 @@ class PurchaseOrderController extends Controller
         //
         $purchaseOrders = PurchaseOrder::select('purchase_orders.*')
             ->with([
-                'inquiry:id,code,customer_id',
-                'inquiry.customer:id,name,email,phone',
+                'quotation:id,code,inquiry_id',
+                'quotation.inquiry.customer:id,name,email,phone',
             ])
             ->get();
 
@@ -37,13 +38,16 @@ class PurchaseOrderController extends Controller
     public function create()
     {
         //
-        $inquiries = Inquiry::select('inquiries.*')
+        $quotations = Quotation::select('quotations.*')
             ->with([
-                'customer:id,name,email,phone',
+                'inquiry:id,code,customer_id',
+                'inquiry.customer:id,name,email,phone',
             ])
+            ->where('status', 'val')
+            ->whereDoesntHave('purchaseOrder')
             ->get();
         return Inertia::render('Dashboard/PurchaseOrders/Create', [
-            'inquiries' => $inquiries,
+            'quotations' => $quotations,
         ]);
     }
 
@@ -64,7 +68,7 @@ class PurchaseOrderController extends Controller
             }
             PurchaseOrder::create([
                 'code' => $validatedData['code'],
-                'inquiry_id' => $validatedData['inquiry_id'],
+                'quotation_id' => $validatedData['quotation_id'],
                 'file' => $validatedData['file'] ?? null,
                 'amount' => $validatedData['amount'],
                 'status' => $validatedData['status'],
@@ -86,11 +90,10 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         //
-        $purchaseOrder->with([
-            'inquiry:id,code,customer_id',
-            'inquiry.customer',
+        $purchaseOrder->load([
+            'quotation:id,code,inquiry_id',
+            'quotation.inquiry.customer',
         ]);
-
         return Inertia::render('Dashboard/PurchaseOrders/Show', [
             'purchaseOrder' => $purchaseOrder,
         ]);
@@ -102,13 +105,17 @@ class PurchaseOrderController extends Controller
     public function edit(PurchaseOrder $purchaseOrder)
     {
         //
-        $purchaseOrder->load([
-            'inquiry',
-            'inquiry.customer',
-        ]);
+        $quotations = Quotation::select('quotations.*')
+            ->with([
+                'inquiry:id,code,customer_id',
+                'inquiry.customer:id,name,email,phone',
+            ])
+            ->where('status', 'val')
+            ->whereDoesntHave('purchaseOrder')
+            ->get();
         return Inertia::render('Dashboard/PurchaseOrders/Edit', [
             'purchaseOrder' => $purchaseOrder,
-            'inquiries' => Inquiry::all(),
+            'quotations' => $quotations,
         ]);
     }
 
@@ -138,7 +145,7 @@ class PurchaseOrderController extends Controller
 
             $purchaseOrder->update([
                 'code' => $validatedData['code'],
-                'inquiry_id' => $validatedData['inquiry_id'],
+                'quotation_id' => $validatedData['quotation_id'],
                 'file' => $validatedData['file'] ?? null,
                 'amount' => $validatedData['amount'],
                 'status' => $validatedData['status'],

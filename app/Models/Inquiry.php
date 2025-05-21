@@ -56,11 +56,6 @@ class Inquiry extends Model
         return $this->hasMany(Quotation::class);
     }
 
-    public function purchaseOrder()
-    {
-        return $this->hasOne(PurchaseOrder::class);
-    }
-
     public function businessUnit()
     {
         return $this->belongsTo(BusinessUnit::class);

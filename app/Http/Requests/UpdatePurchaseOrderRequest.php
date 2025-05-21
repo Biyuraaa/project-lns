@@ -24,7 +24,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
         return [
             //
             'code' => 'required|string|max:255',
-            'inquiry_id' => 'required|exists:inquiries,id',
+            'quotation_id' => 'required|exists:quotations,id',
             'amount' => 'required|numeric',
             'status' => 'required|in:wip,ar,ibt',
             'contract_number' => 'nullable|string|max:255',

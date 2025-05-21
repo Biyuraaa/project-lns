@@ -70,32 +70,25 @@ const PurchaseOrdersShow = () => {
     // Get status badge
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case "pending":
+            case "wip":
                 return (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>Pending</span>
+                        <span>WIP</span>
                     </Badge>
                 );
-            case "approved":
+            case "ar":
                 return (
                     <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
                         <CheckCircle className="h-3 w-3" />
-                        <span>Approved</span>
+                        <span>AR</span>
                     </Badge>
                 );
-            case "rejected":
+            case "ibt":
                 return (
-                    <Badge className="bg-red-100 text-red-800 border-red-200 flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        <span>Rejected</span>
-                    </Badge>
-                );
-            case "completed":
-                return (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
                         <FileCheck className="h-3 w-3" />
-                        <span>Completed</span>
+                        <span>IBT</span>
                     </Badge>
                 );
             default:
@@ -110,16 +103,28 @@ const PurchaseOrdersShow = () => {
     // Get status icon
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
-            case "pending":
+            case "wip":
                 return <Clock3 className="h-3.5 w-3.5 mr-1.5" />;
-            case "approved":
+            case "ar":
                 return <CheckCircle className="h-3.5 w-3.5 mr-1.5" />;
-            case "rejected":
-                return <XCircle className="h-3.5 w-3.5 mr-1.5" />;
-            case "completed":
+            case "ibt":
                 return <FileCheck className="h-3.5 w-3.5 mr-1.5" />;
             default:
                 return <Clock className="h-3.5 w-3.5 mr-1.5" />;
+        }
+    };
+
+    // Get status description
+    const getStatusDescription = (status: string) => {
+        switch (status) {
+            case "wip":
+                return "Order is currently in Work In Progress status";
+            case "ar":
+                return "Order is in Accounts Receivable status";
+            case "ibt":
+                return "Order is in Inter-Branch Transfer status";
+            default:
+                return "Status information unavailable";
         }
     };
 
@@ -217,28 +222,19 @@ const PurchaseOrdersShow = () => {
                                             variant="outline"
                                             className={`px-2.5 py-1 flex items-center gap-1.5 backdrop-blur-sm border-white/20 
                                             ${
-                                                purchaseOrder.status ===
-                                                "pending"
-                                                    ? "bg-yellow-500/20 text-white"
-                                                    : purchaseOrder.status ===
-                                                      "approved"
-                                                    ? "bg-green-500/20 text-white"
-                                                    : purchaseOrder.status ===
-                                                      "completed"
+                                                purchaseOrder.status === "wip"
                                                     ? "bg-blue-500/20 text-white"
-                                                    : "bg-red-500/20 text-white"
+                                                    : purchaseOrder.status ===
+                                                      "ar"
+                                                    ? "bg-green-500/20 text-white"
+                                                    : "bg-amber-500/20 text-white"
                                             }`}
                                         >
                                             {getStatusIcon(
                                                 purchaseOrder.status
                                             )}
                                             <span>
-                                                {purchaseOrder.status
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    purchaseOrder.status.slice(
-                                                        1
-                                                    )}
+                                                {purchaseOrder.status.toUpperCase()}
                                             </span>
                                         </Badge>
                                         <Badge
@@ -314,11 +310,11 @@ const PurchaseOrdersShow = () => {
                                 Details
                             </TabsTrigger>
                             <TabsTrigger
-                                value="inquiry"
+                                value="quotation"
                                 className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:text-green-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
                             >
                                 <ClipboardList className="h-4 w-4" />
-                                Related Inquiry
+                                Related Quotation
                             </TabsTrigger>
                             <TabsTrigger
                                 value="attachments"
@@ -543,60 +539,37 @@ const PurchaseOrdersShow = () => {
                                                                 className={`absolute -left-5 top-1 flex h-10 w-10 items-center justify-center rounded-full 
                                                                 ${
                                                                     purchaseOrder.status ===
-                                                                    "pending"
-                                                                        ? "bg-amber-100"
-                                                                        : purchaseOrder.status ===
-                                                                          "approved"
-                                                                        ? "bg-green-100"
-                                                                        : purchaseOrder.status ===
-                                                                          "completed"
+                                                                    "wip"
                                                                         ? "bg-blue-100"
-                                                                        : "bg-red-100"
+                                                                        : purchaseOrder.status ===
+                                                                          "ar"
+                                                                        ? "bg-green-100"
+                                                                        : "bg-amber-100"
                                                                 }`}
                                                             >
                                                                 {purchaseOrder.status ===
-                                                                    "pending" && (
-                                                                    <Clock className="h-5 w-5 text-amber-600" />
+                                                                    "wip" && (
+                                                                    <Clock className="h-5 w-5 text-blue-600" />
                                                                 )}
                                                                 {purchaseOrder.status ===
-                                                                    "approved" && (
+                                                                    "ar" && (
                                                                     <CheckCircle className="h-5 w-5 text-green-600" />
                                                                 )}
                                                                 {purchaseOrder.status ===
-                                                                    "completed" && (
-                                                                    <FileCheck className="h-5 w-5 text-blue-600" />
-                                                                )}
-                                                                {purchaseOrder.status ===
-                                                                    "rejected" && (
-                                                                    <XCircle className="h-5 w-5 text-red-600" />
+                                                                    "ibt" && (
+                                                                    <FileCheck className="h-5 w-5 text-amber-600" />
                                                                 )}
                                                             </div>
                                                             <div className="ml-6">
                                                                 <h3 className="font-medium">
                                                                     Current
                                                                     Status:{" "}
-                                                                    {purchaseOrder.status
-                                                                        .charAt(
-                                                                            0
-                                                                        )
-                                                                        .toUpperCase() +
-                                                                        purchaseOrder.status.slice(
-                                                                            1
-                                                                        )}
+                                                                    {purchaseOrder.status.toUpperCase()}
                                                                 </h3>
                                                                 <p className="text-sm text-muted-foreground mt-1">
-                                                                    {purchaseOrder.status ===
-                                                                        "pending" &&
-                                                                        "Order is awaiting approval from management"}
-                                                                    {purchaseOrder.status ===
-                                                                        "approved" &&
-                                                                        "Order has been approved and is in process"}
-                                                                    {purchaseOrder.status ===
-                                                                        "completed" &&
-                                                                        "Order has been successfully fulfilled"}
-                                                                    {purchaseOrder.status ===
-                                                                        "rejected" &&
-                                                                        "Order has been rejected and will not be processed"}
+                                                                    {getStatusDescription(
+                                                                        purchaseOrder.status
+                                                                    )}
                                                                 </p>
                                                                 <p className="text-xs text-muted-foreground mt-1">
                                                                     {formatDate(
@@ -608,9 +581,11 @@ const PurchaseOrdersShow = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Delivery item - conditional */}
-                                                        {purchaseOrder.status ===
-                                                            "completed" && (
+                                                        {/* Delivery item - conditional for completed statuses */}
+                                                        {(purchaseOrder.status ===
+                                                            "ar" ||
+                                                            purchaseOrder.status ===
+                                                                "ibt") && (
                                                             <div className="relative">
                                                                 <div className="absolute -left-5 top-1 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                                                                     <Truck className="h-5 w-5 text-blue-600" />
@@ -618,15 +593,18 @@ const PurchaseOrdersShow = () => {
                                                                 <div className="ml-6">
                                                                     <h3 className="font-medium">
                                                                         Order
-                                                                        Fulfilled
+                                                                        Processed
                                                                     </h3>
                                                                     <p className="text-sm text-muted-foreground mt-1">
                                                                         Purchase
                                                                         order
                                                                         has been
-                                                                        completed
-                                                                        and
-                                                                        delivered
+                                                                        processed
+                                                                        for{" "}
+                                                                        {purchaseOrder.status ===
+                                                                        "ar"
+                                                                            ? "accounts receivable"
+                                                                            : "inter-branch transfer"}
                                                                     </p>
                                                                     <p className="text-xs text-muted-foreground mt-1">
                                                                         {formatDate(
@@ -644,7 +622,7 @@ const PurchaseOrdersShow = () => {
                                     </motion.div>
                                 </div>
 
-                                {/* Right column - Inquiry & action info */}
+                                {/* Right column - Quotation & customer info */}
                                 <div className="space-y-6">
                                     {/* Customer Card */}
                                     <motion.div
@@ -677,7 +655,8 @@ const PurchaseOrdersShow = () => {
                                                         <div>
                                                             <h3 className="text-lg font-medium text-foreground">
                                                                 {purchaseOrder
-                                                                    .inquiry
+                                                                    .quotation
+                                                                    ?.inquiry
                                                                     ?.customer
                                                                     ?.name ||
                                                                     "Customer information unavailable"}
@@ -685,7 +664,8 @@ const PurchaseOrdersShow = () => {
                                                             <p className="text-sm text-muted-foreground mt-1">
                                                                 Customer ID:{" "}
                                                                 {purchaseOrder
-                                                                    .inquiry
+                                                                    .quotation
+                                                                    ?.inquiry
                                                                     ?.customer
                                                                     ?.id ||
                                                                     "N/A"}
@@ -694,8 +674,8 @@ const PurchaseOrdersShow = () => {
                                                     </div>
                                                 </div>
 
-                                                {purchaseOrder.inquiry
-                                                    ?.customer && (
+                                                {purchaseOrder.quotation
+                                                    ?.inquiry?.customer && (
                                                     <div className="space-y-4 mt-4">
                                                         {/* Email */}
                                                         <div className="flex items-start p-3 rounded-md hover:bg-muted/30 transition-colors">
@@ -707,11 +687,12 @@ const PurchaseOrdersShow = () => {
                                                                     Email
                                                                 </p>
                                                                 <a
-                                                                    href={`mailto:${purchaseOrder.inquiry.customer.email}`}
+                                                                    href={`mailto:${purchaseOrder.quotation.inquiry.customer.email}`}
                                                                     className="text-sm text-blue-600 hover:underline flex items-center"
                                                                 >
                                                                     {
                                                                         purchaseOrder
+                                                                            .quotation
                                                                             .inquiry
                                                                             .customer
                                                                             .email
@@ -722,8 +703,9 @@ const PurchaseOrdersShow = () => {
                                                         </div>
 
                                                         {/* Phone */}
-                                                        {purchaseOrder.inquiry
-                                                            .customer.phone && (
+                                                        {purchaseOrder.quotation
+                                                            .inquiry.customer
+                                                            .phone && (
                                                             <div className="flex items-start p-3 rounded-md hover:bg-muted/30 transition-colors">
                                                                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-3">
                                                                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -733,11 +715,12 @@ const PurchaseOrdersShow = () => {
                                                                         Phone
                                                                     </p>
                                                                     <a
-                                                                        href={`tel:${purchaseOrder.inquiry.customer.phone}`}
+                                                                        href={`tel:${purchaseOrder.quotation.inquiry.customer.phone}`}
                                                                         className="text-sm text-blue-600 hover:underline flex items-center"
                                                                     >
                                                                         {
                                                                             purchaseOrder
+                                                                                .quotation
                                                                                 .inquiry
                                                                                 .customer
                                                                                 .phone
@@ -749,8 +732,8 @@ const PurchaseOrdersShow = () => {
                                                         )}
 
                                                         {/* Address */}
-                                                        {purchaseOrder.inquiry
-                                                            .customer
+                                                        {purchaseOrder.quotation
+                                                            .inquiry.customer
                                                             .address && (
                                                             <div className="flex items-start p-3 rounded-md hover:bg-muted/30 transition-colors">
                                                                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-3">
@@ -763,6 +746,7 @@ const PurchaseOrdersShow = () => {
                                                                     <p className="text-sm">
                                                                         {
                                                                             purchaseOrder
+                                                                                .quotation
                                                                                 .inquiry
                                                                                 .customer
                                                                                 .address
@@ -776,12 +760,13 @@ const PurchaseOrdersShow = () => {
 
                                                 <Separator className="my-6" />
 
-                                                {purchaseOrder.inquiry
-                                                    ?.customer && (
+                                                {purchaseOrder.quotation
+                                                    ?.inquiry?.customer && (
                                                     <Link
                                                         href={route(
                                                             "customers.show",
                                                             purchaseOrder
+                                                                .quotation
                                                                 .inquiry
                                                                 .customer.id
                                                         )}
@@ -829,20 +814,15 @@ const PurchaseOrdersShow = () => {
                                                         <Badge
                                                             className={
                                                                 purchaseOrder.status ===
-                                                                "pending"
-                                                                    ? "bg-amber-100 text-amber-800"
-                                                                    : purchaseOrder.status ===
-                                                                      "approved"
-                                                                    ? "bg-emerald-100 text-emerald-800"
-                                                                    : purchaseOrder.status ===
-                                                                      "completed"
+                                                                "wip"
                                                                     ? "bg-blue-100 text-blue-800"
-                                                                    : "bg-red-100 text-red-800"
+                                                                    : purchaseOrder.status ===
+                                                                      "ar"
+                                                                    ? "bg-emerald-100 text-emerald-800"
+                                                                    : "bg-amber-100 text-amber-800"
                                                             }
                                                         >
-                                                            {
-                                                                purchaseOrder.status
-                                                            }
+                                                            {purchaseOrder.status.toUpperCase()}
                                                         </Badge>
                                                     </div>
                                                     <div className="flex items-center justify-between py-2 border-b border-border/60">
@@ -907,25 +887,25 @@ const PurchaseOrdersShow = () => {
                             </div>
                         </TabsContent>
 
-                        {/* Inquiry Tab */}
-                        <TabsContent value="inquiry" className="space-y-6">
+                        {/* Quotation Tab */}
+                        <TabsContent value="quotation" className="space-y-6">
                             <Card>
                                 <CardHeader>
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <CardTitle className="text-xl font-bold flex items-center gap-2">
                                                 <ClipboardList className="h-5 w-5 text-green-500" />
-                                                Related Inquiry
+                                                Related Quotation
                                             </CardTitle>
                                             <CardDescription>
-                                                The inquiry associated with this
-                                                purchase order
+                                                The quotation associated with
+                                                this purchase order
                                             </CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    {purchaseOrder.inquiry ? (
+                                    {purchaseOrder.quotation ? (
                                         <div className="space-y-4">
                                             <motion.div
                                                 initial={{ opacity: 0, y: 10 }}
@@ -942,27 +922,37 @@ const PurchaseOrdersShow = () => {
                                                             <h4 className="text-sm font-medium flex items-center">
                                                                 {
                                                                     purchaseOrder
-                                                                        .inquiry
+                                                                        .quotation
                                                                         .code
                                                                 }
                                                                 <Badge
                                                                     className={`ml-2 ${
                                                                         purchaseOrder
-                                                                            .inquiry
+                                                                            .quotation
                                                                             .status ===
-                                                                        "pending"
+                                                                        "draft"
                                                                             ? "bg-yellow-100 text-yellow-800 border-yellow-200"
                                                                             : purchaseOrder
-                                                                                  .inquiry
+                                                                                  .quotation
                                                                                   .status ===
-                                                                              "resolved"
+                                                                              "sent"
+                                                                            ? "bg-blue-100 text-blue-800 border-blue-200"
+                                                                            : purchaseOrder
+                                                                                  .quotation
+                                                                                  .status ===
+                                                                              "accepted"
                                                                             ? "bg-green-100 text-green-800 border-green-200"
+                                                                            : purchaseOrder
+                                                                                  .quotation
+                                                                                  .status ===
+                                                                              "rejected"
+                                                                            ? "bg-red-100 text-red-800 border-red-200"
                                                                             : "bg-slate-100 text-slate-800 border-slate-200"
                                                                     }`}
                                                                 >
                                                                     {
                                                                         purchaseOrder
-                                                                            .inquiry
+                                                                            .quotation
                                                                             .status
                                                                     }
                                                                 </Badge>
@@ -970,18 +960,18 @@ const PurchaseOrdersShow = () => {
                                                             <div className="flex items-center mt-1">
                                                                 <span className="text-xs text-muted-foreground flex items-center">
                                                                     <Calendar className="h-3 w-3 mr-1" />
-                                                                    Date:{" "}
+                                                                    Due Date:{" "}
                                                                     {formatDate(
                                                                         purchaseOrder
-                                                                            .inquiry
-                                                                            .inquiry_date
+                                                                            .quotation
+                                                                            .due_date
                                                                     )}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex space-x-2">
-                                                        {purchaseOrder.inquiry
+                                                        {purchaseOrder.quotation
                                                             .file && (
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -989,7 +979,7 @@ const PurchaseOrdersShow = () => {
                                                                         asChild
                                                                     >
                                                                         <a
-                                                                            href={`/storage/files/inquiries/${purchaseOrder.inquiry.file}`}
+                                                                            href={`/storage/files/quotations/${purchaseOrder.quotation.file}`}
                                                                             download
                                                                             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                                                         >
@@ -999,7 +989,7 @@ const PurchaseOrdersShow = () => {
                                                                     <TooltipContent>
                                                                         <p>
                                                                             Download
-                                                                            Inquiry
+                                                                            Quotation
                                                                         </p>
                                                                     </TooltipContent>
                                                                 </Tooltip>
@@ -1008,9 +998,10 @@ const PurchaseOrdersShow = () => {
 
                                                         <Link
                                                             href={route(
-                                                                "inquiries.show",
+                                                                "quotations.show",
                                                                 purchaseOrder
-                                                                    .inquiry.id
+                                                                    .quotation
+                                                                    .id
                                                             )}
                                                         >
                                                             <Button
@@ -1026,10 +1017,10 @@ const PurchaseOrdersShow = () => {
                                                 </div>
                                             </motion.div>
 
-                                            {/* Additional Inquiry Info */}
+                                            {/* Additional Quotation Info */}
                                             <div className="mt-6 bg-muted/20 p-6 rounded-lg border border-border/40">
                                                 <h3 className="text-base font-medium mb-4">
-                                                    Inquiry Details
+                                                    Related Inquiry
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div>
@@ -1038,34 +1029,90 @@ const PurchaseOrdersShow = () => {
                                                         </h4>
                                                         <p className="text-base">
                                                             {purchaseOrder
+                                                                .quotation
                                                                 .inquiry
-                                                                .customer
+                                                                ?.customer
                                                                 ?.name || "N/A"}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-medium text-muted-foreground">
-                                                            Quantity
+                                                            Inquiry Code
                                                         </h4>
-                                                        <p className="text-base">
-                                                            {
-                                                                purchaseOrder
-                                                                    .inquiry
-                                                                    .business_unit
-                                                            }{" "}
-                                                            units
+                                                        <p className="text-base flex items-center">
+                                                            <span>
+                                                                {
+                                                                    purchaseOrder
+                                                                        .quotation
+                                                                        .inquiry
+                                                                        ?.code
+                                                                }
+                                                            </span>
+                                                            {purchaseOrder
+                                                                .quotation
+                                                                .inquiry && (
+                                                                <Link
+                                                                    href={route(
+                                                                        "inquiries.show",
+                                                                        purchaseOrder
+                                                                            .quotation
+                                                                            .inquiry
+                                                                            .id
+                                                                    )}
+                                                                    className="text-blue-600 hover:text-blue-800 ml-2"
+                                                                >
+                                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                                </Link>
+                                                            )}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                                                    Description
-                                                </h4>
-                                                <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded border border-border/40 whitespace-pre-line leading-relaxed">
-                                                    {purchaseOrder.inquiry
-                                                        .description ||
-                                                        "No description provided"}
-                                                </p>
+                                                {/* Quotation negotiations */}
+                                                {purchaseOrder.quotation
+                                                    .negotiations &&
+                                                    purchaseOrder.quotation
+                                                        .negotiations.length >
+                                                        0 && (
+                                                        <>
+                                                            <h4 className="text-sm font-medium text-muted-foreground mb-2 mt-4">
+                                                                Negotiations
+                                                            </h4>
+                                                            <div className="bg-muted/30 p-3 rounded border border-border/40">
+                                                                <p className="text-sm font-medium mb-2">
+                                                                    This
+                                                                    quotation
+                                                                    has{" "}
+                                                                    {
+                                                                        purchaseOrder
+                                                                            .quotation
+                                                                            .negotiations
+                                                                            .length
+                                                                    }{" "}
+                                                                    negotiation
+                                                                    records
+                                                                </p>
+                                                                <Link
+                                                                    href={route(
+                                                                        "quotations.show",
+                                                                        purchaseOrder
+                                                                            .quotation
+                                                                            .id
+                                                                    )}
+                                                                >
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="mt-1"
+                                                                    >
+                                                                        View
+                                                                        Negotiation
+                                                                        History
+                                                                    </Button>
+                                                                </Link>
+                                                            </div>
+                                                        </>
+                                                    )}
                                             </div>
                                         </div>
                                     ) : (
@@ -1074,18 +1121,18 @@ const PurchaseOrdersShow = () => {
                                                 <AlertCircle className="h-6 w-6 text-muted-foreground" />
                                             </div>
                                             <h3 className="text-lg font-medium mb-2">
-                                                No related inquiry
+                                                No related quotation
                                             </h3>
                                             <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
                                                 This purchase order is not
-                                                linked to any inquiry.
+                                                linked to any quotation.
                                             </p>
                                             <Link
-                                                href={route("inquiries.index")}
+                                                href={route("quotations.index")}
                                             >
                                                 <Button className="bg-amber-600 hover:bg-amber-700 text-white">
                                                     <ClipboardList className="h-4 w-4 mr-2" />
-                                                    View All Inquiries
+                                                    View All Quotations
                                                 </Button>
                                             </Link>
                                         </div>

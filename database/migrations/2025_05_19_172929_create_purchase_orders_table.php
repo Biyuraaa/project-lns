@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('purchase_orders', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->foreignId('inquiry_id')->constrained('inquiries')->onDelete('cascade');
+            $table->foreignId('quotation_id')->constrained('quotations')->onDelete('cascade');
             $table->integer('amount');
             $table->string('file')->nullable();
             $table->enum('status', ['wip', 'ar', 'ibt'])->default('wip');
