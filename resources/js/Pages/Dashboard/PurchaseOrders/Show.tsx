@@ -1057,7 +1057,7 @@ const PurchaseOrdersShow = () => {
                                                             {
                                                                 purchaseOrder
                                                                     .inquiry
-                                                                    .quantity
+                                                                    .business_unit
                                                             }{" "}
                                                             units
                                                         </p>

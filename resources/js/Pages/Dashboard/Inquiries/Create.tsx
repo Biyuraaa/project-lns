@@ -69,7 +69,7 @@ const InquiriesCreate = () => {
         pic_engineer_id: "",
         sales_id: "",
         description: "",
-        quantity: 1,
+        business_unit: 1,
         inquiry_date: defaultDate,
         new_customer: false as boolean,
         customer_name: "",
@@ -183,7 +183,7 @@ const InquiriesCreate = () => {
         const hasRequiredFields = requiredFields.every(
             (field) => field && field.toString().trim() !== ""
         );
-        const hasValidQuantity = data.quantity > 0;
+        const hasValidQuantity = data.business_unit > 0;
         const isValidCode = isCodeValid && data.code && data.code.trim() !== "";
         return hasRequiredFields && hasValidQuantity && isValidCode;
     };
@@ -486,7 +486,7 @@ const InquiriesCreate = () => {
                                         {/* Quantity Field */}
                                         <div className="space-y-1">
                                             <Label
-                                                htmlFor="quantity"
+                                                htmlFor="business_unit"
                                                 className="text-sm font-medium"
                                             >
                                                 Quantity{" "}
@@ -499,20 +499,20 @@ const InquiriesCreate = () => {
                                                     <Package className="h-4 w-4 text-gray-400" />
                                                 </div>
                                                 <Input
-                                                    id="quantity"
+                                                    id="business_unit"
                                                     type="number"
                                                     min="1"
-                                                    value={data.quantity}
+                                                    value={data.business_unit}
                                                     onChange={(e) =>
                                                         setData(
-                                                            "quantity",
+                                                            "business_unit",
                                                             Number.parseInt(
                                                                 e.target.value
                                                             )
                                                         )
                                                     }
                                                     className={`pl-10 ${
-                                                        errors.quantity
+                                                        errors.business_unit
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
                                                     }`}
@@ -520,10 +520,10 @@ const InquiriesCreate = () => {
                                                     required
                                                 />
                                             </div>
-                                            {errors.quantity && (
+                                            {errors.business_unit && (
                                                 <p className="text-red-500 text-xs mt-1 flex items-center">
                                                     <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.quantity}
+                                                    {errors.business_unit}
                                                 </p>
                                             )}
                                         </div>

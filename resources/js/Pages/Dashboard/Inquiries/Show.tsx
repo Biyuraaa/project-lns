@@ -184,7 +184,9 @@ const InquiriesShow = () => {
                                             className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
                                         >
                                             <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-                                            <span>Qty: {inquiry.quantity}</span>
+                                            <span>
+                                                Qty: {inquiry.business_unit}
+                                            </span>
                                         </Badge>
                                     </div>
                                 </div>
@@ -343,7 +345,7 @@ const InquiriesShow = () => {
                                                             <ShoppingBag className="h-4 w-4 text-amber-500 mr-2" />
                                                             <span className="font-medium">
                                                                 {
-                                                                    inquiry.quantity
+                                                                    inquiry.business_unit
                                                                 }
                                                             </span>
                                                             <span className="text-sm text-muted-foreground ml-1">
@@ -736,7 +738,9 @@ const InquiriesShow = () => {
                                                             Quantity
                                                         </span>
                                                         <span className="text-sm font-medium">
-                                                            {inquiry.quantity}{" "}
+                                                            {
+                                                                inquiry.business_unit
+                                                            }{" "}
                                                             units
                                                         </span>
                                                     </div>

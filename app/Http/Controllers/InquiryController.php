@@ -77,7 +77,7 @@ class InquiryController extends Controller
                 'code' => $validatedData['code'],
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
-                'quantity' => $validatedData['quantity'],
+                'business_unit' => $validatedData['business_unit'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'end_user_name' => $validatedData['end_user_name'] ?? null, // Fixed field name
                 'end_user_email' => $validatedData['end_user_email'] ?? null,
@@ -159,7 +159,7 @@ class InquiryController extends Controller
                 'code' => $validatedData['code'],
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
-                'quantity' => $validatedData['quantity'],
+                'business_unit' => $validatedData['business_unit'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'end_user_name' => $validatedData['end_user_name'] ?? $inquiry->end_user_name,
                 'end_user_email' => $validatedData['end_user_email'] ?? $inquiry->end_user_email,

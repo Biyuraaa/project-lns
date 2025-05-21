@@ -52,7 +52,7 @@ export interface Inquiry {
     sales: Sales;
     quotation: Quotation;
     description: string;
-    quantity: number;
+    business_unit: number;
     inquiry_date: string;
     end_user_name: string;
     end_user_email: string;

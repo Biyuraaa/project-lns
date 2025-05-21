@@ -738,7 +738,10 @@ const QuotationEdit = () => {
                                                     Quantity
                                                 </span>
                                                 <span className="text-sm font-medium">
-                                                    {quotation.inquiry.quantity}{" "}
+                                                    {
+                                                        quotation.inquiry
+                                                            .business_unit
+                                                    }{" "}
                                                     units
                                                 </span>
                                             </div>

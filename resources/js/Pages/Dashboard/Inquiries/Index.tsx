@@ -362,7 +362,7 @@ const InquiriesIndex = () => {
                                                 <option value="status">
                                                     Status
                                                 </option>
-                                                <option value="quantity">
+                                                <option value="business_unit">
                                                     Quantity
                                                 </option>
                                             </select>
@@ -572,12 +572,13 @@ const InquiriesIndex = () => {
                                             scope="col"
                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                             onClick={() =>
-                                                handleSort("quantity")
+                                                handleSort("business_unit")
                                             }
                                         >
                                             <div className="flex items-center">
                                                 Qty
-                                                {sortField === "quantity" && (
+                                                {sortField ===
+                                                    "business_unit" && (
                                                     <span className="ml-1">
                                                         {sortDirection ===
                                                         "asc" ? (
@@ -688,7 +689,7 @@ const InquiriesIndex = () => {
                                                         <div className="text-sm flex items-center">
                                                             <span className="font-medium">
                                                                 {
-                                                                    inquiry.quantity
+                                                                    inquiry.business_unit
                                                                 }
                                                             </span>
                                                         </div>

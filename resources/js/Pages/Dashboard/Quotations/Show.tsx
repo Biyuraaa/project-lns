@@ -725,7 +725,7 @@ const QuotationShow = () => {
                                                             {
                                                                 quotation
                                                                     .inquiry
-                                                                    .quantity
+                                                                    .business_unit
                                                             }{" "}
                                                             units
                                                         </p>

@@ -19,7 +19,7 @@ class Inquiry extends Model
         'pic_engineer_id',
         'sales_id',
         'description',
-        'quantity',
+        'business_unit',
         'inquiry_date',
         'end_user_name',
         'end_user_email',
