@@ -10,7 +10,6 @@ import {
     Building2,
     FileText,
     Calendar,
-    Package,
     User,
     Mail,
     Phone,
@@ -28,7 +27,7 @@ import {
     Paperclip,
     Upload,
     Check,
-    Trash2,
+    Factory,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -37,7 +36,14 @@ import { Textarea } from "@/Components/ui/textarea";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Customer, PageProps, PicEngineer, Sales, Inquiry } from "@/types";
+import type {
+    Customer,
+    PageProps,
+    PicEngineer,
+    Sales,
+    Inquiry,
+    BusinessUnit,
+} from "@/types";
 import { cn, formatDateForInput } from "@/lib/utils";
 
 interface InquiriesEditProps extends PageProps {
@@ -45,10 +51,11 @@ interface InquiriesEditProps extends PageProps {
     picEngineers: PicEngineer[];
     sales: Sales[];
     inquiry: Inquiry;
+    businessUnits: BusinessUnit[];
 }
 
 const InquiriesEdit = () => {
-    const { customers, picEngineers, sales, inquiry } =
+    const { customers, picEngineers, sales, inquiry, businessUnits } =
         usePage<InquiriesEditProps>().props;
 
     // File input reference
@@ -63,7 +70,9 @@ const InquiriesEdit = () => {
             : "",
         sales_id: inquiry.sales ? inquiry.sales.id.toString() : "",
         description: inquiry.description,
-        business_unit: inquiry.business_unit,
+        business_unit_id: inquiry.business_unit
+            ? inquiry.business_unit.id.toString()
+            : "",
         inquiry_date: inquiry.inquiry_date,
         end_user_name: inquiry.end_user_name || "",
         end_user_email: inquiry.end_user_email || "",
@@ -91,6 +100,8 @@ const InquiriesEdit = () => {
     const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
     const [salesDropdownOpen, setSalesDropdownOpen] = useState(false);
     const [engineerDropdownOpen, setEngineerDropdownOpen] = useState(false);
+    const [businessUnitDropdownOpen, setBusinessUnitDropdownOpen] =
+        useState(false);
 
     // Filtered results based on search terms
     const filteredCustomers = customers.filter((customer) =>
@@ -146,19 +157,17 @@ const InquiriesEdit = () => {
             data.description,
             data.inquiry_date,
             data.code,
+            data.business_unit_id,
         ];
 
         const hasRequiredFields = requiredFields.every(
             (field) => field && field.toString().trim() !== ""
         );
 
-        // Quantity validation
-        const hasValidQuantity = data.business_unit > 0;
-
         // Code validation
         const isValidCode = isCodeValid && data.code && data.code.trim() !== "";
 
-        return hasRequiredFields && hasValidQuantity && isValidCode;
+        return hasRequiredFields && isValidCode;
     };
 
     // File handling functions
@@ -239,6 +248,10 @@ const InquiriesEdit = () => {
 
             if (!target.closest("#engineer-dropdown-container")) {
                 setEngineerDropdownOpen(false);
+            }
+
+            if (!target.closest("#business-unit-dropdown-container")) {
+                setBusinessUnitDropdownOpen(false);
             }
         };
 
@@ -648,6 +661,9 @@ const InquiriesEdit = () => {
                                                     <option value="closed">
                                                         Closed
                                                     </option>
+                                                    <option value="process">
+                                                        In Process
+                                                    </option>
                                                 </select>
                                             </div>
                                             {errors.status && (
@@ -658,47 +674,61 @@ const InquiriesEdit = () => {
                                             )}
                                         </div>
 
-                                        {/* Quantity Field */}
-                                        <div className="space-y-1 md:col-span-4">
+                                        {/* Business Unit Field */}
+                                        <div
+                                            className="space-y-1 md:col-span-4"
+                                            id="business-unit-dropdown-container"
+                                        >
                                             <Label
-                                                htmlFor="business_unit"
+                                                htmlFor="business_unit_id"
                                                 className="text-sm font-medium"
                                             >
-                                                Quantity{" "}
+                                                Business Unit{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Package className="h-4 w-4 text-gray-400" />
+                                                    <Factory className="h-4 w-4 text-gray-400" />
                                                 </div>
-                                                <Input
-                                                    id="business_unit"
-                                                    type="number"
-                                                    min="1"
-                                                    value={data.business_unit}
+                                                <select
+                                                    id="business_unit_id"
+                                                    value={
+                                                        data.business_unit_id
+                                                    }
                                                     onChange={(e) =>
                                                         setData(
-                                                            "business_unit",
-                                                            Number.parseInt(
-                                                                e.target.value
-                                                            )
+                                                            "business_unit_id",
+                                                            e.target.value
                                                         )
                                                     }
-                                                    className={`pl-10 ${
-                                                        errors.business_unit
+                                                    className={`block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none sm:text-sm rounded-md ${
+                                                        errors.business_unit_id
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
                                                     }`}
-                                                    placeholder="1"
                                                     required
-                                                />
+                                                >
+                                                    <option value="">
+                                                        Select Business Unit
+                                                    </option>
+                                                    {businessUnits.map(
+                                                        (unit) => (
+                                                            <option
+                                                                key={unit.id}
+                                                                value={unit.id.toString()}
+                                                            >
+                                                                {unit.name}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
                                             </div>
-                                            {errors.business_unit && (
+                                            {errors.business_unit_id && (
                                                 <p className="text-red-500 text-xs mt-1 flex items-center">
                                                     <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.business_unit}
+                                                    {errors.business_unit_id}
                                                 </p>
                                             )}
                                         </div>

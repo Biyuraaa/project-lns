@@ -358,7 +358,7 @@ const InquiriesIndex = () => {
                                                     Status
                                                 </option>
                                                 <option value="business_unit">
-                                                    Quantity
+                                                    Bisnis Unit
                                                 </option>
                                             </select>
                                         </div>

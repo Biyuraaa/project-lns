@@ -6,6 +6,7 @@ use App\Models\Quotation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQuotationRequest;
 use App\Http\Requests\UpdateQuotationRequest;
+use App\Models\Inquiry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -34,16 +35,51 @@ class QuotationController extends Controller
      */
     public function create()
     {
-        //
+        // Get inquiries that don't have quotations with status "val"
+        $inquiries = Inquiry::whereDoesntHave('quotations', function ($query) {
+            $query->where('status', 'val');
+        })
+            ->with([
+                'customer:id,name',
+                'picEngineer:id,name',
+                'sales:id,name',
+                'businessUnit:id,name'
+            ])
+            ->get();
 
+        return Inertia::render('Dashboard/Quotations/Create', [
+            'inquiries' => $inquiries
+        ]);
     }
-
     /**
      * Store a newly created resource in storage.
      */
     public function store(StoreQuotationRequest $request)
     {
         //
+        try {
+            $validatedData = $request->validated();
+
+            // Handle file upload
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('files/quotations', $filename, 'public');
+                $validatedData['file'] = $filename;
+            }
+
+            Quotation::create([
+                'code' => $validatedData['code'],
+                'status' => 'val',
+                'due_date' => $validatedData['due_date'],
+                'inquiry_id' => $validatedData['inquiry_id'],
+                'file' => $validatedData['file'] ?? null,
+            ]);
+
+            return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Failed to create quotation: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -57,11 +93,10 @@ class QuotationController extends Controller
             'inquiry.customer',
             'inquiry.picEngineer',
             'inquiry.sales',
-            'negotiations'
+            'inquiry.businessUnit',
         ]);
         return Inertia::render('Dashboard/Quotations/Show', [
             'quotation' => $quotation,
-            'negotiations' => $quotation->negotiations
         ]);
     }
 
@@ -76,7 +111,6 @@ class QuotationController extends Controller
             'inquiry.customer',
             'inquiry.picEngineer',
             'inquiry.sales',
-            'negotiations'
         ]);
 
         return Inertia::render('Dashboard/Quotations/Edit', [
@@ -144,49 +178,6 @@ class QuotationController extends Controller
             return redirect()->route('quotations.index')->with('success', 'Quotation deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to delete quotation: ' . $e->getMessage());
-        }
-    }
-
-    public function createNegotiation(Quotation $quotation)
-    {
-        //
-        $quotation->load([
-            'inquiry',
-            'inquiry.customer',
-            'inquiry.picEngineer',
-            'inquiry.sales',
-            'negotiations'
-        ]);
-        return Inertia::render('Dashboard/Quotations/Negotiations/Create', [
-            'quotation' => $quotation
-        ]);
-    }
-
-    public function storeNegotiation(Request $request, Quotation $quotation)
-    {
-        try {
-            $validatedData = $request->validate([
-                'code' => 'required|string|max:255',
-                'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            ]);
-
-            // Handle file upload if a new file is provided
-            if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('files/quotations', $filename, 'public');
-                $validatedData['file'] = $filename;
-            }
-
-            // Create the negotiation
-            $quotation->negotiations()->create([
-                'code' => $validatedData['code'] ?? null,
-                'file' => $validatedData['file'] ?? null,
-            ]);
-
-            return redirect()->route('quotations.show', $quotation)->with('success', 'Negotiation created successfully.');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Failed to create negotiation: ' . $e->getMessage());
         }
     }
 }

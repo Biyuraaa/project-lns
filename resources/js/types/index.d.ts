@@ -82,18 +82,8 @@ export interface Quotation {
     due_date: string;
     created_at?: string;
     updated_at?: string;
-    negotiations: Negotiation[];
 }
-
-export interface Negotiation {
-    id: number;
-    code: string;
-    quotation: Quotation;
-    status: string;
-    file: string;
-    created_at?: string;
-    updated_at?: string;
-}
+export
 
 export interface PurchaseOrder {
     id: number;

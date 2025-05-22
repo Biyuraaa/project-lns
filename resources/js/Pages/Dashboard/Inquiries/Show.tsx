@@ -185,7 +185,7 @@ const InquiriesShow = () => {
                                         >
                                             <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
                                             <span>
-                                                Qty: {inquiry.business_unit}
+                                                {inquiry.business_unit.name}
                                             </span>
                                         </Badge>
                                     </div>
@@ -338,18 +338,14 @@ const InquiriesShow = () => {
 
                                                     {/* Quantity */}
                                                     <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
-                                                        <h3 className="text-sm font-medium text-muted-foreground">
-                                                            Quantity
-                                                        </h3>
                                                         <p className="mt-1 flex items-center text-base">
                                                             <ShoppingBag className="h-4 w-4 text-amber-500 mr-2" />
                                                             <span className="font-medium">
                                                                 {
-                                                                    inquiry.business_unit
+                                                                    inquiry
+                                                                        .business_unit
+                                                                        .name
                                                                 }
-                                                            </span>
-                                                            <span className="text-sm text-muted-foreground ml-1">
-                                                                units
                                                             </span>
                                                         </p>
                                                     </div>
@@ -735,13 +731,11 @@ const InquiriesShow = () => {
                                                     </div>
                                                     <div className="flex items-center justify-between py-2 border-b border-border/60">
                                                         <span className="text-sm text-muted-foreground">
-                                                            Quantity
-                                                        </span>
-                                                        <span className="text-sm font-medium">
                                                             {
-                                                                inquiry.business_unit
-                                                            }{" "}
-                                                            units
+                                                                inquiry
+                                                                    .business_unit
+                                                                    .name
+                                                            }
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center justify-between py-2">

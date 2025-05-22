@@ -22,8 +22,8 @@ import {
     Search,
     Check,
     Briefcase,
-    ClipboardList,
     ArrowUpDown,
+    FileCheck,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -31,7 +31,7 @@ import { Label } from "@/Components/ui/label";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
 import { motion } from "framer-motion";
-import type { Inquiry, PageProps, PurchaseOrder } from "@/types";
+import type { Quotation, PageProps, PurchaseOrder } from "@/types";
 import {
     cn,
     formatDateForInput,
@@ -51,19 +51,19 @@ import { format } from "date-fns";
 
 interface PurchaseOrdersEditProps extends PageProps {
     purchaseOrder: PurchaseOrder;
-    inquiries: Inquiry[];
+    quotations: Quotation[];
 }
 
 const PurchaseOrdersEdit = () => {
-    const { purchaseOrder, inquiries } =
+    const { purchaseOrder, quotations } =
         usePage<PurchaseOrdersEditProps>().props;
-    console.log(purchaseOrder);
+
     // File input reference
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, processing, errors } = useForm({
         code: purchaseOrder.code || "",
-        inquiry_id: purchaseOrder.inquiry?.id?.toString() || "",
+        quotation_id: purchaseOrder.quotation?.id?.toString() || "",
         status: purchaseOrder.status || "wip",
         amount: purchaseOrder.amount || 0,
         contract_number: purchaseOrder.contract_number || "",
@@ -74,26 +74,27 @@ const PurchaseOrdersEdit = () => {
         _removeFile: false as boolean,
     });
 
-    // State for inquiry search and dropdown
-    const [inquirySearch, setInquirySearch] = useState(
-        purchaseOrder.inquiry?.code || ""
+    // State for quotation search and dropdown
+    const [quotationSearch, setQuotationSearch] = useState(
+        purchaseOrder.quotation?.code || ""
     );
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [inquiryDropdownOpen, setInquiryDropdownOpen] = useState(false);
-    const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(
-        purchaseOrder.inquiry || null
-    );
+    const [quotationDropdownOpen, setQuotationDropdownOpen] = useState(false);
+    const [selectedQuotation, setSelectedQuotation] =
+        useState<Quotation | null>(purchaseOrder.quotation || null);
     const [currentFile, setCurrentFile] = useState<string | null>(
         purchaseOrder.file || null
     );
 
-    // Filtered inquiries based on search term
-    const filteredInquiries = inquiries.filter((inquiry) => {
-        const searchLower = inquirySearch.toLowerCase();
+    // Filtered quotations based on search term
+    const filteredQuotations = quotations.filter((quotation) => {
+        const searchLower = quotationSearch.toLowerCase();
         return (
-            inquiry.code?.toLowerCase().includes(searchLower) ||
-            inquiry.customer?.name?.toLowerCase().includes(searchLower)
+            quotation.code?.toLowerCase().includes(searchLower) ||
+            quotation.inquiry?.customer?.name
+                ?.toLowerCase()
+                .includes(searchLower)
         );
     });
 
@@ -197,7 +198,7 @@ const PurchaseOrdersEdit = () => {
     const validateForm = () => {
         const requiredFields = [
             data.code,
-            data.inquiry_id,
+            data.quotation_id,
             data.date,
             data.amount > 0,
         ];
@@ -205,17 +206,17 @@ const PurchaseOrdersEdit = () => {
         return requiredFields.every((field) => field);
     };
 
-    // Update selected inquiry when inquiry_id changes
+    // Update selected quotation when quotation_id changes
     useEffect(() => {
-        if (data.inquiry_id) {
-            const inquiry = inquiries.find(
-                (inq) => inq.id.toString() === data.inquiry_id.toString()
+        if (data.quotation_id) {
+            const quotation = quotations.find(
+                (q) => q.id.toString() === data.quotation_id.toString()
             );
-            setSelectedInquiry(inquiry || null);
+            setSelectedQuotation(quotation || null);
         } else {
-            setSelectedInquiry(null);
+            setSelectedQuotation(null);
         }
-    }, [data.inquiry_id]);
+    }, [data.quotation_id]);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -223,10 +224,10 @@ const PurchaseOrdersEdit = () => {
             const target = event.target as HTMLElement;
 
             if (
-                !target.closest("#inquiry-dropdown-container") &&
-                !target.closest("#inquiry_search")
+                !target.closest("#quotation-dropdown-container") &&
+                !target.closest("#quotation_search")
             ) {
-                setInquiryDropdownOpen(false);
+                setQuotationDropdownOpen(false);
             }
         };
 
@@ -590,61 +591,61 @@ const PurchaseOrdersEdit = () => {
                                             </p>
                                         </div>
 
-                                        {/* Inquiry Selection Field - Full width */}
+                                        {/* Quotation Selection Field - Full width */}
                                         <div
                                             className="space-y-2 md:col-span-2 lg:col-span-3"
-                                            id="inquiry-dropdown-container"
+                                            id="quotation-dropdown-container"
                                         >
                                             <Label
-                                                htmlFor="inquiry_search"
+                                                htmlFor="quotation_search"
                                                 className="text-sm font-medium"
                                             >
-                                                Related Inquiry{" "}
+                                                Related Quotation{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <ClipboardList className="h-4 w-4 text-gray-400" />
+                                                    <FileCheck className="h-4 w-4 text-gray-400" />
                                                 </div>
                                                 <Input
-                                                    id="inquiry_search"
+                                                    id="quotation_search"
                                                     type="text"
-                                                    placeholder="Search inquiry by code or customer name..."
-                                                    value={inquirySearch}
+                                                    placeholder="Search quotation by code or customer name..."
+                                                    value={quotationSearch}
                                                     onChange={(e) => {
-                                                        setInquirySearch(
+                                                        setQuotationSearch(
                                                             e.target.value
                                                         );
-                                                        setInquiryDropdownOpen(
+                                                        setQuotationDropdownOpen(
                                                             true
                                                         );
                                                     }}
                                                     onClick={() => {
-                                                        setInquiryDropdownOpen(
+                                                        setQuotationDropdownOpen(
                                                             true
                                                         );
                                                     }}
                                                     className={`pl-10 ${
-                                                        errors.inquiry_id
+                                                        errors.quotation_id
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
                                                 />
-                                                {inquirySearch && (
+                                                {quotationSearch && (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            setInquirySearch(
+                                                            setQuotationSearch(
                                                                 ""
                                                             );
                                                             setData(
-                                                                "inquiry_id",
+                                                                "quotation_id",
                                                                 ""
                                                             );
-                                                            setInquiryDropdownOpen(
+                                                            setQuotationDropdownOpen(
                                                                 true
                                                             );
                                                         }}
@@ -654,21 +655,21 @@ const PurchaseOrdersEdit = () => {
                                                     </button>
                                                 )}
 
-                                                {data.inquiry_id &&
-                                                    inquirySearch && (
+                                                {data.quotation_id &&
+                                                    quotationSearch && (
                                                         <div className="absolute inset-y-0 right-8 pr-3 flex items-center">
                                                             <Badge
                                                                 variant="secondary"
                                                                 className="bg-green-100 text-green-700"
                                                             >
                                                                 {
-                                                                    selectedInquiry?.code
+                                                                    selectedQuotation?.code
                                                                 }
                                                             </Badge>
                                                         </div>
                                                     )}
 
-                                                {inquiryDropdownOpen && (
+                                                {quotationDropdownOpen && (
                                                     <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm border border-gray-200">
                                                         {/* Search Header */}
                                                         <div className="sticky top-0 z-20 bg-white p-2 border-b border-gray-200">
@@ -676,15 +677,15 @@ const PurchaseOrdersEdit = () => {
                                                                 <Search className="h-4 w-4 text-gray-400 absolute top-1/2 transform -translate-y-1/2 left-3" />
                                                                 <Input
                                                                     type="text"
-                                                                    placeholder="Type to search inquiries..."
+                                                                    placeholder="Type to search quotations..."
                                                                     className="pl-10 py-1 text-sm"
                                                                     value={
-                                                                        inquirySearch
+                                                                        quotationSearch
                                                                     }
                                                                     onChange={(
                                                                         e
                                                                     ) => {
-                                                                        setInquirySearch(
+                                                                        setQuotationSearch(
                                                                             e
                                                                                 .target
                                                                                 .value
@@ -699,59 +700,60 @@ const PurchaseOrdersEdit = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Inquiry List */}
+                                                        {/* Quotation List */}
                                                         <div className="max-h-52 overflow-y-auto">
-                                                            {filteredInquiries.length ===
+                                                            {filteredQuotations.length ===
                                                             0 ? (
                                                                 <div className="px-4 py-3 text-sm text-gray-500">
-                                                                    {inquiries.length >
+                                                                    {quotations.length >
                                                                     0
-                                                                        ? "No inquiries found matching your search"
-                                                                        : "No inquiries available in the system"}
+                                                                        ? "No quotations found matching your search"
+                                                                        : "No quotations available in the system"}
                                                                 </div>
                                                             ) : (
-                                                                filteredInquiries.map(
+                                                                filteredQuotations.map(
                                                                     (
-                                                                        inquiry
+                                                                        quotation
                                                                     ) => (
                                                                         <div
                                                                             key={
-                                                                                inquiry.id
+                                                                                quotation.id
                                                                             }
                                                                             className={`${
-                                                                                data.inquiry_id ===
-                                                                                inquiry.id.toString()
+                                                                                data.quotation_id ===
+                                                                                quotation.id.toString()
                                                                                     ? "bg-green-50 text-green-700"
                                                                                     : "text-gray-900 hover:bg-gray-100"
                                                                             } cursor-pointer select-none relative py-2 pl-3 pr-9`}
                                                                             onClick={() => {
                                                                                 setData(
-                                                                                    "inquiry_id",
-                                                                                    inquiry.id.toString()
+                                                                                    "quotation_id",
+                                                                                    quotation.id.toString()
                                                                                 );
-                                                                                setInquirySearch(
-                                                                                    inquiry.code ||
+                                                                                setQuotationSearch(
+                                                                                    quotation.code ||
                                                                                         "Unknown Code"
                                                                                 );
-                                                                                setInquiryDropdownOpen(
+                                                                                setQuotationDropdownOpen(
                                                                                     false
                                                                                 );
                                                                             }}
                                                                         >
                                                                             <span className="block truncate font-medium">
                                                                                 {
-                                                                                    inquiry.code
+                                                                                    quotation.code
                                                                                 }
                                                                             </span>
                                                                             <span className="block text-xs text-gray-500 mt-0.5 truncate">
                                                                                 Customer:{" "}
-                                                                                {inquiry
-                                                                                    .customer
+                                                                                {quotation
+                                                                                    .inquiry
+                                                                                    ?.customer
                                                                                     ?.name ||
                                                                                     "Unknown"}
                                                                             </span>
-                                                                            {data.inquiry_id ===
-                                                                                inquiry.id.toString() && (
+                                                                            {data.quotation_id ===
+                                                                                quotation.id.toString() && (
                                                                                 <span className="absolute inset-y-0 right-0 flex items-center pr-4">
                                                                                     <Check className="h-5 w-5 text-green-600" />
                                                                                 </span>
@@ -764,15 +766,15 @@ const PurchaseOrdersEdit = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            {errors.inquiry_id && (
+                                            {errors.quotation_id && (
                                                 <p className="text-red-500 text-xs mt-1 flex items-center">
                                                     <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.inquiry_id}
+                                                    {errors.quotation_id}
                                                 </p>
                                             )}
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Select the inquiry this purchase
-                                                order is related to
+                                                Select the quotation this
+                                                purchase order is related to
                                             </p>
                                         </div>
                                     </div>
@@ -975,58 +977,57 @@ const PurchaseOrdersEdit = () => {
                                         )}
                                     </div>
                                 </div>
-                                {/* Customer Information Section - if inquiry is selected */}
-                                {selectedInquiry && (
+                                {/* Customer Information Section - if quotation is selected */}
+                                {selectedQuotation && (
                                     <div className="py-8">
                                         <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                                             <Building2 className="w-5 h-5 mr-2 text-green-600" />
-                                            Customer Information
+                                            Quotation Details
                                         </h2>
 
                                         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-700">
+                                                        Quotation Code
+                                                    </p>
+                                                    <p className="text-sm text-gray-900">
+                                                        {selectedQuotation.code ||
+                                                            "N/A"}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-700">
                                                         Customer Name
                                                     </p>
                                                     <p className="text-sm text-gray-900">
-                                                        {selectedInquiry
-                                                            .customer?.name ||
-                                                            "N/A"}
+                                                        {selectedQuotation
+                                                            .inquiry?.customer
+                                                            ?.name || "N/A"}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-700">
-                                                        Customer Email
+                                                        Quotation Date
                                                     </p>
                                                     <p className="text-sm text-gray-900">
-                                                        {selectedInquiry
-                                                            .customer?.email ||
-                                                            "N/A"}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">
-                                                        Customer Phone
-                                                    </p>
-                                                    <p className="text-sm text-gray-900">
-                                                        {selectedInquiry
-                                                            .customer?.phone ||
-                                                            "N/A"}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">
-                                                        Inquiry Date
-                                                    </p>
-                                                    <p className="text-sm text-gray-900">
-                                                        {selectedInquiry.inquiry_date
+                                                        {selectedQuotation.due_date
                                                             ? format(
                                                                   new Date(
-                                                                      selectedInquiry.inquiry_date
+                                                                      selectedQuotation.due_date
                                                                   ),
                                                                   "MMM dd, yyyy"
                                                               )
+                                                            : "N/A"}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        Quotation Status
+                                                    </p>
+                                                    <p className="text-sm text-gray-900">
+                                                        {selectedQuotation.status
+                                                            ? selectedQuotation.status.toUpperCase()
                                                             : "N/A"}
                                                     </p>
                                                 </div>
@@ -1119,7 +1120,7 @@ const PurchaseOrdersEdit = () => {
                                     <p>
                                         Fields marked with an asterisk (*) are
                                         mandatory. The purchase order is linked
-                                        to the selected inquiry.
+                                        to the selected quotation.
                                     </p>
                                     <p className="mt-1">
                                         You can update all information including

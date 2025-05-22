@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from "react";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Button } from "@/Components/ui/button";
@@ -31,13 +31,14 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/Components/ui/alert";
-import type { Inquiry } from "@/types";
+import type { Inquiry, PageProps } from "@/types";
 
-interface CreateQuotationProps {
+interface CreateQuotationProps extends PageProps {
     inquiry: Inquiry;
 }
 
-const QuotationsCreate = ({ inquiry }: CreateQuotationProps) => {
+const QuotationsCreate = () => {
+    const { inquiry } = usePage<CreateQuotationProps>().props;
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -484,12 +485,8 @@ const QuotationsCreate = ({ inquiry }: CreateQuotationProps) => {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-border/60">
-                                                <span className="text-sm text-muted-foreground">
-                                                    Quantity
-                                                </span>
                                                 <span className="text-sm font-medium">
-                                                    {inquiry.business_unit}{" "}
-                                                    units
+                                                    {inquiry.business_unit.name}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between py-2">

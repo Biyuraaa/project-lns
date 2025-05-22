@@ -11,7 +11,7 @@ class StoreQuotationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,6 +23,11 @@ class StoreQuotationRequest extends FormRequest
     {
         return [
             //
+            'code' => 'required|string|max:50|unique:quotations,code',
+            'inquiry_id' => 'required|exists:inquiries,id',
+            'status' => 'required|in:n/a,val,lost,clsd',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+            'due_date' => 'nullable|date',
         ];
     }
 }

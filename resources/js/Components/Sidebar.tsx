@@ -87,12 +87,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             active: url.startsWith("/quotations"),
         },
         {
-            name: "Negotiations",
-            icon: <FileCheck size={20} />,
-            route: route("negotiations.index"),
-            active: url.startsWith("/negotiations"),
-        },
-        {
             name: "Purchase Orders",
             icon: <CreditCard size={20} />,
             route: route("purchaseOrders.index"),

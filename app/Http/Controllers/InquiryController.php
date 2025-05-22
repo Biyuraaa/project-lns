@@ -107,7 +107,8 @@ class InquiryController extends Controller
         $inquiry->load([
             'customer',
             'picEngineer',
-            'sales'
+            'sales',
+            'businessUnit',
         ]);
 
         return Inertia::render('Dashboard/Inquiries/Show', [
@@ -128,6 +129,7 @@ class InquiryController extends Controller
             'customers' => Customer::all(),
             'picEngineers' => User::role('pic-engineer')->get(),
             'sales' => User::role('sales')->get(),
+            'businessUnits' => BusinessUnit::all(),
         ]);
     }
 
@@ -162,7 +164,7 @@ class InquiryController extends Controller
                 'code' => $validatedData['code'],
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
-                'business_unit' => $validatedData['business_unit'],
+                'business_unit_id' => $validatedData['business_unit_id'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'end_user_name' => $validatedData['end_user_name'] ?? $inquiry->end_user_name,
                 'end_user_email' => $validatedData['end_user_email'] ?? $inquiry->end_user_email,
@@ -213,7 +215,8 @@ class InquiryController extends Controller
         $inquiry->load([
             'customer:id,name',
             'picEngineer:id,name',
-            'sales:id,name'
+            'sales:id,name',
+            'businessUnit:id,name',
         ]);
         return Inertia::render('Dashboard/Inquiries/Quotations/Create', [
             'inquiry' => $inquiry,

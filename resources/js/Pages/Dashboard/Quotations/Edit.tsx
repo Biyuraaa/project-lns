@@ -176,20 +176,6 @@ const QuotationEdit = () => {
                         <span>Lost</span>
                     </Badge>
                 );
-            case "wip":
-                return (
-                    <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>Work in Progress</span>
-                    </Badge>
-                );
-            case "ar":
-                return (
-                    <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
-                        <FileText className="h-3.5 w-3.5" />
-                        <span>Awaiting Review</span>
-                    </Badge>
-                );
             case "clsd":
                 return (
                     <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
@@ -720,15 +706,11 @@ const QuotationEdit = () => {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-border/60">
-                                                <span className="text-sm text-muted-foreground">
-                                                    Quantity
-                                                </span>
                                                 <span className="text-sm font-medium">
                                                     {
                                                         quotation.inquiry
-                                                            .business_unit
-                                                    }{" "}
-                                                    units
+                                                            .business_unit.name
+                                                    }
                                                 </span>
                                             </div>
                                             <div className="flex justify-between py-2">

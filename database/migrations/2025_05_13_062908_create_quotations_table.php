@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->foreignId('inquiry_id')->constrained('inquiries')->onDelete('cascade');
-            $table->enum('status', ['n/a', 'val', 'lost', 'wip', 'ar', 'clsd'])->default('n/a');
+            $table->enum('status', ['n/a', 'val', 'lost', 'clsd'])->default('n/a');
             $table->string('file')->nullable();
             $table->date('due_date')->nullable();
             $table->timestamps();

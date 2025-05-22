@@ -14,10 +14,10 @@ class Quotation extends Model
 
     protected $fillable = [
         'code',
-        'inquiry_id',
         'status',
-        'file',
         'due_date',
+        'inquiry_id',
+        'file',
     ];
 
     protected $casts = [
@@ -27,11 +27,6 @@ class Quotation extends Model
     public function inquiry()
     {
         return $this->belongsTo(Inquiry::class);
-    }
-
-    public function negotiations()
-    {
-        return $this->hasMany(Negotiation::class);
     }
 
     public function purchaseOrder()

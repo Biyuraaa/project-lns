@@ -449,7 +449,7 @@ const InquiriesCreate = () => {
                                         {/* Business Unit Field */}
                                         <div className="space-y-1">
                                             <Label
-                                                htmlFor="business_unit"
+                                                htmlFor="business_unit_id"
                                                 className="text-sm font-medium"
                                             >
                                                 Business Unit{" "}

@@ -1067,52 +1067,6 @@ const PurchaseOrdersShow = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-
-                                                {/* Quotation negotiations */}
-                                                {purchaseOrder.quotation
-                                                    .negotiations &&
-                                                    purchaseOrder.quotation
-                                                        .negotiations.length >
-                                                        0 && (
-                                                        <>
-                                                            <h4 className="text-sm font-medium text-muted-foreground mb-2 mt-4">
-                                                                Negotiations
-                                                            </h4>
-                                                            <div className="bg-muted/30 p-3 rounded border border-border/40">
-                                                                <p className="text-sm font-medium mb-2">
-                                                                    This
-                                                                    quotation
-                                                                    has{" "}
-                                                                    {
-                                                                        purchaseOrder
-                                                                            .quotation
-                                                                            .negotiations
-                                                                            .length
-                                                                    }{" "}
-                                                                    negotiation
-                                                                    records
-                                                                </p>
-                                                                <Link
-                                                                    href={route(
-                                                                        "quotations.show",
-                                                                        purchaseOrder
-                                                                            .quotation
-                                                                            .id
-                                                                    )}
-                                                                >
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        className="mt-1"
-                                                                    >
-                                                                        View
-                                                                        Negotiation
-                                                                        History
-                                                                    </Button>
-                                                                </Link>
-                                                            </div>
-                                                        </>
-                                                    )}
                                             </div>
                                         </div>
                                     ) : (

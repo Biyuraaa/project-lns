@@ -25,6 +25,7 @@ import {
     XCircle,
     Building2,
     Mail,
+    Plus,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -255,6 +256,14 @@ const QuotationsIndex = () => {
                                         <span>Last updated: Today</span>
                                     </Badge>
                                 </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                                <Link href={route("quotations.create")}>
+                                    <Button className="shadow-lg shadow-amber-900/30 bg-white text-amber-700 hover:bg-amber-50 gap-1.5 font-medium transition-all duration-200">
+                                        <Plus className="h-4 w-4" />
+                                        <span>Create New Quotation</span>
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     </div>

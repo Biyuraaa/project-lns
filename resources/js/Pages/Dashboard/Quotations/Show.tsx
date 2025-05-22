@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { PageProps, Quotation, Negotiation } from "@/types";
+import { PageProps, Quotation } from "@/types";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import {
@@ -13,24 +13,16 @@ import {
     FileSpreadsheet,
     FileText,
     FileWarning,
-    Info,
     Layers,
     Mail,
     MapPin,
     Phone,
-    User,
     XCircle,
-    Users,
-    CalendarDays,
-    ArrowLeft,
-    Pencil,
     Trash,
     AlertTriangle,
     ChevronRight,
     Clock3,
     CreditCard,
-    Banknote,
-    FileIcon,
     HardHat,
     UserCircle,
     Plus,
@@ -72,7 +64,6 @@ import { cn } from "@/lib/utils";
 
 interface ShowQuotationProps extends PageProps {
     quotation: Quotation;
-    negotiations: Negotiation[];
 }
 
 const QuotationShow = () => {
@@ -145,12 +136,14 @@ const QuotationShow = () => {
     // Get status icon
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
-            case "pending":
-                return <Clock3 className="h-3.5 w-3.5 mr-1.5" />;
-            case "approved":
+            case "n/a":
+                return <Clock className="h-3.5 w-3.5 mr-1.5" />;
+            case "val":
                 return <CheckCircle className="h-3.5 w-3.5 mr-1.5" />;
-            case "rejected":
+            case "lost":
                 return <XCircle className="h-3.5 w-3.5 mr-1.5" />;
+            case "clsd":
+                return <CheckCircle className="h-3.5 w-3.5 mr-1.5" />;
             default:
                 return <Clock className="h-3.5 w-3.5 mr-1.5" />;
         }
@@ -183,23 +176,6 @@ const QuotationShow = () => {
                                 { label: quotation.code },
                             ]}
                         />
-
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href={route(
-                                    "quotations.negotiations.create",
-                                    quotation.id
-                                )}
-                            >
-                                <Button
-                                    size="sm"
-                                    className="h-9 bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create Negotiation
-                                </Button>
-                            </Link>
-                        </div>
                     </div>
 
                     {/* Header with status and key info */}
@@ -259,17 +235,6 @@ const QuotationShow = () => {
                                             <span>
                                                 Due:{" "}
                                                 {formatDate(quotation.due_date)}
-                                            </span>
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
-                                        >
-                                            <Layers className="h-3.5 w-3.5 mr-1.5" />
-                                            <span>
-                                                {quotation.negotiations
-                                                    ?.length || 0}{" "}
-                                                Negotiations
                                             </span>
                                         </Badge>
                                     </div>
@@ -332,18 +297,6 @@ const QuotationShow = () => {
                                 Details
                             </TabsTrigger>
                             <TabsTrigger
-                                value="negotiations"
-                                className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
-                            >
-                                <Layers className="h-4 w-4" />
-                                Negotiations
-                                {quotation.negotiations?.length > 0 && (
-                                    <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-800">
-                                        {quotation.negotiations.length}
-                                    </span>
-                                )}
-                            </TabsTrigger>
-                            <TabsTrigger
                                 value="team"
                                 className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
                             >
@@ -379,26 +332,40 @@ const QuotationShow = () => {
                                                             quotation
                                                         </CardDescription>
                                                     </div>
+
                                                     <Badge
                                                         className={cn(
                                                             quotation.status ===
-                                                                "pending"
+                                                                "n/a"
                                                                 ? "bg-amber-100 text-amber-800 border-amber-200"
                                                                 : quotation.status ===
-                                                                  "approved"
+                                                                  "val"
                                                                 ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                                                                : "bg-red-100 text-red-800 border-red-200"
+                                                                : quotation.status ===
+                                                                  "lost"
+                                                                ? "bg-red-100 text-red-800 border-red-200"
+                                                                : quotation.status ===
+                                                                  "clsd"
+                                                                ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                                : "bg-gray-100 text-gray-800 border-gray-200"
                                                         )}
                                                     >
                                                         {getStatusIcon(
                                                             quotation.status
                                                         )}
-                                                        {quotation.status
-                                                            .charAt(0)
-                                                            .toUpperCase() +
-                                                            quotation.status.slice(
-                                                                1
-                                                            )}
+                                                        {quotation.status ===
+                                                        "n/a"
+                                                            ? "Not Applicable"
+                                                            : quotation.status ===
+                                                              "val"
+                                                            ? "Validated"
+                                                            : quotation.status ===
+                                                              "lost"
+                                                            ? "Lost"
+                                                            : quotation.status ===
+                                                              "clsd"
+                                                            ? "Closed"
+                                                            : quotation.status}
                                                     </Badge>
                                                 </div>
                                             </CardHeader>
@@ -577,10 +544,7 @@ const QuotationShow = () => {
                                                                     will
                                                                     permanently
                                                                     delete the
-                                                                    quotation
-                                                                    and any
-                                                                    associated
-                                                                    negotiations.
+                                                                    quotation.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
@@ -718,7 +682,7 @@ const QuotationShow = () => {
                                                     {/* Quantity */}
                                                     <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
                                                         <h3 className="text-sm font-medium text-muted-foreground">
-                                                            Quantity
+                                                            Business Unit
                                                         </h3>
                                                         <p className="mt-1 flex items-center text-base">
                                                             <Layers className="h-4 w-4 text-amber-500 mr-2" />
@@ -726,6 +690,7 @@ const QuotationShow = () => {
                                                                 quotation
                                                                     .inquiry
                                                                     .business_unit
+                                                                    .name
                                                             }{" "}
                                                             units
                                                         </p>
@@ -928,18 +893,40 @@ const QuotationShow = () => {
                                                         <span className="text-sm text-muted-foreground">
                                                             Status
                                                         </span>
+
                                                         <Badge
                                                             className={cn(
                                                                 quotation.status ===
-                                                                    "pending"
-                                                                    ? "bg-amber-100 text-amber-800"
+                                                                    "n/a"
+                                                                    ? "bg-amber-100 text-amber-800 border-amber-200"
                                                                     : quotation.status ===
-                                                                      "approved"
-                                                                    ? "bg-emerald-100 text-emerald-800"
-                                                                    : "bg-red-100 text-red-800"
+                                                                      "val"
+                                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                                                    : quotation.status ===
+                                                                      "lost"
+                                                                    ? "bg-red-100 text-red-800 border-red-200"
+                                                                    : quotation.status ===
+                                                                      "clsd"
+                                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                                    : "bg-gray-100 text-gray-800 border-gray-200"
                                                             )}
                                                         >
-                                                            {quotation.status}
+                                                            {getStatusIcon(
+                                                                quotation.status
+                                                            )}
+                                                            {quotation.status ===
+                                                            "n/a"
+                                                                ? "Not Applicable"
+                                                                : quotation.status ===
+                                                                  "val"
+                                                                ? "Validated"
+                                                                : quotation.status ===
+                                                                  "lost"
+                                                                ? "Lost"
+                                                                : quotation.status ===
+                                                                  "clsd"
+                                                                ? "Closed"
+                                                                : quotation.status}
                                                         </Badge>
                                                     </div>
                                                     <div className="flex items-center justify-between py-2 border-b border-border/60">
@@ -962,19 +949,6 @@ const QuotationShow = () => {
                                                                     ""
                                                             )}
                                                         </span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between py-2">
-                                                        <span className="text-sm text-muted-foreground">
-                                                            Negotiations
-                                                        </span>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="bg-blue-100 text-blue-800 border-blue-200"
-                                                        >
-                                                            {quotation
-                                                                .negotiations
-                                                                ?.length || 0}
-                                                        </Badge>
                                                     </div>
                                                 </div>
 
@@ -999,178 +973,6 @@ const QuotationShow = () => {
                                     </motion.div>
                                 </div>
                             </div>
-                        </TabsContent>
-
-                        {/* Negotiations Tab */}
-                        <TabsContent value="negotiations" className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <CardTitle className="text-xl font-bold flex items-center gap-2">
-                                                <Layers className="h-5 w-5 text-blue-500" />
-                                                Negotiations
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Negotiations related to this
-                                                quotation
-                                            </CardDescription>
-                                        </div>
-                                        <Link
-                                            href={route(
-                                                "quotations.negotiations.create",
-                                                quotation.id
-                                            )}
-                                        >
-                                            <Button
-                                                size="sm"
-                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                            >
-                                                <Plus className="h-4 w-4 mr-1" />
-                                                Add Negotiation
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {quotation.negotiations &&
-                                    quotation.negotiations.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {quotation.negotiations.map(
-                                                (negotiation) => (
-                                                    <motion.div
-                                                        key={negotiation.id}
-                                                        initial={{
-                                                            opacity: 0,
-                                                            y: 10,
-                                                        }}
-                                                        animate={{
-                                                            opacity: 1,
-                                                            y: 0,
-                                                        }}
-                                                        transition={{
-                                                            duration: 0.2,
-                                                        }}
-                                                        className="group"
-                                                    >
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                                                            <div className="flex items-center mb-3 sm:mb-0">
-                                                                <div className="w-10 h-10 rounded-md flex items-center justify-center bg-blue-100 text-blue-700 mr-3">
-                                                                    <Layers className="h-5 w-5" />
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium flex items-center">
-                                                                        Negotiation
-                                                                        #
-                                                                        {
-                                                                            negotiation.code
-                                                                        }
-                                                                        <Badge
-                                                                            className={cn(
-                                                                                "ml-2",
-                                                                                negotiation.status ===
-                                                                                    "pending"
-                                                                                    ? "bg-amber-100 text-amber-800 border-amber-200"
-                                                                                    : negotiation.status ===
-                                                                                      "approved"
-                                                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                                                                                    : "bg-red-100 text-red-800 border-red-200"
-                                                                            )}
-                                                                        >
-                                                                            {
-                                                                                negotiation.status
-                                                                            }
-                                                                        </Badge>
-                                                                    </h4>
-                                                                    <div className="flex items-center mt-1">
-                                                                        <span className="text-xs text-muted-foreground flex items-center">
-                                                                            <Calendar className="h-3 w-3 mr-1" />
-                                                                            Created:{" "}
-                                                                            {formatDate(
-                                                                                negotiation.created_at ||
-                                                                                    ""
-                                                                            )}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex space-x-2">
-                                                                {negotiation.file && (
-                                                                    <TooltipProvider>
-                                                                        <Tooltip>
-                                                                            <TooltipTrigger
-                                                                                asChild
-                                                                            >
-                                                                                <a
-                                                                                    href={`/storage/files/negotiations/${negotiation.file}`}
-                                                                                    download
-                                                                                    className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                                >
-                                                                                    <Download className="h-4 w-4" />
-                                                                                </a>
-                                                                            </TooltipTrigger>
-                                                                            <TooltipContent>
-                                                                                <p>
-                                                                                    Download
-                                                                                    Negotiation
-                                                                                </p>
-                                                                            </TooltipContent>
-                                                                        </Tooltip>
-                                                                    </TooltipProvider>
-                                                                )}
-
-                                                                <Link
-                                                                    href={route(
-                                                                        "negotiations.show",
-                                                                        negotiation.id
-                                                                    )}
-                                                                >
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        className="h-9"
-                                                                    >
-                                                                        View
-                                                                        Details
-                                                                        <ChevronRight className="h-4 w-4 ml-1" />
-                                                                    </Button>
-                                                                </Link>
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
-                                                )
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-10 px-4">
-                                            <div className="bg-muted/30 inline-flex rounded-full p-3 mb-4">
-                                                <Layers className="h-6 w-6 text-muted-foreground" />
-                                            </div>
-                                            <h3 className="text-lg font-medium mb-2">
-                                                No negotiations yet
-                                            </h3>
-                                            <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
-                                                Create a negotiation to discuss
-                                                pricing and terms with the
-                                                customer.
-                                            </p>
-                                            {quotation.status === "pending" && (
-                                                <Link
-                                                    href={route(
-                                                        "quotations.negotiations.create",
-                                                        quotation.id
-                                                    )}
-                                                >
-                                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                                        <Plus className="h-4 w-4 mr-2" />
-                                                        Create Negotiation
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
                         </TabsContent>
 
                         {/* Team Tab */}
