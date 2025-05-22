@@ -92,7 +92,6 @@ class DashboardController extends Controller
         // Prepare data for client-side filtering
         $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
         $topCustomersData = $this->prepareTopCustomersData($businessUnits);
-
         // Total PO summary (overall)
         $totalPOCount = PurchaseOrder::count();
         $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
@@ -167,7 +166,7 @@ class DashboardController extends Controller
 
         // First, add data for "all" business units
         foreach ($months as $month) {
-            $inquiryCount = Inquiry::where('status', '!=', 'closed')->whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $inquiryCount = Inquiry::where('status', '!=', 'closed ')->whereBetween('created_at', [$month['start'], $month['end']])->count();
 
             $quotationCount = Quotation::where('status', 'val')->whereBetween('created_at', [$month['start'], $month['end']])->count();
 

@@ -76,15 +76,13 @@ export interface BusinessUnit {
 export interface Quotation {
     id: number;
     code: string;
-    inquiry: Inquiry;    
+    inquiry: Inquiry;
     status: string;
     file: string;
     due_date: string;
     created_at?: string;
     updated_at?: string;
 }
-export
-
 export interface PurchaseOrder {
     id: number;
     code: string;
@@ -97,6 +95,22 @@ export interface PurchaseOrder {
     file: string;
     created_at?: string;
     updated_at?: string;
+}
+
+interface CompanyGrowthData {
+    month: string;
+    inquiry: number;
+    quotation: number;
+    po: number;
+    target: number;
+    business_unit_id: string;
+}
+
+interface TopCustomerData {
+    name: string;
+    value: number;
+    poCount: number;
+    business_unit_id: string;
 }
 
 export type PageProps<

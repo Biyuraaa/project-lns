@@ -2,7 +2,12 @@
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
-import type { PageProps } from "@/types";
+import type {
+    BusinessUnit,
+    CompanyGrowthData,
+    PageProps,
+    TopCustomerData,
+} from "@/types";
 import {
     FileText,
     FileCheck,
@@ -16,7 +21,6 @@ import {
 } from "lucide-react";
 import StatsCard from "@/Components/StatsCard";
 import { motion } from "framer-motion";
-import { CompanyGrowthChart } from "@/Components/ComponyGrowthChart";
 import DashboardCharts from "@/Components/DashboardChart";
 
 interface Statistics {
@@ -43,27 +47,12 @@ interface Statistics {
 }
 
 interface ChartData {
-    companyGrowthData: Array<{
-        month: string;
-        inquiry: number;
-        quotation: number;
-        po: number;
-        target: number;
-        business_unit_id: string;
-    }>;
-    topCustomersData: Array<{
-        name: string;
-        value: number;
-        poCount: number;
-        business_unit_id: string;
-    }>;
-    businessUnits: Array<{
-        id: string | number;
-        name: string;
-    }>;
+    companyGrowthData: CompanyGrowthData[];
+    topCustomersData: TopCustomerData[];
+    businessUnits: BusinessUnit[];
     totalPOCount: number;
     totalPOValue: number;
-    selectedBusinessUnit?: string | number;
+    selectedBusinessUnit?: string;
 }
 
 interface DashboardProps extends PageProps {
@@ -97,19 +86,6 @@ const DashboardIndex = () => {
             transition: {
                 staggerChildren: 0.1,
                 delayChildren: 0.2,
-            },
-        },
-    };
-
-    const cardVariants = {
-        hidden: { opacity: 0, y: 20, scale: 0.95 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            transition: {
-                duration: 0.4,
-                ease: "easeOut",
             },
         },
     };
@@ -227,7 +203,6 @@ const DashboardIndex = () => {
                                 trend={statistics.purchaseOrders.growth}
                                 description={statistics.purchaseOrders.insight}
                                 isPositiveBetter={true}
-                                highlighted={true}
                             />
 
                             <StatsCard

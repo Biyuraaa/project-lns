@@ -27,20 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 import { useMemo } from "react";
-
-interface CompanyGrowthData {
-    month: string;
-    inquiry: number;
-    quotation: number;
-    po: number;
-    target: number;
-    business_unit_id: string | number;
-}
-
-interface BusinessUnit {
-    id: number | string;
-    name: string;
-}
+import { BusinessUnit, CompanyGrowthData } from "@/types";
 
 interface CompanyGrowthChartProps {
     data: CompanyGrowthData[];

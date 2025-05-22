@@ -2,32 +2,13 @@
 
 import { useState } from "react";
 import { CompanyGrowthChart } from "./ComponyGrowthChart";
-
-interface CompanyGrowthData {
-    month: string;
-    inquiry: number;
-    quotation: number;
-    po: number;
-    target: number;
-    business_unit_id: string;
-}
-
-interface BusinessUnit {
-    id: number | string;
-    name: string;
-}
-
-interface CustomerData {
-    name: string;
-    value: number;
-    poCount: number;
-    business_unit_id: string;
-}
+import { TopCustomerChart } from "./TopCustomerChart";
+import { BusinessUnit, CompanyGrowthData, TopCustomerData } from "@/types";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
     businessUnits: BusinessUnit[];
-    topCustomersData: CustomerData[];
+    topCustomersData: TopCustomerData[];
     totalPOCount: number;
     totalPOValue: number;
 }
@@ -39,12 +20,21 @@ const DashboardCharts = ({
     totalPOCount,
     totalPOValue,
 }: DashboardChartsProps) => {
-    // Use client-side state for filtering
-    const [selectedBusinessUnit, setSelectedBusinessUnit] =
+    // Use separate state for each chart's filter
+    const [growthChartBusinessUnit, setGrowthChartBusinessUnit] =
+        useState<string>("all");
+    const [customerChartBusinessUnit, setTopCustomerChartBusinessUnit] =
         useState<string>("all");
 
-    const handleBusinessUnitChange = (businessUnitId: string) => {
-        setSelectedBusinessUnit(businessUnitId);
+    // Separate handler functions for each chart
+    const handleGrowthChartBusinessUnitChange = (businessUnitId: string) => {
+        setGrowthChartBusinessUnit(businessUnitId);
+    };
+
+    const handleTopCustomerChartBusinessUnitChange = (
+        businessUnitId: string
+    ) => {
+        setTopCustomerChartBusinessUnit(businessUnitId);
     };
 
     return (
@@ -53,8 +43,18 @@ const DashboardCharts = ({
                 <CompanyGrowthChart
                     data={companyGrowthData}
                     businessUnits={businessUnits}
-                    selectedBusinessUnit={selectedBusinessUnit}
-                    onBusinessUnitChange={handleBusinessUnitChange}
+                    selectedBusinessUnit={growthChartBusinessUnit}
+                    onBusinessUnitChange={handleGrowthChartBusinessUnitChange}
+                />
+                <TopCustomerChart
+                    data={topCustomersData}
+                    businessUnits={businessUnits}
+                    selectedBusinessUnit={customerChartBusinessUnit}
+                    onBusinessUnitChange={
+                        handleTopCustomerChartBusinessUnitChange
+                    }
+                    totalPOValue={totalPOValue}
+                    totalPOCount={totalPOCount}
                 />
             </div>
         </div>
