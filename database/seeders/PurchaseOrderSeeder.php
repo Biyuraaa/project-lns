@@ -51,20 +51,12 @@ class PurchaseOrderSeeder extends Seeder
             // Determine status based on age of PO
             $daysSincePoDate = Carbon::now()->diffInDays($poDate);
 
-            if ($daysSincePoDate < 14) {
-                $status = 'wip'; // New POs are usually Work In Progress
-            } else if ($daysSincePoDate < 45) {
-                $status = fake()->randomElement(['wip', 'ar']); // Older ones are either WIP or Awaiting Review
-            } else {
-                $status = fake()->randomElement(['ar', 'ibt']); // The oldest are usually AR or IBT
-            }
 
             // Create the purchase order
-            PurchaseOrder::create([
+            PurchaseOrder::factory()->create([
                 'code' => 'PO-' . substr($quotation->code, 4) . '-' . Carbon::parse($poDate)->format('Ymd'),
                 'quotation_id' => $quotation->id,
                 'amount' => fake()->numberBetween(10000000, 500000000), // 10M to 500M
-                'status' => $status,
                 'contract_number' => 'CTR-' . fake()->numerify('######'),
                 'job_number' => 'JOB-' . fake()->numerify('######'),
                 'date' => $poDate,

@@ -10,16 +10,14 @@ import {
     Clock,
     User,
     Calendar,
-    Plus,
     BarChart2,
     TrendingUp,
     TrendingDown,
-    Activity,
-    Sparkles,
 } from "lucide-react";
 import StatsCard from "@/Components/StatsCard";
-import { Button } from "@/Components/ui/button";
 import { motion } from "framer-motion";
+import { CompanyGrowthChart } from "@/Components/ComponyGrowthChart";
+import DashboardCharts from "@/Components/DashboardChart";
 
 interface Statistics {
     inquiries: {
@@ -44,12 +42,37 @@ interface Statistics {
     };
 }
 
+interface ChartData {
+    companyGrowthData: Array<{
+        month: string;
+        inquiry: number;
+        quotation: number;
+        po: number;
+        target: number;
+        business_unit_id: string;
+    }>;
+    topCustomersData: Array<{
+        name: string;
+        value: number;
+        poCount: number;
+        business_unit_id: string;
+    }>;
+    businessUnits: Array<{
+        id: string | number;
+        name: string;
+    }>;
+    totalPOCount: number;
+    totalPOValue: number;
+    selectedBusinessUnit?: string | number;
+}
+
 interface DashboardProps extends PageProps {
     statistics: Statistics;
+    chartData: ChartData;
 }
 
 const DashboardIndex = () => {
-    const { statistics, auth } = usePage<DashboardProps>().props;
+    const { statistics, chartData, auth } = usePage<DashboardProps>().props;
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString("id-ID", {
         weekday: "long",
@@ -131,7 +154,7 @@ const DashboardIndex = () => {
                     </div>
 
                     {/* Stats Section */}
-                    <div>
+                    <div className="mb-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -204,6 +227,7 @@ const DashboardIndex = () => {
                                 trend={statistics.purchaseOrders.growth}
                                 description={statistics.purchaseOrders.insight}
                                 isPositiveBetter={true}
+                                highlighted={true}
                             />
 
                             <StatsCard
@@ -220,6 +244,22 @@ const DashboardIndex = () => {
                             />
                         </motion.div>
                     </div>
+
+                    {/* Charts Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                        className="mt-12"
+                    >
+                        <DashboardCharts
+                            companyGrowthData={chartData.companyGrowthData}
+                            businessUnits={chartData.businessUnits}
+                            topCustomersData={chartData.topCustomersData}
+                            totalPOCount={chartData.totalPOCount}
+                            totalPOValue={chartData.totalPOValue}
+                        />
+                    </motion.div>
                 </div>
             </div>
         </AuthenticatedLayout>

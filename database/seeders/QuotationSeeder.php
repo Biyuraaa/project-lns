@@ -76,10 +76,11 @@ class QuotationSeeder extends Seeder
                     }
 
                     // Create the quotation
-                    Quotation::create([
-                        'code' => 'QUO-' . $inquiry->id . '-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
+                    Quotation::factory()->create([
+                        'code' => 'QUO-' . $this->faker->unique()->numerify('######'),
                         'inquiry_id' => $inquiry->id,
                         'status' => $status,
+                        'file' => null, // No files as requested
                         'due_date' => $dueDate,
                     ]);
                 }

@@ -82,20 +82,6 @@ class InquirySeeder extends Seeder
                 if ($inquiryDate > $now) {
                     $inquiryDate = $now;
                 }
-
-                // Generate a status based on the date (older ones more likely to be closed)
-                $daysDiff = $now->diffInDays($inquiryDate);
-                $statusProbability = min(100, $daysDiff);
-
-                if ($statusProbability > 60) {
-                    $status = 'pending';
-                } elseif ($statusProbability > 40) {
-                    $status = 'process';
-                } elseif ($statusProbability > 20) {
-                    $status = 'resolved';
-                } else {
-                    $status = 'closed';
-                }
                 // Create the inquiry
                 Inquiry::factory()->create([
                     'code' => 'INQ-' . $customer->id . '-' . $current->format('Ym') . '-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
@@ -109,7 +95,6 @@ class InquirySeeder extends Seeder
                     'end_user_address' => fake()->address(),
                     'pic_engineer_id' => $engineerUsers->isNotEmpty() ? $engineerUsers->random()->id : null,
                     'sales_id' => $salesUsers->isNotEmpty() ? $salesUsers->random()->id : null,
-                    'status' => $status,
                 ]);
             }
 

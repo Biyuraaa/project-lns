@@ -30,6 +30,7 @@ class PurchaseOrderFactory extends Factory
             'contract_number' => 'CTR-' . $this->faker->numerify('######'),
             'job_number' => 'JOB-' . $this->faker->numerify('######'),
             'date' => $this->faker->dateTimeBetween('-6 months', 'now'),
+            'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
     }
 
