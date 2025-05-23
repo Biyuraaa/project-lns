@@ -197,15 +197,6 @@ const Login = () => {
                                                 Remember me
                                             </label>
                                         </div>
-
-                                        <div>
-                                            <Link
-                                                href={route("password.request")}
-                                                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                                            >
-                                                Forgot password?
-                                            </Link>
-                                        </div>
                                     </div>
 
                                     {/* Submit Button */}
