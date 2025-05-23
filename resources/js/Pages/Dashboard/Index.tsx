@@ -7,6 +7,7 @@ import type {
     CompanyGrowthData,
     CompanyGrowthSelling,
     PageProps,
+    PurchaseOrderDetail,
     TopCustomerData,
 } from "@/types";
 import {
@@ -52,6 +53,7 @@ interface ChartData {
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
     companyGrowthSellingData: CompanyGrowthSelling[];
+    poDetailData: PurchaseOrderDetail[];
     totalPOCount: number;
     totalPOValue: number;
     selectedBusinessUnit?: string;
@@ -238,6 +240,7 @@ const DashboardIndex = () => {
                             topCustomersData={chartData.topCustomersData}
                             totalPOCount={chartData.totalPOCount}
                             totalPOValue={chartData.totalPOValue}
+                            purchaseOrderDetails={chartData.poDetailData}
                         />
                     </motion.div>
                 </div>

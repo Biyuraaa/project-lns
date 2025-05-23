@@ -123,6 +123,16 @@ interface CompanyGrowthSelling {
     percentage: number;
 }
 
+export interface PurchaseOrderDetail {
+    id: number;
+    amount: number;
+    status: string;
+    business_unit_id: number | string;
+    created_at: string;
+    month: number;
+    year: number;
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>
 > = T & {

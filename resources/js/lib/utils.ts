@@ -69,3 +69,21 @@ export const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
 export const getFileExtension = (filename: string): string => {
     return filename.split(".").pop()?.toLowerCase() || "";
 };
+
+export function formatValue(value: number) {
+    return value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}
+
+export function getValueUnit(value: number) {
+    if (value >= 1000000000) {
+        return "Billion";
+    } else if (value >= 1000000) {
+        return "Million";
+    } else if (value >= 1000) {
+        return "Thousand";
+    }
+    return "";
+}

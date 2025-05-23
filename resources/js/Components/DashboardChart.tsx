@@ -10,12 +10,23 @@ import {
     TopCustomerData,
 } from "@/types";
 import { CompanyGrowthSellingChart } from "./CompanyGrowthSellingChart";
+import { PurchaseOrderStatusChart } from "./PurchaseOrderStatusChart";
+import { TotalValueCard } from "./TotalValueCard";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
     companyGrowthSellingData: CompanyGrowthSelling[];
+    purchaseOrderDetails: {
+        id: number;
+        amount: number;
+        status: string;
+        business_unit_id: number | string;
+        created_at: string;
+        month: number;
+        year: number;
+    }[];
     totalPOCount: number;
     totalPOValue: number;
 }
@@ -27,6 +38,7 @@ const DashboardCharts = ({
     topCustomersData,
     totalPOCount,
     totalPOValue,
+    purchaseOrderDetails,
 }: DashboardChartsProps) => {
     // Use separate state for each chart's filter
     const [growthChartBusinessUnit, setGrowthChartBusinessUnit] =
@@ -70,7 +82,14 @@ const DashboardCharts = ({
                 <CompanyGrowthSellingChart data={companyGrowthSellingData} />
             </div>
 
-            
+            <TotalValueCard
+                purchaseOrders={purchaseOrderDetails}
+                businessUnits={businessUnits}
+            />
+            <PurchaseOrderStatusChart
+                purchaseOrders={purchaseOrderDetails}
+                businessUnits={businessUnits}
+            />
         </div>
     );
 };
