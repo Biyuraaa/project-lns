@@ -113,6 +113,16 @@ interface TopCustomerData {
     business_unit_id: string;
 }
 
+interface CompanyGrowthSelling {
+    id: number;
+    month: number;
+    year: number;
+    target: number;
+    actual: number;
+    difference: number;
+    percentage: number;
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>
 > = T & {

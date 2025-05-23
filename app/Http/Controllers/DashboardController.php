@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessUnit;
+use App\Models\CompanyGrowthSelling;
 use App\Models\Inquiry;
 use App\Models\Quotation;
 use App\Models\PurchaseOrder;
@@ -92,7 +93,8 @@ class DashboardController extends Controller
         // Prepare data for client-side filtering
         $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
         $topCustomersData = $this->prepareTopCustomersData($businessUnits);
-        // Total PO summary (overall)
+        $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
+
         $totalPOCount = PurchaseOrder::count();
         $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
 
@@ -122,6 +124,7 @@ class DashboardController extends Controller
             'chartData' => [
                 'companyGrowthData' => $companyGrowthData,
                 'topCustomersData' => $topCustomersData,
+                'companyGrowthSellingData' => $companyGrowthSellingData,
                 'businessUnits' => $businessUnits,
                 'totalPOCount' => $totalPOCount,
                 'totalPOValue' => $totalPOValue,
@@ -382,5 +385,38 @@ class DashboardController extends Controller
         }
 
         return $baseTarget;
+    }
+
+
+    private function prepareCompanyGrowthSellingData()
+    {
+        $growthSellingData = CompanyGrowthSelling::orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(function ($item) {
+                // Format data consistently
+                $monthNames = [
+                    1 => 'Jan',
+                    2 => 'Feb',
+                    3 => 'Mar',
+                    4 => 'Apr',
+                    5 => 'May',
+                    6 => 'Jun',
+                    7 => 'Jul',
+                    8 => 'Aug',
+                    9 => 'Sep',
+                    10 => 'Oct',
+                    11 => 'Nov',
+                    12 => 'Dec'
+                ];
+
+                // Add month_name field for easier display
+                $item['month_name'] = $monthNames[$item->month] ?? '';
+
+                return $item;
+            })
+            ->toArray();
+
+        return $growthSellingData;
     }
 }

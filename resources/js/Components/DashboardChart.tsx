@@ -3,18 +3,26 @@
 import { useState } from "react";
 import { CompanyGrowthChart } from "./ComponyGrowthChart";
 import { TopCustomerChart } from "./TopCustomerChart";
-import { BusinessUnit, CompanyGrowthData, TopCustomerData } from "@/types";
+import {
+    BusinessUnit,
+    CompanyGrowthData,
+    CompanyGrowthSelling,
+    TopCustomerData,
+} from "@/types";
+import { CompanyGrowthSellingChart } from "./CompanyGrowthSellingChart";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
+    companyGrowthSellingData: CompanyGrowthSelling[];
     totalPOCount: number;
     totalPOValue: number;
 }
 
 const DashboardCharts = ({
     companyGrowthData,
+    companyGrowthSellingData,
     businessUnits,
     topCustomersData,
     totalPOCount,
@@ -57,6 +65,12 @@ const DashboardCharts = ({
                     totalPOCount={totalPOCount}
                 />
             </div>
+
+            <div>
+                <CompanyGrowthSellingChart data={companyGrowthSellingData} />
+            </div>
+
+            
         </div>
     );
 };

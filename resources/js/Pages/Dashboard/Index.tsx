@@ -5,6 +5,7 @@ import { Head, usePage } from "@inertiajs/react";
 import type {
     BusinessUnit,
     CompanyGrowthData,
+    CompanyGrowthSelling,
     PageProps,
     TopCustomerData,
 } from "@/types";
@@ -50,6 +51,7 @@ interface ChartData {
     companyGrowthData: CompanyGrowthData[];
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
+    companyGrowthSellingData: CompanyGrowthSelling[];
     totalPOCount: number;
     totalPOValue: number;
     selectedBusinessUnit?: string;
@@ -229,6 +231,9 @@ const DashboardIndex = () => {
                     >
                         <DashboardCharts
                             companyGrowthData={chartData.companyGrowthData}
+                            companyGrowthSellingData={
+                                chartData.companyGrowthSellingData
+                            }
                             businessUnits={chartData.businessUnits}
                             topCustomersData={chartData.topCustomersData}
                             totalPOCount={chartData.totalPOCount}

@@ -18,6 +18,7 @@ import {
     Calendar,
     HelpCircle,
     FileText,
+    LineChart,
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,6 +92,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             icon: <CreditCard size={20} />,
             route: route("purchaseOrders.index"),
             active: url.startsWith("/purchaseOrders"),
+        },
+        {
+            name: "Target Sales",
+            icon: <LineChart size={20} />,
+            route: route("targetSales.index"),
+            active: url.startsWith("/targetSales"),
         },
     ];
 

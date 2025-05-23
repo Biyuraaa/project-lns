@@ -8,6 +8,7 @@ use App\Http\Controllers\SalesController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\CompanyGrowthSellingController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -45,6 +46,7 @@ Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () 
     Route::resource('inquiries', InquiryController::class);
     Route::resource('quotations', QuotationController::class);
     Route::resource('purchaseOrders', PurchaseOrderController::class);
+    Route::resource('targetSales', CompanyGrowthSellingController::class)->except('show');
 });
 
 Route::middleware('auth')->group(function () {
