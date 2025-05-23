@@ -111,6 +111,7 @@ class QuotationController extends Controller
             'inquiry.customer',
             'inquiry.picEngineer',
             'inquiry.sales',
+            'inquiry.businessUnit',
         ]);
 
         return Inertia::render('Dashboard/Quotations/Edit', [
