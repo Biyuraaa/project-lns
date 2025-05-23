@@ -70,7 +70,7 @@ class QuotationController extends Controller
 
             Quotation::create([
                 'code' => $validatedData['code'],
-                'status' => 'val',
+                'status' => 'n/a',
                 'due_date' => $validatedData['due_date'],
                 'inquiry_id' => $validatedData['inquiry_id'],
                 'file' => $validatedData['file'] ?? null,
