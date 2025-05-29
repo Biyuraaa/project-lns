@@ -60,7 +60,7 @@ class InquiryController extends Controller
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
-                $filename = Str::slug($validatedData['code']) . '-' . time() . '.' . $extension;
+                $filename = time() . '.' . $extension; // Changed since code not available yet
                 $file->storeAs('files/inquiries', $filename, 'public');
                 $validatedData['file'] = $filename; // Store as file in database
             }
@@ -72,25 +72,50 @@ class InquiryController extends Controller
                     'phone' => $request->customer_phone,
                     'address' => $request->customer_address,
                 ]);
-                $validatedData['customer_id'] = $customer->id;;
+                $validatedData['customer_id'] = $customer->id;
             }
 
-            // Fix the end_user field name
-            Inquiry::create([
-                'code' => $validatedData['code'],
+            // Create the inquiry without specifying the code
+            $inquiry = Inquiry::create([
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
                 'business_unit_id' => $validatedData['business_unit_id'],
                 'inquiry_date' => $validatedData['inquiry_date'],
-                'end_user_name' => $validatedData['end_user_name'] ?? null, // Fixed field name
+                'end_user_name' => $validatedData['end_user_name'] ?? null,
                 'end_user_email' => $validatedData['end_user_email'] ?? null,
                 'end_user_phone' => $validatedData['end_user_phone'] ?? null,
                 'end_user_address' => $validatedData['end_user_address'] ?? null,
                 'pic_engineer_id' => $validatedData['pic_engineer_id'] ?? null,
                 'sales_id' => $validatedData['sales_id'] ?? null,
-                'status' => $validatedData['status'],
-                'file' => $validatedData['file'] ?? null // Include file path if exists
+                'file' => $validatedData['file'] ?? null
             ]);
+
+            // Get current month in Roman numerals
+            $month = date('n');
+            $romanMonths = [
+                1 => 'I',
+                2 => 'II',
+                3 => 'III',
+                4 => 'IV',
+                5 => 'V',
+                6 => 'VI',
+                7 => 'VII',
+                8 => 'VIII',
+                9 => 'IX',
+                10 => 'X',
+                11 => 'XI',
+                12 => 'XII'
+            ];
+            $romanMonth = $romanMonths[$month];
+
+            // Get current year
+            $year = date('Y');
+
+            // Generate inquiry code using the format: {id}/I/LNS/{MONTH_IN_ROMAN}/{YEAR}
+            $code = $inquiry->id . '/I/LNS/' . $romanMonth . '/' . $year;
+
+            // Update the inquiry with the generated code
+            $inquiry->update(['code' => $code]);
 
             return redirect()->route('inquiries.index')->with('success', 'Inquiry created successfully.');
         } catch (\Exception $e) {
@@ -122,7 +147,7 @@ class InquiryController extends Controller
      */
     public function edit(Inquiry $inquiry)
     {
-        $inquiry->load(['customer', 'picEngineer', 'sales']);
+        $inquiry->load(['customer', 'picEngineer', 'sales', 'businessUnit']);
 
         return Inertia::render('Dashboard/Inquiries/Edit', [
             'inquiry' => $inquiry,

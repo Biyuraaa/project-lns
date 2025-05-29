@@ -57,18 +57,8 @@ const PurchaseOrdersCreate = () => {
     // File input reference
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Generate unique PO number
-    const generatePONumber = () => {
-        const today = new Date();
-        const year = today.getFullYear().toString().substr(-2);
-        const month = (today.getMonth() + 1).toString().padStart(2, "0");
-        const day = today.getDate().toString().padStart(2, "0");
-        const random = Math.floor(Math.random() * 9000) + 1000;
-        return `PO-${year}${month}${day}-${random}`;
-    };
-
     const { data, setData, post, processing, errors } = useForm({
-        code: generatePONumber(),
+        code: "",
         quotation_id: "",
         status: "wip",
         amount: 0,
@@ -303,7 +293,6 @@ const PurchaseOrdersCreate = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., PO-230501-1234"
                                                     required
                                                 />
                                             </div>
@@ -445,7 +434,6 @@ const PurchaseOrdersCreate = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., CTR-2023-001"
                                                 />
                                             </div>
                                             {errors.contract_number && (
@@ -482,7 +470,6 @@ const PurchaseOrdersCreate = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., JOB-23-001"
                                                 />
                                             </div>
                                             {errors.job_number && (

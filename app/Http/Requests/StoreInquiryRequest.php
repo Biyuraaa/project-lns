@@ -22,7 +22,6 @@ class StoreInquiryRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'code' => 'required|string|max:50|unique:inquiries,code',
             'description' => 'required|string|max:2000',
             'business_unit_id' => 'required|exists:business_units,id',
             'inquiry_date' => 'required|date',
@@ -34,7 +33,6 @@ class StoreInquiryRequest extends FormRequest
             'new_customer' => 'boolean',
             'pic_engineer_id' => 'nullable|exists:users,id',
             'sales_id' => 'nullable|exists:users,id',
-            'status' => 'required|string|in:pending,resolved,closed,process',
         ];
 
         if ($this->boolean('new_customer')) {

@@ -165,9 +165,8 @@ const InquiriesEdit = () => {
         );
 
         // Code validation
-        const isValidCode = isCodeValid && data.code && data.code.trim() !== "";
 
-        return hasRequiredFields && isValidCode;
+        return hasRequiredFields;
     };
 
     // File handling functions
@@ -396,7 +395,7 @@ const InquiriesEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
                                                     }`}
-                                                    placeholder="e.g., INQ-230501-001"
+                                                    placeholder=""
                                                     required
                                                 />
                                             </div>

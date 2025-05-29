@@ -359,7 +359,6 @@ const PurchaseOrdersEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., PO-230501-1234"
                                                     required
                                                 />
                                             </div>
@@ -491,7 +490,6 @@ const PurchaseOrdersEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., CTR-2023-001"
                                                 />
                                             </div>
                                             {errors.contract_number && (
@@ -529,7 +527,6 @@ const PurchaseOrdersEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    placeholder="e.g., JOB-23-001"
                                                 />
                                             </div>
                                             {errors.job_number && (

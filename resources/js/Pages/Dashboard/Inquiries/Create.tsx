@@ -349,7 +349,6 @@ const InquiriesCreate = () => {
                                         <FileText className="w-5 h-5 mr-2 text-blue-600" />
                                         Inquiry Information
                                     </h2>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Inquiry Date Field */}
                                         <div className="space-y-1">
@@ -806,35 +805,6 @@ const InquiriesCreate = () => {
                                                         {/* Customer Dropdown with z-index to ensure it's visible */}
                                                         {customerDropdownOpen && (
                                                             <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm border border-gray-200">
-                                                                {/* Search Header */}
-                                                                <div className="sticky top-0 z-20 bg-white p-2 border-b border-gray-200">
-                                                                    <div className="relative">
-                                                                        <Search className="h-4 w-4 text-gray-400 absolute top-1/2 transform -translate-y-1/2 left-3" />
-                                                                        <Input
-                                                                            type="text"
-                                                                            placeholder="Type to search..."
-                                                                            className="pl-10 py-1 text-sm"
-                                                                            value={
-                                                                                customerSearch
-                                                                            }
-                                                                            onChange={(
-                                                                                e
-                                                                            ) => {
-                                                                                setCustomerSearch(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value
-                                                                                );
-                                                                            }}
-                                                                            onClick={(
-                                                                                e
-                                                                            ) =>
-                                                                                e.stopPropagation()
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
                                                                 {/* Customer List */}
                                                                 <div className="max-h-52 overflow-y-auto">
                                                                     {filteredCustomers.length ===
@@ -1275,33 +1245,6 @@ const InquiriesCreate = () => {
                                                             }}
                                                             className="absolute z-50 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm border border-gray-200"
                                                         >
-                                                            <div className="sticky top-0 z-10 bg-white p-2 border-b border-gray-200">
-                                                                <div className="relative">
-                                                                    <Search className="h-4 w-4 text-gray-400 absolute top-1/2 transform -translate-y-1/2 left-3" />
-                                                                    <Input
-                                                                        type="text"
-                                                                        placeholder="Type to search..."
-                                                                        className="pl-10 py-1 text-sm"
-                                                                        value={
-                                                                            salesSearch
-                                                                        }
-                                                                        onChange={(
-                                                                            e
-                                                                        ) =>
-                                                                            setSalesSearch(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            )
-                                                                        }
-                                                                        onClick={(
-                                                                            e
-                                                                        ) =>
-                                                                            e.stopPropagation()
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
                                                             {filteredSales.length ===
                                                             0 ? (
                                                                 <div className="px-4 py-3 text-sm text-gray-500">
@@ -1437,33 +1380,6 @@ const InquiriesCreate = () => {
                                                             }}
                                                             className="absolute z-50 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm border border-gray-200"
                                                         >
-                                                            <div className="sticky top-0 z-10 bg-white p-2 border-b border-gray-200">
-                                                                <div className="relative">
-                                                                    <Search className="h-4 w-4 text-gray-400 absolute top-1/2 transform -translate-y-1/2 left-3" />
-                                                                    <Input
-                                                                        type="text"
-                                                                        placeholder="Type to search..."
-                                                                        className="pl-10 py-1 text-sm"
-                                                                        value={
-                                                                            engineerSearch
-                                                                        }
-                                                                        onChange={(
-                                                                            e
-                                                                        ) =>
-                                                                            setEngineerSearch(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            )
-                                                                        }
-                                                                        onClick={(
-                                                                            e
-                                                                        ) =>
-                                                                            e.stopPropagation()
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
                                                             {filteredEngineers.length ===
                                                             0 ? (
                                                                 <div className="px-4 py-3 text-sm text-gray-500">
