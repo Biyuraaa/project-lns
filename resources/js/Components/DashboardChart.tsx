@@ -12,9 +12,11 @@ import {
 import { CompanyGrowthSellingChart } from "./CompanyGrowthSellingChart";
 import { PurchaseOrderStatusChart } from "./PurchaseOrderStatusChart";
 import { TotalValueCard } from "./TotalValueCard";
+import { CumulativeCompanyGrowthSellingChart } from "./CumulativeCompanyGrowthChart";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
+    cumulativeCompanyGrowthSellingData: any[];
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
     companyGrowthSellingData: CompanyGrowthSelling[];
@@ -34,16 +36,16 @@ interface DashboardChartsProps {
 const DashboardCharts = ({
     companyGrowthData,
     companyGrowthSellingData,
+    cumulativeCompanyGrowthSellingData,
     businessUnits,
     topCustomersData,
     totalPOCount,
     totalPOValue,
     purchaseOrderDetails,
 }: DashboardChartsProps) => {
-    // Use separate state for each chart's filter
     const [growthChartBusinessUnit, setGrowthChartBusinessUnit] =
         useState<string>("all");
-    const [customerChartBusinessUnit, setTopCustomerChartBusinessUnit] =
+    const [customerChartBusinessUnit, setCustomerChartBusinessUnit] =
         useState<string>("all");
 
     // Separate handler functions for each chart
@@ -54,7 +56,7 @@ const DashboardCharts = ({
     const handleTopCustomerChartBusinessUnitChange = (
         businessUnitId: string
     ) => {
-        setTopCustomerChartBusinessUnit(businessUnitId);
+        setCustomerChartBusinessUnit(businessUnitId);
     };
 
     return (
@@ -78,9 +80,12 @@ const DashboardCharts = ({
                 />
             </div>
 
-            <div>
-                <CompanyGrowthSellingChart data={companyGrowthSellingData} />
-            </div>
+            <CompanyGrowthSellingChart data={companyGrowthSellingData} />
+
+            <CumulativeCompanyGrowthSellingChart
+                data={cumulativeCompanyGrowthSellingData}
+                className="h-full"
+            />
 
             <TotalValueCard
                 purchaseOrders={purchaseOrderDetails}

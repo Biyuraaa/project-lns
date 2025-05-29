@@ -15,8 +15,9 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import {
-    BarChart,
+    ComposedChart,
     Bar,
+    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -73,7 +74,6 @@ export function CompanyGrowthChart({
                     inquiry: item.inquiry,
                     quotation: item.quotation,
                     po: item.po,
-                    target: item.target,
                 });
             }
 
@@ -106,12 +106,6 @@ export function CompanyGrowthChart({
     // Custom tooltip component
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
-            // Calculate the total
-            const total = payload.reduce(
-                (sum: number, entry: any) => sum + entry.value,
-                0
-            );
-
             return (
                 <div className="bg-white p-3 shadow-lg rounded-md border border-gray-100 max-w-[200px]">
                     <p className="font-medium text-gray-700 mb-2">{label}</p>
@@ -135,16 +129,22 @@ export function CompanyGrowthChart({
                                 </span>
                             </div>
                         ))}
-                        <div className="pt-1.5 mt-1.5 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-600">
-                                    Total:
-                                </span>
-                                <span className="text-xs font-semibold">
-                                    {total}
-                                </span>
+                        {payload.length > 1 && (
+                            <div className="pt-1.5 mt-1.5 border-t border-gray-100">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-gray-600">
+                                        Total:
+                                    </span>
+                                    <span className="text-xs font-semibold">
+                                        {payload.reduce(
+                                            (sum: number, entry: any) =>
+                                                sum + entry.value,
+                                            0
+                                        )}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             );
@@ -186,7 +186,7 @@ export function CompanyGrowthChart({
             <CardContent className="pt-6">
                 <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
+                        <ComposedChart
                             data={sortedChartData}
                             margin={{
                                 top: 20,
@@ -214,27 +214,35 @@ export function CompanyGrowthChart({
                                 iconType="circle"
                                 wrapperStyle={{ paddingTop: 15 }}
                             />
+                            {/* Bar chart for inquiries */}
                             <Bar
                                 dataKey="inquiry"
-                                stackId="a"
                                 fill="#3B82F6"
                                 name="Inquiry"
+                                barSize={24}
                                 radius={[4, 4, 0, 0]}
                             />
-                            <Bar
+                            {/* Line chart for quotations */}
+                            <Line
                                 dataKey="quotation"
-                                stackId="a"
-                                fill="#A855F7"
+                                stroke="#A855F7"
                                 name="Quotation"
+                                strokeWidth={3}
+                                dot={{ r: 4, fill: "#A855F7" }}
+                                activeDot={{ r: 6 }}
+                                type="monotone"
                             />
-                            <Bar
+                            {/* Line chart for POs */}
+                            <Line
                                 dataKey="po"
-                                stackId="a"
-                                fill="#F59E0B"
+                                stroke="#F59E0B"
                                 name="PO"
-                                radius={[0, 0, 4, 4]}
+                                strokeWidth={3}
+                                dot={{ r: 4, fill: "#F59E0B" }}
+                                activeDot={{ r: 6 }}
+                                type="monotone"
                             />
-                        </BarChart>
+                        </ComposedChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
@@ -244,11 +252,7 @@ export function CompanyGrowthChart({
                             <p className="leading-relaxed">
                                 <span className="font-medium">Insight:</span>{" "}
                                 Menampilkan perjalanan proses penjualan dari
-                                Inquiry → Quotation → PO.
-                            </p>
-                            <p className="leading-relaxed">
-                                <span className="font-medium">Tujuan:</span>{" "}
-                                Menilai konversi antar tahap penjualan.
+                                Inquiry (biru) → Quotation (ungu) → PO (kuning).
                             </p>
                         </div>
                     </div>

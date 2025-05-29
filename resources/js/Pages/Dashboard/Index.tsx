@@ -50,6 +50,7 @@ interface Statistics {
 
 interface ChartData {
     companyGrowthData: CompanyGrowthData[];
+    cumulativeCompanyGrowthSellingData: any[]; // Changed to match our new data
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
     companyGrowthSellingData: CompanyGrowthSelling[];
@@ -235,6 +236,9 @@ const DashboardIndex = () => {
                             companyGrowthData={chartData.companyGrowthData}
                             companyGrowthSellingData={
                                 chartData.companyGrowthSellingData
+                            }
+                            cumulativeCompanyGrowthSellingData={
+                                chartData.cumulativeCompanyGrowthSellingData
                             }
                             businessUnits={chartData.businessUnits}
                             topCustomersData={chartData.topCustomersData}

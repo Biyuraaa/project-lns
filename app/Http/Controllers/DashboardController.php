@@ -37,6 +37,7 @@ class DashboardController extends Controller
         $activeQuotations = $quotationsQuery->clone()
             ->whereDate('quotations.due_date', '>=', now())
             ->whereNotIn('quotations.status', ['lost', 'clsd'])
+            ->where('quotations.status', 'wip')
             ->count();
 
         $activeQuotationsLastMonth = $quotationsQuery->clone()
@@ -94,6 +95,7 @@ class DashboardController extends Controller
         $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
         $topCustomersData = $this->prepareTopCustomersData($businessUnits);
         $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
+        $cumulativeCompanyGrowthSellingData = $this->prepareCompanyGrowthSellingCumulative(); // New method
         $poDetailData = $this->preparePODetailData($businessUnits);
 
         $totalPOCount = PurchaseOrder::count();
@@ -126,12 +128,73 @@ class DashboardController extends Controller
                 'companyGrowthData' => $companyGrowthData,
                 'topCustomersData' => $topCustomersData,
                 'companyGrowthSellingData' => $companyGrowthSellingData,
+                'cumulativeCompanyGrowthSellingData' => $cumulativeCompanyGrowthSellingData, // New data
                 'poDetailData' => $poDetailData,
                 'businessUnits' => $businessUnits,
                 'totalPOCount' => $totalPOCount,
                 'totalPOValue' => $totalPOValue,
             ]
         ]);
+    }
+    // Add this function to ensure we have data for all months in order
+    private function prepareCompanyGrowthSellingCumulative()
+    {
+        $growthSellingData = CompanyGrowthSelling::orderBy('year')
+            ->orderBy('month')
+            ->get();
+
+        $cumulativeData = [];
+
+        // Prepare month names for display
+        $monthNames = [
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Aug',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Dec'
+        ];
+
+        // Group data by year
+        $dataByYear = $growthSellingData->groupBy('year');
+        foreach ($dataByYear as $year => $yearData) {
+            $cumulativeTarget = 0;
+            $cumulativeActual = 0;
+
+            foreach ($yearData as $item) {
+                // Add to running totals
+                $cumulativeTarget += $item->target;
+                $cumulativeActual += $item->actual;
+                $cumulativeDifference = $cumulativeActual - $cumulativeTarget;
+
+                // Calculate percentage (avoid division by zero)
+                $cumulativePercentage = $cumulativeTarget > 0
+                    ? round(($cumulativeActual / $cumulativeTarget) * 100)
+                    : 0;
+
+                $cumulativeData[] = [
+                    'month' => $item->month,
+                    'year' => $item->year,
+                    'month_name' => $monthNames[$item->month] ?? '',
+                    'target' => $item->target,
+                    'actual' => $item->actual,
+                    'difference' => $item->difference,
+                    'percentage' => $item->percentage,
+                    'cumulative_target' => $cumulativeTarget,
+                    'cumulative_actual' => $cumulativeActual,
+                    'cumulative_difference' => $cumulativeDifference,
+                    'cumulative_percentage' => $cumulativePercentage
+                ];
+            }
+        }
+
+        return $cumulativeData;
     }
 
     /**
