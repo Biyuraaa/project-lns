@@ -35,7 +35,7 @@ class QuotationController extends Controller
      */
     public function create()
     {
-        $inquiries = Inquiry::whereDoesntHave('quotation', function ($query) {
+        $inquiries = Inquiry::where('status', 'pending')->whereDoesntHave('quotation', function ($query) {
             $query->where('status', 'wip');
         })
             ->with([
@@ -53,9 +53,11 @@ class QuotationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StoreQuotationRequest $request)
     {
-        //
         try {
             $validatedData = $request->validated();
 
@@ -67,9 +69,46 @@ class QuotationController extends Controller
                 $validatedData['file'] = $filename;
             }
 
+            // Get year and month from due_date
+            $dueDate = new \DateTime($validatedData['due_date']);
+            $year = $dueDate->format('Y');
+            $month = (int)$dueDate->format('n');
+
+            // Convert month to Roman numeral
+            $romanMonths = [
+                1 => 'I',
+                2 => 'II',
+                3 => 'III',
+                4 => 'IV',
+                5 => 'V',
+                6 => 'VI',
+                7 => 'VII',
+                8 => 'VIII',
+                9 => 'IX',
+                10 => 'X',
+                11 => 'XI',
+                12 => 'XII'
+            ];
+            $romanMonth = $romanMonths[$month];
+
+            $inquiry = Inquiry::findOrFail($validatedData['inquiry_id']);
+
+            // Count quotations related to this inquiry to determine revision number
+            $quotationCount = Quotation::where('inquiry_id', $inquiry->id)->count();
+
+            // Generate the correct code format
+            if ($quotationCount > 0) {
+                // This is a revision
+                $code = "{$inquiry->id}/Q{$quotationCount}/LNS/{$romanMonth}/{$year}";
+            } else {
+                // This is the first quotation
+                $code = "{$inquiry->id}/Q/LNS/{$romanMonth}/{$year}";
+            }
+
+            // Create the quotation with default status
             Quotation::create([
-                'code' => $validatedData['code'],
-                'status' => 'n/a',
+                'code' => $code,
+                'status' => 'val',
                 'due_date' => $validatedData['due_date'],
                 'inquiry_id' => $validatedData['inquiry_id'],
                 'file' => $validatedData['file'] ?? null,
@@ -80,7 +119,6 @@ class QuotationController extends Controller
             return redirect()->back()->withInput()->with('error', 'Failed to create quotation: ' . $e->getMessage());
         }
     }
-
     /**
      * Display the specified resource.
      */
@@ -93,6 +131,7 @@ class QuotationController extends Controller
             'inquiry.picEngineer',
             'inquiry.sales',
             'inquiry.businessUnit',
+            'negotiations',
         ]);
         return Inertia::render('Dashboard/Quotations/Show', [
             'quotation' => $quotation,
@@ -178,6 +217,82 @@ class QuotationController extends Controller
             return redirect()->route('quotations.index')->with('success', 'Quotation deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to delete quotation: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Create a new negotiation for the quotation.
+     */
+    public function createNegotiation(Quotation $quotation)
+    {
+        $quotation->load([
+            'inquiry',
+            'inquiry.customer',
+            'inquiry.picEngineer',
+            'inquiry.sales',
+            'inquiry.businessUnit',
+        ]);
+
+        return Inertia::render('Dashboard/Quotations/Negotiations/Create', [
+            'quotation' => $quotation
+        ]);
+    }
+
+    /**
+     * Store a newly created negotiation in storage.
+     */
+    public function storeNegotiation(Request $request, Quotation $quotation)
+    {
+        try {
+            $validatedData = $request->validate([
+                'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:2048', // Adjust file types and size as needed
+            ]);
+            $file = $request->file('file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('files/negotiations', $filename, 'public');
+            $validatedData['file'] = $filename;
+
+            $quotation->negotiations()->create([
+                'file' => $validatedData['file'],
+                'quotation_id' => $quotation->id
+            ]);
+
+            $inquiry = $quotation->inquiry;
+
+            $negotiationCount = $quotation->negotiations()->count();
+
+            $today = now();
+            $year = $today->format('Y');
+            $month = (int)$today->format('n');
+
+            // Convert month to Roman numeral
+            $romanMonths = [
+                1 => 'I',
+                2 => 'II',
+                3 => 'III',
+                4 => 'IV',
+                5 => 'V',
+                6 => 'VI',
+                7 => 'VII',
+                8 => 'VIII',
+                9 => 'IX',
+                10 => 'X',
+                11 => 'XI',
+                12 => 'XII'
+            ];
+            $romanMonth = $romanMonths[$month];
+
+            // Generate the revised code - always include revision number since this is a negotiation
+            $revisedCode = "{$inquiry->id}/Q{$negotiationCount}/LNS/{$romanMonth}/{$year}";
+
+            // Update the quotation with the new revision code
+            $quotation->update([
+                'code' => $revisedCode
+            ]);
+
+            return redirect()->route('quotations.show', $quotation)->with('success', 'Negotiation created successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Failed to create negotiation: ' . $e->getMessage());
         }
     }
 }

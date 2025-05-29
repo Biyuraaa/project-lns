@@ -43,6 +43,13 @@ Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () 
         Route::patch('/', [InquiryController::class, 'updateQuotation'])->name('inquiries.quotations.update');
     });
 
+    Route::prefix('quotations/{quotation}/negotiations')->group(function () {
+        Route::get('create', [QuotationController::class, 'createNegotiation'])->name('quotations.negotiations.create');
+        Route::post('/', [QuotationController::class, 'storeNegotiation'])->name('quotations.negotiations.store');
+        Route::get('edit', [QuotationController::class, 'editNegotiation'])->name('quotations.negotiations.edit');
+        Route::patch('/', [QuotationController::class, 'updateNegotiation'])->name('quotations.negotiations.update');
+    });
+
     Route::resource('inquiries', InquiryController::class);
     Route::resource('quotations', QuotationController::class);
     Route::resource('purchaseOrders', PurchaseOrderController::class);

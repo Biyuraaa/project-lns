@@ -20,6 +20,11 @@ import {
     Briefcase,
     Calendar,
     DollarSign,
+    Edit,
+    Trash2,
+    Eye,
+    Plus,
+    Users,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -245,11 +250,6 @@ const PurchaseOrdersIndex = () => {
         setEndDate("");
         setSortField("code");
         setSortDirection("desc");
-    };
-
-    // Handle file icon based on extension
-    const getFileIcon = (filename: string) => {
-        // Existing code...
     };
 
     // DELETE handler
@@ -844,7 +844,113 @@ const PurchaseOrdersIndex = () => {
                                                     }}
                                                     className="hover:bg-gray-50 transition-colors"
                                                 >
-                                                    {/* Existing table row content */}
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center">
+                                                            <div className="bg-green-100 text-green-700 p-2 rounded-md">
+                                                                <ShoppingCart className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="ml-4">
+                                                                <div className="text-sm font-medium text-gray-900">
+                                                                    {po.code}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500">
+                                                                    {po.contract_number && (
+                                                                        <div className="flex items-center text-xs text-gray-500">
+                                                                            Contract:{" "}
+                                                                            {
+                                                                                po.contract_number
+                                                                            }
+                                                                        </div>
+                                                                    )}
+                                                                    {po.job_number && (
+                                                                        <div className="flex items-center text-xs text-gray-500">
+                                                                            Job:{" "}
+                                                                            {
+                                                                                po.job_number
+                                                                            }
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div>
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {po.quotation
+                                                                    ?.code ||
+                                                                    "N/A"}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {po.quotation
+                                                                    ?.inquiry
+                                                                    ?.customer
+                                                                    ?.name ||
+                                                                    "N/A"}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {po.date ? (
+                                                            <div className="flex items-center text-sm text-gray-600">
+                                                                <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                                                                {format(
+                                                                    new Date(
+                                                                        po.date
+                                                                    ),
+                                                                    "MMM d, yyyy"
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400 italic">
+                                                                Not dated
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {formatCurrency(
+                                                                po.amount
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {getStatusBadge(
+                                                            po.status
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <div className="flex items-center justify-end space-x-2">
+                                                            <Link
+                                                                href={route(
+                                                                    "purchaseOrders.edit",
+                                                                    po.id
+                                                                )}
+                                                                className="text-green-600 hover:text-green-900"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Link>
+                                                            <Link
+                                                                href={route(
+                                                                    "purchaseOrders.show",
+                                                                    po.id
+                                                                )}
+                                                                className="text-blue-600 hover:text-blue-900"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Link>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleDelete(
+                                                                        po.id
+                                                                    )
+                                                                }
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
                                                 </motion.tr>
                                             )
                                         )

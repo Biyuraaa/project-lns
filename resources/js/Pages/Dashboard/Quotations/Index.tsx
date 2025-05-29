@@ -26,6 +26,7 @@ import {
     Building2,
     Mail,
     Plus,
+    Calendar,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +34,21 @@ import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Button } from "@/Components/ui/button";
 import { Badge } from "@/Components/ui/badge";
 import { useForm } from "@inertiajs/react";
-import { format } from "date-fns";
+import {
+    format,
+    addMonths,
+    addYears,
+    startOfDay,
+    endOfDay,
+    isWithinInterval,
+    subMonths,
+    subYears,
+    isAfter,
+    isBefore,
+    isEqual,
+    parseISO,
+    isValid,
+} from "date-fns";
 
 interface QuotationsIndexProps extends PageProps {
     quotations: Quotation[];
@@ -48,11 +63,33 @@ const QuotationsIndex = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [statusFilter, setStatusFilter] = useState("");
 
-    // Format date for display
+    // Date filter states
+    const [dateFilterType, setDateFilterType] = useState<string>("all"); // all, 1month, 3months, 6months, 1year, custom
+    const [customStartDate, setCustomStartDate] = useState<string>("");
+    const [customEndDate, setCustomEndDate] = useState<string>("");
+
+    // Format date for display safely
     const formatDate = (dateString: string) => {
         if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return format(date, "MMM dd, yyyy");
+        try {
+            const date = parseISO(dateString);
+            if (!isValid(date)) return "N/A";
+            return format(date, "MMM dd, yyyy");
+        } catch (error) {
+            return "N/A";
+        }
+    };
+
+    // Format date for summary display safely
+    const formatDateSafe = (dateString: string) => {
+        if (!dateString) return null;
+        try {
+            const date = parseISO(dateString);
+            if (!isValid(date)) return null;
+            return format(date, "MMM dd, yyyy");
+        } catch (error) {
+            return null;
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -85,20 +122,6 @@ const QuotationsIndex = () => {
                         <span>Work in Progress</span>
                     </Badge>
                 );
-            case "ar":
-                return (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
-                        <FileText className="h-3 w-3" />
-                        <span>Awaiting Review</span>
-                    </Badge>
-                );
-            case "clsd":
-                return (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        <span>Closed</span>
-                    </Badge>
-                );
             default:
                 return (
                     <Badge className="bg-slate-100 text-slate-800 border-slate-200">
@@ -108,7 +131,7 @@ const QuotationsIndex = () => {
         }
     };
 
-    // Filter quotations based on search term and status
+    // Filter quotations based on search term, status, and date
     const filteredQuotations = quotations.filter((quotation) => {
         const matchesSearch =
             quotation.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,7 +145,82 @@ const QuotationsIndex = () => {
         const matchesStatus =
             statusFilter === "" || quotation.status === statusFilter;
 
-        return matchesSearch && matchesStatus;
+        // Date filtering logic based on dateFilterType
+        let matchesDate = true;
+
+        if (quotation.due_date) {
+            try {
+                const quotationDate = new Date(quotation.due_date);
+                if (!isValid(quotationDate)) return false;
+
+                const today = new Date();
+
+                switch (dateFilterType) {
+                    case "1month":
+                        matchesDate = isWithinInterval(quotationDate, {
+                            start: startOfDay(subMonths(today, 1)),
+                            end: endOfDay(today),
+                        });
+                        break;
+                    case "3months":
+                        matchesDate = isWithinInterval(quotationDate, {
+                            start: startOfDay(subMonths(today, 3)),
+                            end: endOfDay(today),
+                        });
+                        break;
+                    case "6months":
+                        matchesDate = isWithinInterval(quotationDate, {
+                            start: startOfDay(subMonths(today, 6)),
+                            end: endOfDay(today),
+                        });
+                        break;
+                    case "1year":
+                        matchesDate = isWithinInterval(quotationDate, {
+                            start: startOfDay(subYears(today, 1)),
+                            end: endOfDay(today),
+                        });
+                        break;
+                    case "custom":
+                        if (customStartDate && customEndDate) {
+                            const startDate = startOfDay(
+                                parseISO(customStartDate)
+                            );
+                            const endDate = endOfDay(parseISO(customEndDate));
+
+                            if (isValid(startDate) && isValid(endDate)) {
+                                matchesDate = isWithinInterval(quotationDate, {
+                                    start: startDate,
+                                    end: endDate,
+                                });
+                            }
+                        } else if (customStartDate) {
+                            const startDate = startOfDay(
+                                parseISO(customStartDate)
+                            );
+                            if (isValid(startDate)) {
+                                matchesDate =
+                                    isAfter(quotationDate, startDate) ||
+                                    isEqual(quotationDate, startDate);
+                            }
+                        } else if (customEndDate) {
+                            const endDate = endOfDay(parseISO(customEndDate));
+                            if (isValid(endDate)) {
+                                matchesDate =
+                                    isBefore(quotationDate, endDate) ||
+                                    isEqual(quotationDate, endDate);
+                            }
+                        }
+                        break;
+                    default: // 'all'
+                        matchesDate = true;
+                }
+            } catch (error) {
+                console.error("Date filtering error:", error);
+                matchesDate = true;
+            }
+        }
+
+        return matchesSearch && matchesStatus && matchesDate;
     });
 
     // Sort quotations
@@ -130,6 +228,8 @@ const QuotationsIndex = () => {
         if (sortField === "due_date") {
             const dateA = new Date(a.due_date || "");
             const dateB = new Date(b.due_date || "");
+
+            if (!isValid(dateA) || !isValid(dateB)) return 0;
 
             return sortDirection === "asc"
                 ? dateA.getTime() - dateB.getTime()
@@ -139,6 +239,8 @@ const QuotationsIndex = () => {
         if (sortField === "created_at") {
             const dateA = new Date(a.created_at || "");
             const dateB = new Date(b.created_at || "");
+
+            if (!isValid(dateA) || !isValid(dateB)) return 0;
 
             return sortDirection === "asc"
                 ? dateA.getTime() - dateB.getTime()
@@ -179,7 +281,13 @@ const QuotationsIndex = () => {
     // Reset to first page when search term or status filter changes
     useEffect(() => {
         pagination.goToFirstPage();
-    }, [searchTerm, statusFilter]);
+    }, [
+        searchTerm,
+        statusFilter,
+        dateFilterType,
+        customStartDate,
+        customEndDate,
+    ]);
 
     // Handle file icon based on extension
     const getFileIcon = (filename: string) => {
@@ -214,6 +322,16 @@ const QuotationsIndex = () => {
                 },
             });
         }
+    };
+
+    const resetFilters = () => {
+        setSearchTerm("");
+        setStatusFilter("");
+        setSortField("code");
+        setSortDirection("desc");
+        setDateFilterType("all");
+        setCustomStartDate("");
+        setCustomEndDate("");
     };
 
     return (
@@ -267,7 +385,6 @@ const QuotationsIndex = () => {
                             </div>
                         </div>
                     </div>
-
                     {/* Search and Filter Section */}
                     <div className="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
                         <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
@@ -364,12 +481,6 @@ const QuotationsIndex = () => {
                                                 <option value="wip">
                                                     Work in Progress
                                                 </option>
-                                                <option value="ar">
-                                                    Awaiting Review
-                                                </option>
-                                                <option value="clsd">
-                                                    Closed
-                                                </option>
                                             </select>
                                         </div>
                                         <div>
@@ -423,17 +534,232 @@ const QuotationsIndex = () => {
                                                 </option>
                                             </select>
                                         </div>
+
+                                        {/* Date Filter (in the filters section) */}
+                                        <div className="md:col-span-3">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Date Filter
+                                            </label>
+                                            <div className="p-4 rounded-md border border-gray-200 bg-gray-50">
+                                                <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-3">
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "all"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "all"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "all"
+                                                            );
+                                                            setCustomStartDate(
+                                                                ""
+                                                            );
+                                                            setCustomEndDate(
+                                                                ""
+                                                            );
+                                                        }}
+                                                    >
+                                                        All Time
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "1month"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "1month"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "1month"
+                                                            );
+                                                            setCustomStartDate(
+                                                                ""
+                                                            );
+                                                            setCustomEndDate(
+                                                                ""
+                                                            );
+                                                        }}
+                                                    >
+                                                        Last Month
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "3months"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "3months"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "3months"
+                                                            );
+                                                            setCustomStartDate(
+                                                                ""
+                                                            );
+                                                            setCustomEndDate(
+                                                                ""
+                                                            );
+                                                        }}
+                                                    >
+                                                        Last 3 Months
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "6months"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "6months"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "6months"
+                                                            );
+                                                            setCustomStartDate(
+                                                                ""
+                                                            );
+                                                            setCustomEndDate(
+                                                                ""
+                                                            );
+                                                        }}
+                                                    >
+                                                        Last 6 Months
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "1year"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "1year"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "1year"
+                                                            );
+                                                            setCustomStartDate(
+                                                                ""
+                                                            );
+                                                            setCustomEndDate(
+                                                                ""
+                                                            );
+                                                        }}
+                                                    >
+                                                        Last Year
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            dateFilterType ===
+                                                            "custom"
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`h-9 text-xs px-3 ${
+                                                            dateFilterType ===
+                                                            "custom"
+                                                                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setDateFilterType(
+                                                                "custom"
+                                                            );
+                                                        }}
+                                                    >
+                                                        Custom Range
+                                                    </Button>
+                                                </div>
+
+                                                {dateFilterType ===
+                                                    "custom" && (
+                                                    <div className="flex items-center space-x-2 mt-3">
+                                                        <div className="relative w-full">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                                            </div>
+                                                            <Input
+                                                                type="date"
+                                                                className="pl-8 h-9 bg-white border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                                                                value={
+                                                                    customStartDate
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setCustomStartDate(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                placeholder="Start date"
+                                                            />
+                                                        </div>
+                                                        <span className="text-gray-500">
+                                                            to
+                                                        </span>
+                                                        <div className="relative w-full">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                                            </div>
+                                                            <Input
+                                                                type="date"
+                                                                className="pl-8 h-9 bg-white border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                                                                value={
+                                                                    customEndDate
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setCustomEndDate(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                placeholder="End date"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="mt-4 flex justify-end">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => {
-                                                setSearchTerm("");
-                                                setStatusFilter("");
-                                                setSortField("code");
-                                                setSortDirection("desc");
-                                            }}
+                                            onClick={resetFilters}
                                         >
                                             Reset Filters
                                         </Button>
@@ -459,6 +785,65 @@ const QuotationsIndex = () => {
                                     {" "}
                                     with status "<strong>{statusFilter}</strong>
                                     "
+                                </span>
+                            )}
+                            {dateFilterType !== "all" && (
+                                <span>
+                                    {" "}
+                                    {dateFilterType === "custom" ? (
+                                        customStartDate && customEndDate ? (
+                                            <>
+                                                from{" "}
+                                                <strong>
+                                                    {formatDateSafe(
+                                                        customStartDate
+                                                    ) || "invalid date"}
+                                                </strong>{" "}
+                                                to{" "}
+                                                <strong>
+                                                    {formatDateSafe(
+                                                        customEndDate
+                                                    ) || "invalid date"}
+                                                </strong>
+                                            </>
+                                        ) : customStartDate ? (
+                                            <>
+                                                from{" "}
+                                                <strong>
+                                                    {formatDateSafe(
+                                                        customStartDate
+                                                    ) || "invalid date"}
+                                                </strong>
+                                            </>
+                                        ) : customEndDate ? (
+                                            <>
+                                                until{" "}
+                                                <strong>
+                                                    {formatDateSafe(
+                                                        customEndDate
+                                                    ) || "invalid date"}
+                                                </strong>
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )
+                                    ) : (
+                                        <>
+                                            from{" "}
+                                            <strong>
+                                                the last{" "}
+                                                {dateFilterType === "1month"
+                                                    ? "month"
+                                                    : dateFilterType ===
+                                                      "3months"
+                                                    ? "3 months"
+                                                    : dateFilterType ===
+                                                      "6months"
+                                                    ? "6 months"
+                                                    : "year"}
+                                            </strong>
+                                        </>
+                                    )}
                                 </span>
                             )}
                         </p>
@@ -606,7 +991,7 @@ const QuotationsIndex = () => {
                                                                         "inquiries.show",
                                                                         quotation
                                                                             .inquiry
-                                                                            .id
+                                                                            ?.id
                                                                     )}
                                                                     className="font-medium text-blue-600 hover:underline"
                                                                 >
@@ -614,7 +999,7 @@ const QuotationsIndex = () => {
                                                                     {
                                                                         quotation
                                                                             .inquiry
-                                                                            .code
+                                                                            ?.code
                                                                     }
                                                                 </Link>
                                                             </div>
@@ -624,8 +1009,8 @@ const QuotationsIndex = () => {
                                                                     {
                                                                         quotation
                                                                             .inquiry
-                                                                            .customer
-                                                                            .name
+                                                                            ?.customer
+                                                                            ?.name
                                                                     }
                                                                 </span>
                                                             </div>
@@ -636,14 +1021,16 @@ const QuotationsIndex = () => {
                                                             <CalendarDays className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                                                             <span>
                                                                 {formatDate(
-                                                                    quotation.due_date
+                                                                    quotation.due_date ||
+                                                                        ""
                                                                 )}
                                                             </span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         {getStatusBadge(
-                                                            quotation.status
+                                                            quotation.status ||
+                                                                ""
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -695,29 +1082,28 @@ const QuotationsIndex = () => {
                                                     </div>
                                                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                                                         {searchTerm ||
-                                                        statusFilter
+                                                        statusFilter ||
+                                                        dateFilterType !== "all"
                                                             ? "No quotations found matching your criteria"
                                                             : "No quotations available"}
                                                     </h3>
                                                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                                         {searchTerm ||
-                                                        statusFilter
+                                                        statusFilter ||
+                                                        dateFilterType !== "all"
                                                             ? "Try adjusting your search filters to see more results"
                                                             : "There are no quotations in the system yet"}
                                                     </p>
 
                                                     {(searchTerm ||
-                                                        statusFilter) && (
+                                                        statusFilter ||
+                                                        dateFilterType !==
+                                                            "all") && (
                                                         <Button
                                                             variant="outline"
-                                                            onClick={() => {
-                                                                setSearchTerm(
-                                                                    ""
-                                                                );
-                                                                setStatusFilter(
-                                                                    ""
-                                                                );
-                                                            }}
+                                                            onClick={
+                                                                resetFilters
+                                                            }
                                                             className="border-gray-200"
                                                         >
                                                             Clear Filters

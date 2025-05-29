@@ -48,7 +48,7 @@ class PurchaseOrderController extends Controller
                 'inquiry:id,code,customer_id',
                 'inquiry.customer:id,name,email,phone',
             ])
-            ->where('status', 'val')
+            ->where('status', 'wip')
             ->whereDoesntHave('purchaseOrder')
             ->get();
         return Inertia::render('Dashboard/PurchaseOrders/Create', [

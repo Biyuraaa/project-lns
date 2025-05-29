@@ -27,6 +27,9 @@ import {
     UserCircle,
     Plus,
     Briefcase,
+    MessageSquare,
+    ClockIcon,
+    FileUp,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import {
@@ -39,23 +42,6 @@ import {
 import { Separator } from "@/Components/ui/separator";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Badge } from "@/Components/ui/badge";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/Components/ui/alert-dialog";
 import { useForm } from "@inertiajs/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
@@ -68,7 +54,6 @@ interface ShowQuotationProps extends PageProps {
 
 const QuotationShow = () => {
     const { quotation } = usePage<ShowQuotationProps>().props;
-    const [activeTab, setActiveTab] = useState("details");
     const { delete: destroy } = useForm({});
 
     // Get file icon based on filename
@@ -88,6 +73,21 @@ const QuotationShow = () => {
                 return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
             default:
                 return <FileText className="h-5 w-5 text-gray-500" />;
+        }
+    };
+
+    const handleDeleteNegotiation = (id: number) => {
+        if (
+            confirm(
+                "Are you sure you want to delete this negotiation document?"
+            )
+        ) {
+            destroy(route("negotiations.destroy", id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    console.log("Negotiation deleted successfully");
+                },
+            });
         }
     };
 
@@ -297,6 +297,13 @@ const QuotationShow = () => {
                                 Details
                             </TabsTrigger>
                             <TabsTrigger
+                                value="negotiations"
+                                className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
+                            >
+                                <MessageSquare className="h-4 w-4" />
+                                Negotiations
+                            </TabsTrigger>
+                            <TabsTrigger
                                 value="team"
                                 className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
                             >
@@ -499,69 +506,6 @@ const QuotationShow = () => {
                                                             </div>
                                                         </div>
                                                     )}
-                                                </div>
-
-                                                {/* Actions */}
-                                                <div className="mt-8 flex flex-wrap gap-3">
-                                                    <Link
-                                                        href={route(
-                                                            "quotations.edit",
-                                                            quotation.id
-                                                        )}
-                                                    >
-                                                        <Button
-                                                            variant="outline"
-                                                            className="gap-2"
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                            Edit Quotation
-                                                        </Button>
-                                                    </Link>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger
-                                                            asChild
-                                                        >
-                                                            <Button
-                                                                variant="outline"
-                                                                className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                                                            >
-                                                                <Trash className="h-4 w-4" />
-                                                                Delete Quotation
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>
-                                                                    Are you sure
-                                                                    you want to
-                                                                    delete this
-                                                                    quotation?
-                                                                </AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This action
-                                                                    cannot be
-                                                                    undone. This
-                                                                    will
-                                                                    permanently
-                                                                    delete the
-                                                                    quotation.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>
-                                                                    Cancel
-                                                                </AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    onClick={
-                                                                        handleDelete
-                                                                    }
-                                                                    className="bg-red-500 text-white hover:bg-red-600"
-                                                                >
-                                                                    Delete
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -973,6 +917,135 @@ const QuotationShow = () => {
                                     </motion.div>
                                 </div>
                             </div>
+                        </TabsContent>
+                        <TabsContent value="negotiations" className="space-y-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <Card className="overflow-hidden border-border">
+                                    <CardHeader className="pb-3 bg-muted/40">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                                    <div className="bg-blue-100 p-1.5 rounded-md">
+                                                        <MessageSquare className="h-5 w-5 text-blue-600" />
+                                                    </div>
+                                                    Negotiation History
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    Record of all negotiation
+                                                    documents and communications
+                                                </CardDescription>
+                                            </div>
+                                            <Link
+                                                href={route(
+                                                    "quotations.negotiations.create",
+                                                    quotation.id
+                                                )}
+                                            >
+                                                <Button
+                                                    variant="default"
+                                                    className="gap-2"
+                                                >
+                                                    <FileUp className="h-4 w-4" />
+                                                    Add Negotiation Document
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-6">
+                                        {quotation.negotiations &&
+                                        quotation.negotiations.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {quotation.negotiations.map(
+                                                    (negotiation) => (
+                                                        <div
+                                                            key={negotiation.id}
+                                                            className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-md flex items-center justify-center bg-blue-100 text-blue-700">
+                                                                    {getFileIcon(
+                                                                        negotiation.file
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium">
+                                                                        {negotiation.file
+                                                                            .split(
+                                                                                "/"
+                                                                            )
+                                                                            .pop()}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                                        <ClockIcon className="h-3.5 w-3.5" />
+                                                                        {formatDate(
+                                                                            negotiation.created_at ||
+                                                                                ""
+                                                                        )}{" "}
+                                                                        at{" "}
+                                                                        {formatTime(
+                                                                            negotiation.created_at ||
+                                                                                ""
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <a
+                                                                    href={`/storage/files/negotiations/${negotiation.file}`}
+                                                                    download
+                                                                    className="p-2 rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                </a>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="p-2 rounded-full hover:bg-red-100 hover:text-red-700 transition-colors"
+                                                                    onClick={() =>
+                                                                        handleDeleteNegotiation(
+                                                                            negotiation.id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-center">
+                                                <div className="bg-blue-50 p-3 rounded-full mb-4">
+                                                    <MessageSquare className="h-8 w-8 text-blue-400" />
+                                                </div>
+                                                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                                                    No negotiations yet
+                                                </h3>
+                                                <p className="text-sm text-gray-500 max-w-md mb-6">
+                                                    There are no negotiation
+                                                    documents recorded for this
+                                                    quotation. Add a new
+                                                    negotiation document to
+                                                    track communication with the
+                                                    customer.
+                                                </p>
+                                                <Button
+                                                    variant="default"
+                                                    className="gap-2"
+                                                >
+                                                    <FileUp className="h-4 w-4" />
+                                                    Add First Negotiation
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
                         </TabsContent>
 
                         {/* Team Tab */}

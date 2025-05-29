@@ -21,11 +21,9 @@ class PurchaseOrderFactory extends Factory
         return [
             'code' => 'PO-' . $this->faker->unique()->numerify('######'),
             'quotation_id' => function () {
-                // We'll override this in the seeder to ensure we only use validated quotations
-                return Quotation::where('status', 'val')->inRandomOrder()->first()->id;
+                return Quotation::where('status', 'wip')->inRandomOrder()->first()->id;
             },
             'amount' => $this->faker->numberBetween(10000000, 500000000),
-            'file' => null, // No file as requested
             'status' => $this->faker->randomElement(['wip', 'ar', 'ibt']),
             'contract_number' => 'CTR-' . $this->faker->numerify('######'),
             'job_number' => 'JOB-' . $this->faker->numerify('######'),

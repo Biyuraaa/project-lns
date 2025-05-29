@@ -77,7 +77,6 @@ const QuotationEdit = () => {
     const { data, setData, post, processing, errors } = useForm({
         _method: "put",
         id: quotation.id,
-        code: quotation.code || "",
         status: quotation.status,
         due_date: quotation.due_date || "",
         file: null as File | null,
@@ -353,51 +352,6 @@ const QuotationEdit = () => {
                                         </h2>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                                            {/* Quotation Code */}
-                                            <div className="space-y-1">
-                                                <Label
-                                                    htmlFor="code"
-                                                    className="text-sm font-medium"
-                                                >
-                                                    Quotation Code{" "}
-                                                    <span className="text-red-500">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <Hash className="h-4 w-4 text-gray-400" />
-                                                    </div>
-                                                    <Input
-                                                        id="code"
-                                                        type="text"
-                                                        placeholder="QT-INQ-001"
-                                                        value={data.code}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                "code",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        className={`pl-10 ${
-                                                            errors.code
-                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                                : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                        }`}
-                                                    />
-                                                </div>
-                                                {errors.code && (
-                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                        <AlertCircle className="h-3 w-3 mr-1" />
-                                                        {errors.code}
-                                                    </p>
-                                                )}
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    A unique code identifier for
-                                                    this quotation
-                                                </p>
-                                            </div>
-
                                             {/* Due Date */}
                                             <div className="space-y-1">
                                                 <Label
@@ -489,12 +443,6 @@ const QuotationEdit = () => {
                                                             </SelectItem>
                                                             <SelectItem value="wip">
                                                                 Work in Progress
-                                                            </SelectItem>
-                                                            <SelectItem value="ar">
-                                                                Awaiting Review
-                                                            </SelectItem>
-                                                            <SelectItem value="clsd">
-                                                                Closed
                                                             </SelectItem>
                                                         </SelectContent>
                                                     </Select>
@@ -738,7 +686,6 @@ const QuotationEdit = () => {
                                         disabled={
                                             processing ||
                                             isSubmitting ||
-                                            !data.code ||
                                             !data.due_date ||
                                             !data.status
                                         }

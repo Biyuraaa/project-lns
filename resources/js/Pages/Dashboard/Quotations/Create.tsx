@@ -13,7 +13,6 @@ import {
     Info,
     Upload,
     X,
-    Hash,
     ChevronLeft,
     AlertCircle,
     Save,
@@ -34,13 +33,6 @@ import {
 } from "@/lib/utils";
 import type { Inquiry, PageProps } from "@/types";
 import { motion } from "framer-motion";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/Components/ui/select";
 
 interface CreateQuotationProps extends PageProps {
     inquiries: Inquiry[];
@@ -65,8 +57,6 @@ const QuotationsCreate = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        code: "",
-        status: "n/a",
         due_date: "",
         file: null as File | null,
         inquiry_id: "",
@@ -195,7 +185,6 @@ const QuotationsCreate = () => {
     // Form validation check
     const validateForm = () => {
         return (
-            data.code.trim() !== "" &&
             data.due_date !== "" &&
             selectedFile !== null &&
             data.inquiry_id !== ""
@@ -248,41 +237,6 @@ const QuotationsCreate = () => {
             month: "long",
             day: "numeric",
         });
-    };
-
-    const getStatusBadge = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "n/a":
-                return (
-                    <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>N/A</span>
-                    </Badge>
-                );
-            case "val":
-                return (
-                    <Badge className="bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Validated</span>
-                    </Badge>
-                );
-            case "lost":
-                return (
-                    <Badge className="bg-red-100 text-red-800 flex items-center gap-1">
-                        <X className="h-3.5 w-3.5" />
-                        <span>Lost</span>
-                    </Badge>
-                );
-            case "clsd":
-                return (
-                    <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span>Closed</span>
-                    </Badge>
-                );
-            default:
-                return <Badge variant="outline">{status}</Badge>;
-        }
     };
 
     return (
@@ -362,9 +316,9 @@ const QuotationsCreate = () => {
                                         Quotation Information
                                     </h2>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
                                         {/* Inquiry Selection */}
-                                        <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                                        <div className="space-y-1">
                                             <Label
                                                 htmlFor="inquiry_search"
                                                 className="text-sm font-medium"
@@ -428,7 +382,7 @@ const QuotationsCreate = () => {
                                                     }}
                                                     exit={{ opacity: 0, y: -5 }}
                                                     id="inquiry-dropdown"
-                                                    className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full max-h-60 overflow-y-auto"
+                                                    className="relative z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full max-h-60 overflow-y-auto"
                                                 >
                                                     {filteredInquiries.length ===
                                                     0 ? (
@@ -488,52 +442,6 @@ const QuotationsCreate = () => {
                                             </p>
                                         </div>
 
-                                        {/* Quotation Code Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="code"
-                                                className="text-sm font-medium"
-                                            >
-                                                Quotation Code{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Hash className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="code"
-                                                    type="text"
-                                                    placeholder="QT-INQ-001"
-                                                    value={data.code}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "code",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.code
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    required
-                                                />
-                                            </div>
-                                            {errors.code && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.code}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Enter a unique code for this
-                                                quotation
-                                            </p>
-                                        </div>
-
                                         {/* Due Date Field */}
                                         <div className="space-y-1">
                                             <Label
@@ -581,66 +489,6 @@ const QuotationsCreate = () => {
                                             <p className="text-xs text-gray-500 mt-1">
                                                 Set the expiration date for this
                                                 quotation
-                                            </p>
-                                        </div>
-
-                                        {/* Status Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="status"
-                                                className="text-sm font-medium"
-                                            >
-                                                Status
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                                                    <FileText className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Select
-                                                    value={data.status}
-                                                    onValueChange={(value) =>
-                                                        setData("status", value)
-                                                    }
-                                                >
-                                                    <SelectTrigger
-                                                        className={`pl-10 ${
-                                                            errors.status
-                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                                : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                        }`}
-                                                    >
-                                                        <SelectValue placeholder="Select status" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="n/a">
-                                                            N/A
-                                                        </SelectItem>
-                                                        <SelectItem value="val">
-                                                            Validated
-                                                        </SelectItem>
-                                                        <SelectItem value="lost">
-                                                            Lost
-                                                        </SelectItem>
-                                                        <SelectItem value="wip">
-                                                            Work in Progress
-                                                        </SelectItem>
-                                                        <SelectItem value="ar">
-                                                            Awaiting Review
-                                                        </SelectItem>
-                                                        <SelectItem value="clsd">
-                                                            Closed
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            {errors.status && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.status}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Current status of this quotation
                                             </p>
                                         </div>
                                     </div>
@@ -937,10 +785,12 @@ const QuotationsCreate = () => {
                                         for this quotation.
                                     </p>
                                     <p className="mt-1">
-                                        Once created, this quotation will be
-                                        linked to the selected inquiry and can
-                                        be accessed through both the quotation
-                                        and inquiry management sections.
+                                        The quotation code and status will be
+                                        automatically generated. Once created,
+                                        this quotation will be linked to the
+                                        selected inquiry and can be accessed
+                                        through both the quotation and inquiry
+                                        management sections.
                                     </p>
                                 </div>
                             </div>

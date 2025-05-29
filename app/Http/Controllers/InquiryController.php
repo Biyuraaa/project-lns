@@ -227,7 +227,6 @@ class InquiryController extends Controller
     {
         // Validate the request
         $validatedData = $request->validate([
-            'code' => 'required|string|max:50|unique:quotations,code',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
             'due_date' => 'required|date',
         ]);
@@ -244,13 +243,8 @@ class InquiryController extends Controller
 
             // Create the quotation
             $inquiry->quotation()->create([
-                'code' => $validatedData['code'],
                 'file' => $validatedData['file'] ?? null,
                 'due_date' => $validatedData['due_date'],
-            ]);
-
-            $inquiry->update([
-                'status' => 'process',
             ]);
 
             return redirect()->route('inquiries.show',  $inquiry)

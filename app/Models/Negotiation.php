@@ -16,23 +16,6 @@ class Negotiation extends Model
     ];
 
     /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    protected static function booted()
-    {
-        static::created(function ($negotiation) {
-            $negotiation->quotation->updateQuotationCode();
-        });
-
-        // Update quotation code when a negotiation is deleted
-        static::deleted(function ($negotiation) {
-            $negotiation->quotation->updateQuotationCode();
-        });
-    }
-
-    /**
      * Get the quotation associated with the negotiation.
      */
 

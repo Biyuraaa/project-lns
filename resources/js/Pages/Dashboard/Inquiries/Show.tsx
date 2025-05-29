@@ -58,20 +58,6 @@ interface InquiriesShowProps extends PageProps {
 const InquiriesShow = () => {
     const { inquiry, quotation } = usePage<InquiriesShowProps>().props;
 
-    // Get status badge variant
-    const getStatusBadgeVariant = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "pending":
-                return "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200";
-            case "resolved":
-                return "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200";
-            case "closed":
-                return "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200";
-            default:
-                return "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200";
-        }
-    };
-
     // Get status icon
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
@@ -105,7 +91,7 @@ const InquiriesShow = () => {
                         />
 
                         <div className="flex items-center gap-2">
-                            {!inquiry.quotation && (
+                            {!quotation && (
                                 <Link
                                     href={route("quotations.create", {
                                         inquiry_id: inquiry.id,
@@ -241,18 +227,6 @@ const InquiriesShow = () => {
                                 Details
                             </TabsTrigger>
                             <TabsTrigger
-                                value="quotations"
-                                className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:text-amber-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
-                            >
-                                <ClipboardList className="h-4 w-4" />
-                                Quotation
-                                {quotation && (
-                                    <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs font-medium text-amber-800">
-                                        1
-                                    </span>
-                                )}
-                            </TabsTrigger>
-                            <TabsTrigger
                                 value="team"
                                 className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:text-amber-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
                             >
@@ -338,6 +312,9 @@ const InquiriesShow = () => {
 
                                                     {/* Quantity */}
                                                     <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                        <h3 className="text-sm font-medium text-muted-foreground">
+                                                            Business Unit
+                                                        </h3>
                                                         <p className="mt-1 flex items-center text-base">
                                                             <ShoppingBag className="h-4 w-4 text-amber-500 mr-2" />
                                                             <span className="font-medium">
@@ -429,13 +406,212 @@ const InquiriesShow = () => {
                                         </Card>
                                     </motion.div>
 
-                                    {/* End User Information Card */}
+                                    {/* Quotation Section (moved from tab) */}
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{
                                             duration: 0.3,
                                             delay: 0.1,
+                                        }}
+                                    >
+                                        <Card>
+                                            <CardHeader className="pb-3 bg-muted/40">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                                            <div className="bg-amber-100 p-1.5 rounded-md">
+                                                                <ClipboardList className="h-5 w-5 text-amber-600" />
+                                                            </div>
+                                                            Quotation
+                                                        </CardTitle>
+                                                        <CardDescription>
+                                                            Quotation generated
+                                                            for this inquiry
+                                                        </CardDescription>
+                                                    </div>
+                                                    {!quotation && (
+                                                        <Link
+                                                            href={route(
+                                                                "quotations.create",
+                                                                {
+                                                                    inquiry_id:
+                                                                        inquiry.id,
+                                                                }
+                                                            )}
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-amber-600 hover:bg-amber-700 text-white"
+                                                            >
+                                                                <Plus className="h-4 w-4 mr-1" />
+                                                                Add Quotation
+                                                            </Button>
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-6">
+                                                {quotation ? (
+                                                    <motion.div
+                                                        key={quotation.id}
+                                                        initial={{
+                                                            opacity: 0,
+                                                            y: 10,
+                                                        }}
+                                                        animate={{
+                                                            opacity: 1,
+                                                            y: 0,
+                                                        }}
+                                                        transition={{
+                                                            duration: 0.2,
+                                                        }}
+                                                        className="group"
+                                                    >
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
+                                                            <div className="flex items-center mb-3 sm:mb-0">
+                                                                <div className="w-10 h-10 rounded-md flex items-center justify-center bg-amber-100 text-amber-700 mr-3">
+                                                                    <ClipboardList className="h-5 w-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-sm font-medium flex items-center">
+                                                                        {
+                                                                            quotation.code
+                                                                        }
+                                                                        <Badge
+                                                                            className={`ml-2 ${
+                                                                                quotation.status ===
+                                                                                "n/a"
+                                                                                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                                                    : quotation.status ===
+                                                                                      "val"
+                                                                                    ? "bg-green-100 text-green-800 border-green-200"
+                                                                                    : quotation.status ===
+                                                                                      "wip"
+                                                                                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                                                                                    : quotation.status ===
+                                                                                      "lost"
+                                                                                    ? "bg-red-100 text-red-800 border-red-200"
+                                                                                    : quotation.status ===
+                                                                                      "clsd"
+                                                                                    ? "bg-slate-100 text-slate-800 border-slate-200"
+                                                                                    : "bg-gray-100 text-gray-800 border-gray-200"
+                                                                            }`}
+                                                                        >
+                                                                            {quotation.status ===
+                                                                            "n/a"
+                                                                                ? "N/A"
+                                                                                : quotation.status ===
+                                                                                  "val"
+                                                                                ? "Validated"
+                                                                                : quotation.status ===
+                                                                                  "wip"
+                                                                                ? "In Progress"
+                                                                                : quotation.status ===
+                                                                                  "lost"
+                                                                                ? "Lost"
+                                                                                : quotation.status ===
+                                                                                  "clsd"
+                                                                                ? "Closed"
+                                                                                : quotation.status}
+                                                                        </Badge>
+                                                                    </h4>
+                                                                    <div className="flex items-center mt-1">
+                                                                        <span className="text-xs text-muted-foreground flex items-center">
+                                                                            <Calendar className="h-3 w-3 mr-1" />
+                                                                            Due:{" "}
+                                                                            {formatDate(
+                                                                                quotation.due_date
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex space-x-2">
+                                                                {quotation.file && (
+                                                                    <TooltipProvider>
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger
+                                                                                asChild
+                                                                            >
+                                                                                <a
+                                                                                    href={`/storage/files/quotations/${quotation.file}`}
+                                                                                    download
+                                                                                    className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                                                                >
+                                                                                    <Download className="h-4 w-4" />
+                                                                                </a>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent>
+                                                                                <p>
+                                                                                    Download
+                                                                                    Quotation
+                                                                                </p>
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    </TooltipProvider>
+                                                                )}
+
+                                                                <Link
+                                                                    href={route(
+                                                                        "quotations.show",
+                                                                        quotation.id
+                                                                    )}
+                                                                >
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="h-9"
+                                                                    >
+                                                                        View
+                                                                        Details
+                                                                        <ChevronRight className="h-4 w-4 ml-1" />
+                                                                    </Button>
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                ) : (
+                                                    <div className="text-center py-8 px-4">
+                                                        <div className="bg-muted/30 inline-flex rounded-full p-3 mb-4">
+                                                            <ClipboardList className="h-6 w-6 text-muted-foreground" />
+                                                        </div>
+                                                        <h3 className="text-lg font-medium mb-2">
+                                                            No quotation yet
+                                                        </h3>
+                                                        <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
+                                                            Create a quotation
+                                                            to provide pricing
+                                                            and product details
+                                                            to the customer.
+                                                        </p>
+                                                        <Link
+                                                            href={route(
+                                                                "quotations.create",
+                                                                {
+                                                                    inquiry_id:
+                                                                        inquiry.id,
+                                                                }
+                                                            )}
+                                                        >
+                                                            <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+                                                                <Plus className="h-4 w-4 mr-2" />
+                                                                Create Quotation
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+
+                                    {/* End User Information Card */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{
+                                            duration: 0.3,
+                                            delay: 0.2,
                                         }}
                                     >
                                         <Card className="overflow-hidden border-border">
@@ -731,6 +907,9 @@ const InquiriesShow = () => {
                                                     </div>
                                                     <div className="flex items-center justify-between py-2 border-b border-border/60">
                                                         <span className="text-sm text-muted-foreground">
+                                                            Business Unit
+                                                        </span>
+                                                        <span className="text-sm font-medium">
                                                             {
                                                                 inquiry
                                                                     .business_unit
@@ -745,12 +924,12 @@ const InquiriesShow = () => {
                                                         <Badge
                                                             variant="outline"
                                                             className={
-                                                                inquiry.quotation
+                                                                quotation
                                                                     ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                                                                     : "bg-amber-100 text-amber-800 border-amber-200"
                                                             }
                                                         >
-                                                            {inquiry.quotation
+                                                            {quotation
                                                                 ? "Yes"
                                                                 : "No"}
                                                         </Badge>
@@ -778,189 +957,6 @@ const InquiriesShow = () => {
                                     </motion.div>
                                 </div>
                             </div>
-                        </TabsContent>
-                        {/* Quotations Tab */}
-                        <TabsContent value="quotations" className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <CardTitle className="text-xl font-bold flex items-center gap-2">
-                                                <ClipboardList className="h-5 w-5 text-amber-500" />
-                                                Quotation
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Quotation generated for this
-                                                inquiry
-                                            </CardDescription>
-                                        </div>
-                                        {!quotation && (
-                                            <Link
-                                                href={route(
-                                                    "quotations.create",
-                                                    {
-                                                        inquiry_id: inquiry.id,
-                                                    }
-                                                )}
-                                            >
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-amber-600 hover:bg-amber-700 text-white"
-                                                >
-                                                    <Plus className="h-4 w-4 mr-1" />
-                                                    Add Quotation
-                                                </Button>
-                                            </Link>
-                                        )}
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {quotation ? (
-                                        <motion.div
-                                            key={quotation.id}
-                                            initial={{
-                                                opacity: 0,
-                                                y: 10,
-                                            }}
-                                            animate={{
-                                                opacity: 1,
-                                                y: 0,
-                                            }}
-                                            transition={{
-                                                duration: 0.2,
-                                            }}
-                                            className="group"
-                                        >
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                                                <div className="flex items-center mb-3 sm:mb-0">
-                                                    <div className="w-10 h-10 rounded-md flex items-center justify-center bg-amber-100 text-amber-700 mr-3">
-                                                        <ClipboardList className="h-5 w-5" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-medium flex items-center">
-                                                            {quotation.code}
-                                                            <Badge
-                                                                className={`ml-2 ${
-                                                                    quotation.status ===
-                                                                    "n/a"
-                                                                        ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                                                        : quotation.status ===
-                                                                          "val"
-                                                                        ? "bg-green-100 text-green-800 border-green-200"
-                                                                        : quotation.status ===
-                                                                          "wip"
-                                                                        ? "bg-blue-100 text-blue-800 border-blue-200"
-                                                                        : quotation.status ===
-                                                                          "lost"
-                                                                        ? "bg-red-100 text-red-800 border-red-200"
-                                                                        : quotation.status ===
-                                                                          "clsd"
-                                                                        ? "bg-slate-100 text-slate-800 border-slate-200"
-                                                                        : "bg-gray-100 text-gray-800 border-gray-200"
-                                                                }`}
-                                                            >
-                                                                {quotation.status ===
-                                                                "n/a"
-                                                                    ? "N/A"
-                                                                    : quotation.status ===
-                                                                      "val"
-                                                                    ? "Validated"
-                                                                    : quotation.status ===
-                                                                      "wip"
-                                                                    ? "In Progress"
-                                                                    : quotation.status ===
-                                                                      "lost"
-                                                                    ? "Lost"
-                                                                    : quotation.status ===
-                                                                      "clsd"
-                                                                    ? "Closed"
-                                                                    : quotation.status}
-                                                            </Badge>
-                                                        </h4>
-                                                        <div className="flex items-center mt-1">
-                                                            <span className="text-xs text-muted-foreground flex items-center">
-                                                                <Calendar className="h-3 w-3 mr-1" />
-                                                                Due:{" "}
-                                                                {formatDate(
-                                                                    quotation.due_date
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex space-x-2">
-                                                    {quotation.file && (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger
-                                                                    asChild
-                                                                >
-                                                                    <a
-                                                                        href={`/storage/files/quotations/${quotation.file}`}
-                                                                        download
-                                                                        className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                    >
-                                                                        <Download className="h-4 w-4" />
-                                                                    </a>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p>
-                                                                        Download
-                                                                        Quotation
-                                                                    </p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    )}
-
-                                                    <Link
-                                                        href={route(
-                                                            "quotations.show",
-                                                            quotation.id
-                                                        )}
-                                                    >
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="h-9"
-                                                        >
-                                                            View Details
-                                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                                        </Button>
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <div className="text-center py-10 px-4">
-                                            <div className="bg-muted/30 inline-flex rounded-full p-3 mb-4">
-                                                <ClipboardList className="h-6 w-6 text-muted-foreground" />
-                                            </div>
-                                            <h3 className="text-lg font-medium mb-2">
-                                                No quotation yet
-                                            </h3>
-                                            <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
-                                                Create a quotation to provide
-                                                pricing and product details to
-                                                the customer.
-                                            </p>
-                                            <Link
-                                                href={route(
-                                                    "quotations.create",
-                                                    {
-                                                        inquiry_id: inquiry.id,
-                                                    }
-                                                )}
-                                            >
-                                                <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Create Quotation
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
                         </TabsContent>
 
                         {/* Team Tab */}

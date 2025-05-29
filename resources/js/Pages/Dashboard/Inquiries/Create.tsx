@@ -77,7 +77,6 @@ const InquiriesCreate = () => {
     const defaultDate = today.toISOString().split("T")[0];
 
     const { data, setData, post, processing, errors } = useForm({
-        code: "",
         customer_id: "",
         pic_engineer_id: "",
         sales_id: "",
@@ -180,7 +179,7 @@ const InquiriesCreate = () => {
     const [isPickingDate, setIsPickingDate] = useState(false);
 
     const validateForm = () => {
-        const requiredFields = [data.description, data.inquiry_date, data.code];
+        const requiredFields = [data.description, data.inquiry_date];
         if (isNewCustomer) {
             requiredFields.push(data.customer_name, data.customer_email);
         } else {
@@ -190,8 +189,7 @@ const InquiriesCreate = () => {
         const hasRequiredFields = requiredFields.every(
             (field) => field && field.toString().trim() !== ""
         );
-        const isValidCode = isCodeValid && data.code && data.code.trim() !== "";
-        return hasRequiredFields && isValidCode;
+        return hasRequiredFields;
     };
 
     // File handling functions
@@ -352,53 +350,7 @@ const InquiriesCreate = () => {
                                         Inquiry Information
                                     </h2>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {/* Inquiry Code Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="code"
-                                                className="text-sm font-medium"
-                                            >
-                                                Inquiry Code{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <FileText className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="code"
-                                                    type="text"
-                                                    value={data.code}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "code",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.code
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="e.g., INQ-230501-001"
-                                                    required
-                                                />
-                                            </div>
-                                            {errors.code && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.code}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                A unique code is auto-generated,
-                                                but you can customize it
-                                            </p>
-                                        </div>
-
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Inquiry Date Field */}
                                         <div className="space-y-1">
                                             <Label
