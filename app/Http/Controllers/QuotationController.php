@@ -184,7 +184,6 @@ class QuotationController extends Controller
             }
 
             $quotation->update([
-                'code' => $validatedData['code'],
                 'status' => $validatedData['status'],
                 'due_date' => $validatedData['due_date'],
                 'file' => $validatedData['file'] ?? $quotation->file,

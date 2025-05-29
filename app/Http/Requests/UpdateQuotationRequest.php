@@ -24,8 +24,7 @@ class UpdateQuotationRequest extends FormRequest
 
         return [
             //
-            'code' => 'required|string|max:50|unique:quotations,code,' . $this->quotation->id,
-            'status' => 'required|in: n/a,val,lost,clsd',
+            'status' => 'required|in: n/a,val,lost,wip',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
             'due_date' => 'nullable|date',
         ];

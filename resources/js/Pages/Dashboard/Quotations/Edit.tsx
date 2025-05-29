@@ -78,7 +78,9 @@ const QuotationEdit = () => {
         _method: "put",
         id: quotation.id,
         status: quotation.status,
-        due_date: quotation.due_date || "",
+        due_date: quotation.due_date
+            ? format(parseISO(quotation.due_date), "yyyy-MM-dd")
+            : "",
         file: null as File | null,
         _removeFile: false as boolean,
     });
