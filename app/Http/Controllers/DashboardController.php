@@ -54,11 +54,11 @@ class DashboardController extends Controller
         $poQuery = PurchaseOrder::query();
 
         $posThisMonth = $poQuery->clone()
-            ->whereBetween('purchase_orders.created_at', [$currentMonthStart, now()])
+            ->whereBetween('purchase_orders.date', [$currentMonthStart, now()])
             ->count();
 
         $posLastMonth = $poQuery->clone()
-            ->whereBetween('purchase_orders.created_at', [$lastMonthStart, $lastMonthEnd])
+            ->whereBetween('purchase_orders.date', [$lastMonthStart, $lastMonthEnd])
             ->count();
 
         $posGrowth = $this->calculateGrowth($posThisMonth, $posLastMonth);
