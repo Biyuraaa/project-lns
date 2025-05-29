@@ -80,6 +80,15 @@ export interface Quotation {
     status: string;
     file: string;
     due_date: string;
+    negotiations: Negotiation[];
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Negotiation {
+    id: number;
+    quotation: Quotation;
+    file: string;
     created_at?: string;
     updated_at?: string;
 }

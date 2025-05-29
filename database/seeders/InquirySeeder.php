@@ -84,7 +84,6 @@ class InquirySeeder extends Seeder
                 }
                 // Create the inquiry
                 Inquiry::factory()->create([
-                    'code' => 'INQ-' . $customer->id . '-' . $current->format('Ym') . '-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
                     'customer_id' => $customer->id,
                     'description' => fake()->text(100),
                     'business_unit_id' => $businessUnits->isNotEmpty() ? $businessUnits->random()->id : null,

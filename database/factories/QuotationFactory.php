@@ -12,6 +12,32 @@ use Carbon\Carbon;
 class QuotationFactory extends Factory
 {
     /**
+     * Convert month to Roman numerals
+     * 
+     * @param int $month
+     * @return string
+     */
+    private function monthToRoman(int $month): string
+    {
+        $romans = [
+            1 => 'I',
+            2 => 'II',
+            3 => 'III',
+            4 => 'IV',
+            5 => 'V',
+            6 => 'VI',
+            7 => 'VII',
+            8 => 'VIII',
+            9 => 'IX',
+            10 => 'X',
+            11 => 'XI',
+            12 => 'XII'
+        ];
+
+        return $romans[$month];
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -21,14 +47,51 @@ class QuotationFactory extends Factory
         // Generate a due date between now and 3 months in the future
         $dueDate = Carbon::now()->addDays(rand(7, 90));
 
+        // Default status
         return [
-            'code' => 'QUO-' . $this->faker->unique()->numerify('######'),
-            'inquiry_id' => Inquiry::inRandomOrder()->first()->id ?? Inquiry::factory(),
-            'status' => 'n/a', // Default status
+            'inquiry_id' => Inquiry::factory(),
             'file' => null, // No files as requested
             'due_date' => $dueDate,
             'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     *
+     * @return $this
+     */
+    public function configure()
+    {
+        return $this->afterMaking(function ($quotation) {
+            // Logic that should happen after making but before creating
+        })->afterCreating(function ($quotation) {
+            // Generate code with the format id/Q/LNS/month/year
+            $inquiry = $quotation->inquiry;
+            $date = Carbon::parse($quotation->created_at ?: now());
+            $romanMonth = $this->monthToRoman($date->month);
+            $year = $date->year;
+
+            // Count existing negotiations
+            $negotiationCount = $quotation->negotiations()->count();
+            $qPrefix = $negotiationCount > 0 ? "Q{$negotiationCount}" : "Q";
+
+            // Update the code
+            $quotation->code = "{$inquiry->id}/{$qPrefix}/LNS/{$romanMonth}/{$year}";
+            $quotation->save();
+        });
+    }
+
+    /**
+     * Set the quotation as not applicable (n/a)
+     */
+    public function na()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'status' => 'n/a',
+            ];
+        });
     }
 
     /**
@@ -63,6 +126,15 @@ class QuotationFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'status' => 'clsd',
+            ];
+        });
+    }
+
+    public function workInProgress()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'status' => 'wip',
             ];
         });
     }

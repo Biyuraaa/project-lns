@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('quotations', function (Blueprint $table) {
+        Schema::create('negotiations', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
-            $table->foreignId('inquiry_id')->constrained('inquiries')->onDelete('cascade');
-            $table->enum('status', ['n/a', 'val', 'lost', 'wip'])->default('val');
             $table->string('file')->nullable();
-            $table->date('due_date')->nullable();
+            $table->foreignId('quotation_id')
+                ->constrained('quotations')
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('quotations');
+        Schema::dropIfExists('negotiations');
     }
 };

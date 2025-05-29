@@ -46,17 +46,17 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/Components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { formatDate, formatTime } from "@/lib/utils";
 
 interface InquiriesShowProps extends PageProps {
     inquiry: Inquiry;
-    quotations: Quotation[];
+    quotation: Quotation | null;
 }
 
 const InquiriesShow = () => {
-    const { inquiry, quotations } = usePage<InquiriesShowProps>().props;
+    const { inquiry, quotation } = usePage<InquiriesShowProps>().props;
 
     // Get status badge variant
     const getStatusBadgeVariant = (status: string) => {
@@ -245,10 +245,10 @@ const InquiriesShow = () => {
                                 className="flex items-center gap-2 px-5 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:text-amber-600 data-[state=active]:font-medium transition-all duration-200 text-muted-foreground hover:text-foreground -mb-px"
                             >
                                 <ClipboardList className="h-4 w-4" />
-                                Quotations
-                                {quotations?.length > 0 && (
+                                Quotation
+                                {quotation && (
                                     <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs font-medium text-amber-800">
-                                        {quotations.length}
+                                        1
                                     </span>
                                 )}
                             </TabsTrigger>
@@ -787,19 +787,19 @@ const InquiriesShow = () => {
                                         <div>
                                             <CardTitle className="text-xl font-bold flex items-center gap-2">
                                                 <ClipboardList className="h-5 w-5 text-amber-500" />
-                                                Quotations
+                                                Quotation
                                             </CardTitle>
                                             <CardDescription>
-                                                Quotations generated for this
+                                                Quotation generated for this
                                                 inquiry
                                             </CardDescription>
                                         </div>
-                                        {!inquiry.quotation && (
+                                        {!quotation && (
                                             <Link
                                                 href={route(
-                                                    "inquiries.quotations.create",
+                                                    "quotations.create",
                                                     {
-                                                        inquiry: inquiry,
+                                                        inquiry_id: inquiry.id,
                                                     }
                                                 )}
                                             >
@@ -815,111 +815,129 @@ const InquiriesShow = () => {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    {quotations && quotations.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {quotations.map((quotation) => (
-                                                <motion.div
-                                                    key={quotation.id}
-                                                    initial={{
-                                                        opacity: 0,
-                                                        y: 10,
-                                                    }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        y: 0,
-                                                    }}
-                                                    transition={{
-                                                        duration: 0.2,
-                                                    }}
-                                                    className="group"
-                                                >
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                                                        <div className="flex items-center mb-3 sm:mb-0">
-                                                            <div className="w-10 h-10 rounded-md flex items-center justify-center bg-amber-100 text-amber-700 mr-3">
-                                                                <ClipboardList className="h-5 w-5" />
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="text-sm font-medium flex items-center">
-                                                                    {
-                                                                        quotation.code
-                                                                    }
-                                                                    <Badge
-                                                                        className={`ml-2 ${
-                                                                            quotation.status ===
-                                                                            "pending"
-                                                                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                                                                : quotation.status ===
-                                                                                  "approved"
-                                                                                ? "bg-green-100 text-green-800 border-green-200"
-                                                                                : "bg-red-100 text-red-800 border-red-200"
-                                                                        }`}
-                                                                    >
-                                                                        {
-                                                                            quotation.status
-                                                                        }
-                                                                    </Badge>
-                                                                </h4>
-                                                                <div className="flex items-center mt-1">
-                                                                    <span className="text-xs text-muted-foreground flex items-center">
-                                                                        <Calendar className="h-3 w-3 mr-1" />
-                                                                        Due:{" "}
-                                                                        {formatDate(
-                                                                            quotation.due_date
-                                                                        )}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex space-x-2">
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger
-                                                                        asChild
-                                                                    >
-                                                                        <a
-                                                                            href={`/storage/files/quotations/${quotation.file}`}
-                                                                            download
-                                                                            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                        >
-                                                                            <Download className="h-4 w-4" />
-                                                                        </a>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p>
-                                                                            Download
-                                                                            Quotation
-                                                                        </p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-
-                                                            <Link
-                                                                href={route(
-                                                                    "quotations.show",
-                                                                    quotation.id
-                                                                )}
+                                    {quotation ? (
+                                        <motion.div
+                                            key={quotation.id}
+                                            initial={{
+                                                opacity: 0,
+                                                y: 10,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                            }}
+                                            transition={{
+                                                duration: 0.2,
+                                            }}
+                                            className="group"
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
+                                                <div className="flex items-center mb-3 sm:mb-0">
+                                                    <div className="w-10 h-10 rounded-md flex items-center justify-center bg-amber-100 text-amber-700 mr-3">
+                                                        <ClipboardList className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-medium flex items-center">
+                                                            {quotation.code}
+                                                            <Badge
+                                                                className={`ml-2 ${
+                                                                    quotation.status ===
+                                                                    "n/a"
+                                                                        ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                                        : quotation.status ===
+                                                                          "val"
+                                                                        ? "bg-green-100 text-green-800 border-green-200"
+                                                                        : quotation.status ===
+                                                                          "wip"
+                                                                        ? "bg-blue-100 text-blue-800 border-blue-200"
+                                                                        : quotation.status ===
+                                                                          "lost"
+                                                                        ? "bg-red-100 text-red-800 border-red-200"
+                                                                        : quotation.status ===
+                                                                          "clsd"
+                                                                        ? "bg-slate-100 text-slate-800 border-slate-200"
+                                                                        : "bg-gray-100 text-gray-800 border-gray-200"
+                                                                }`}
                                                             >
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="h-9"
-                                                                >
-                                                                    View Details
-                                                                    <ChevronRight className="h-4 w-4 ml-1" />
-                                                                </Button>
-                                                            </Link>
+                                                                {quotation.status ===
+                                                                "n/a"
+                                                                    ? "N/A"
+                                                                    : quotation.status ===
+                                                                      "val"
+                                                                    ? "Validated"
+                                                                    : quotation.status ===
+                                                                      "wip"
+                                                                    ? "In Progress"
+                                                                    : quotation.status ===
+                                                                      "lost"
+                                                                    ? "Lost"
+                                                                    : quotation.status ===
+                                                                      "clsd"
+                                                                    ? "Closed"
+                                                                    : quotation.status}
+                                                            </Badge>
+                                                        </h4>
+                                                        <div className="flex items-center mt-1">
+                                                            <span className="text-xs text-muted-foreground flex items-center">
+                                                                <Calendar className="h-3 w-3 mr-1" />
+                                                                Due:{" "}
+                                                                {formatDate(
+                                                                    quotation.due_date
+                                                                )}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
+                                                </div>
+                                                <div className="flex space-x-2">
+                                                    {quotation.file && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger
+                                                                    asChild
+                                                                >
+                                                                    <a
+                                                                        href={`/storage/files/quotations/${quotation.file}`}
+                                                                        download
+                                                                        className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                                                    >
+                                                                        <Download className="h-4 w-4" />
+                                                                    </a>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Download
+                                                                        Quotation
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+
+                                                    <Link
+                                                        href={route(
+                                                            "quotations.show",
+                                                            quotation.id
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-9"
+                                                        >
+                                                            View Details
+                                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </motion.div>
                                     ) : (
                                         <div className="text-center py-10 px-4">
                                             <div className="bg-muted/30 inline-flex rounded-full p-3 mb-4">
                                                 <ClipboardList className="h-6 w-6 text-muted-foreground" />
                                             </div>
                                             <h3 className="text-lg font-medium mb-2">
-                                                No quotations yet
+                                                No quotation yet
                                             </h3>
                                             <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
                                                 Create a quotation to provide
@@ -928,9 +946,9 @@ const InquiriesShow = () => {
                                             </p>
                                             <Link
                                                 href={route(
-                                                    "inquiries.quotations.create",
+                                                    "quotations.create",
                                                     {
-                                                        inquiry: inquiry,
+                                                        inquiry_id: inquiry.id,
                                                     }
                                                 )}
                                             >

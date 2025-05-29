@@ -22,8 +22,8 @@ class DatabaseSeeder extends Seeder
             BusinessUnitSeeder::class,
             InquirySeeder::class,
             QuotationSeeder::class,
-            PurchaseOrderSeeder::class,
-            CompanyGrowthSellingSeeder::class,
+            // PurchaseOrderSeeder::class,
+            // CompanyGrowthSellingSeeder::class,
         ]);
     }
 }

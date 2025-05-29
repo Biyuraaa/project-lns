@@ -113,7 +113,7 @@ class InquiryController extends Controller
 
         return Inertia::render('Dashboard/Inquiries/Show', [
             'inquiry' => $inquiry,
-            'quotations' => $inquiry->quotations,
+            'quotation' => $inquiry->quotation,
         ]);
     }
 
@@ -243,7 +243,7 @@ class InquiryController extends Controller
             }
 
             // Create the quotation
-            $inquiry->quotations()->create([
+            $inquiry->quotation()->create([
                 'code' => $validatedData['code'],
                 'file' => $validatedData['file'] ?? null,
                 'due_date' => $validatedData['due_date'],

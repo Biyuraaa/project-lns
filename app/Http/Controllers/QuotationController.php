@@ -35,9 +35,8 @@ class QuotationController extends Controller
      */
     public function create()
     {
-        // Get inquiries that don't have quotations with status "val"
-        $inquiries = Inquiry::whereDoesntHave('quotations', function ($query) {
-            $query->where('status', 'val');
+        $inquiries = Inquiry::whereDoesntHave('quotation', function ($query) {
+            $query->where('status', 'wip');
         })
             ->with([
                 'customer:id,name',
