@@ -968,16 +968,19 @@ const QuotationShow = () => {
                                                             <div className="flex items-center gap-4">
                                                                 <div className="w-10 h-10 rounded-md flex items-center justify-center bg-blue-100 text-blue-700">
                                                                     {getFileIcon(
-                                                                        negotiation.file
+                                                                        negotiation.file ||
+                                                                            ""
                                                                     )}
                                                                 </div>
                                                                 <div>
                                                                     <p className="font-medium">
                                                                         {negotiation.file
-                                                                            .split(
-                                                                                "/"
-                                                                            )
-                                                                            .pop()}
+                                                                            ? negotiation.file
+                                                                                  .split(
+                                                                                      "/"
+                                                                                  )
+                                                                                  .pop()
+                                                                            : "Unnamed File"}
                                                                     </p>
                                                                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                                                         <ClockIcon className="h-3.5 w-3.5" />
@@ -994,13 +997,15 @@ const QuotationShow = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <a
-                                                                    href={`/storage/files/negotiations/${negotiation.file}`}
-                                                                    download
-                                                                    className="p-2 rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                                                                >
-                                                                    <Download className="h-4 w-4" />
-                                                                </a>
+                                                                {negotiation.file && (
+                                                                    <a
+                                                                        href={`/storage/files/negotiations/${negotiation.file}`}
+                                                                        download
+                                                                        className="p-2 rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                                                    >
+                                                                        <Download className="h-4 w-4" />
+                                                                    </a>
+                                                                )}
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
