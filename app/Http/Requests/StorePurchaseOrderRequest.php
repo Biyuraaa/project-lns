@@ -26,7 +26,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'code' => 'required|string|max:50|unique:purchase_orders,code',
             'quotation_id' => 'required|exists:quotations,id',
             'amount' => 'required|integer|min:1',
-            'status' => 'required|string|in:wip,ar,ibt',
+            'status' => 'required|string|in:wip,ar,ibt,clsd',
             'contract_number' => 'nullable|string|max:50',
             'job_number' => 'nullable|string|max:50',
             'date' => 'nullable|date',

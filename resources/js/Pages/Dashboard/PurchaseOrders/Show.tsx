@@ -47,7 +47,7 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/Components/ui/tooltip";
 import { formatDate, formatTime } from "@/lib/utils";
 
 interface PurchaseOrdersShowProps extends PageProps {
@@ -122,7 +122,7 @@ const PurchaseOrdersShow = () => {
             case "ar":
                 return "Order is in Accounts Receivable status";
             case "ibt":
-                return "Order is in Inter-Branch Transfer status";
+                return "Order is in Income Before Tax status";
             default:
                 return "Status information unavailable";
         }
@@ -604,7 +604,7 @@ const PurchaseOrdersShow = () => {
                                                                         {purchaseOrder.status ===
                                                                         "ar"
                                                                             ? "accounts receivable"
-                                                                            : "inter-branch transfer"}
+                                                                            : "income before tax"}
                                                                     </p>
                                                                     <p className="text-xs text-muted-foreground mt-1">
                                                                         {formatDate(

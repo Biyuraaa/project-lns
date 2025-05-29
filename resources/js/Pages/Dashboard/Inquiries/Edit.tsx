@@ -654,12 +654,6 @@ const InquiriesEdit = () => {
                                                     <option value="pending">
                                                         Pending
                                                     </option>
-                                                    <option value="resolved">
-                                                        Resolved
-                                                    </option>
-                                                    <option value="closed">
-                                                        Closed
-                                                    </option>
                                                     <option value="process">
                                                         In Process
                                                     </option>

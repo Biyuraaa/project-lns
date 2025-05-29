@@ -24,7 +24,7 @@ class PurchaseOrderSeeder extends Seeder
         $this->command->info('Creating purchase orders for validated quotations...');
 
         // Get all validated quotations
-        $validatedQuotations = Quotation::where('status', 'val')->get();
+        $validatedQuotations = Quotation::where('status', 'wip')->get();
 
         if ($validatedQuotations->isEmpty()) {
             $this->command->warn('No validated quotations found. No purchase orders will be created.');
@@ -47,10 +47,6 @@ class PurchaseOrderSeeder extends Seeder
             if ($poDate->isFuture()) {
                 $poDate = Carbon::now()->subDays(rand(1, 7));
             }
-
-            // Determine status based on age of PO
-            $daysSincePoDate = Carbon::now()->diffInDays($poDate);
-
 
             // Create the purchase order
             PurchaseOrder::factory()->create([

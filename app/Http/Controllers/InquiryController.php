@@ -272,6 +272,9 @@ class InquiryController extends Controller
                 'due_date' => $validatedData['due_date'],
             ]);
 
+            // Update the inquiry status to 'process'
+            $inquiry->update(['status' => 'process']);
+
             return redirect()->route('inquiries.show',  $inquiry)
                 ->with('success', 'Quotation created successfully.');
         } catch (\Exception $e) {

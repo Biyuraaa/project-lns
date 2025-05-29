@@ -24,7 +24,7 @@ class PurchaseOrderFactory extends Factory
                 return Quotation::where('status', 'wip')->inRandomOrder()->first()->id;
             },
             'amount' => $this->faker->numberBetween(10000000, 500000000),
-            'status' => $this->faker->randomElement(['wip', 'ar', 'ibt']),
+            'status' => $this->faker->randomElement(['wip', 'ar', 'ibt', 'clsd']),
             'contract_number' => 'CTR-' . $this->faker->numerify('######'),
             'job_number' => 'JOB-' . $this->faker->numerify('######'),
             'date' => $this->faker->dateTimeBetween('-6 months', 'now'),
@@ -59,11 +59,23 @@ class PurchaseOrderFactory extends Factory
     /**
      * Set the purchase order as issued by third party.
      */
-    public function issuedByThirdParty()
+    public function incomeBeforeTax()
     {
         return $this->state(function (array $attributes) {
             return [
                 'status' => 'ibt',
+            ];
+        });
+    }
+
+    /**
+     * Set the purchase order as closed.
+     */
+    public function closed()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'status' => 'clsd',
             ];
         });
     }

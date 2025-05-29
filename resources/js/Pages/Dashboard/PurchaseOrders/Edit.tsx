@@ -571,8 +571,10 @@ const PurchaseOrdersEdit = () => {
                                                         AR (Accounts Receivable)
                                                     </SelectItem>
                                                     <SelectItem value="ibt">
-                                                        IBT (Inter-Branch
-                                                        Transfer)
+                                                        IBT (Income Before Tax)
+                                                    </SelectItem>
+                                                    <SelectItem value="clsd">
+                                                        Closed
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>

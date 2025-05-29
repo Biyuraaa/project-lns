@@ -61,7 +61,7 @@ const STATUS_COLORS = {
     wip: "#3b82f6", // blue
     ar: "#f59e0b", // amber
     ibt: "#a855f7", // purple
-    others: "#10b981", // green
+    clsd: "#10b981", // green
 };
 
 // Predefined date ranges - sama dengan TotalValueCard
@@ -281,7 +281,7 @@ export const PurchaseOrderStatusChart = ({
         filteredPOs.forEach((po) => {
             // Normalize status
             let status = po.status.toLowerCase();
-            if (!["wip", "ar", "ibt"].includes(status)) {
+            if (!["wip", "ar", "ibt", "clsd"].includes(status)) {
                 status = "others";
             }
 

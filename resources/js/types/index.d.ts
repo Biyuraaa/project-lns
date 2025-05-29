@@ -106,15 +106,16 @@ export interface PurchaseOrder {
     updated_at?: string;
 }
 
-interface CompanyGrowthData {
+export interface CompanyGrowthData {
     month: string;
+    month_year?: string;
+    year: string;
     inquiry: number;
     quotation: number;
     po: number;
     target: number;
     business_unit_id: string;
 }
-
 interface TopCustomerData {
     name: string;
     value: number;

@@ -59,7 +59,7 @@ class InquiryFactory extends Factory
             'file' => null, // Leave file as null since we're not generating actual files
             'pic_engineer_id' => User::role('pic-engineer')->inRandomOrder()->first()->id ?? null,
             'sales_id' => User::role('sales')->inRandomOrder()->first()->id ?? null,
-            'status' => $this->faker->randomElement(['pending', 'resolved', 'closed']),
+            'status' => $this->faker->randomElement(['pending', 'process']),
             'created_at' => $inquiryDate,
         ];
     }
@@ -74,34 +74,6 @@ class InquiryFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'status' => 'pending',
-            ];
-        });
-    }
-
-    /**
-     * Indicate that the inquiry is resolved.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function resolved()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'status' => 'resolved',
-            ];
-        });
-    }
-
-    /**
-     * Indicate that the inquiry is closed.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function closed()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'status' => 'closed',
             ];
         });
     }

@@ -208,43 +208,42 @@ class DashboardController extends Controller
     {
         $data = [];
 
-        // Get all the months we want to display (past 6 months)
+        $startDate = now()->subMonths(36)->startOfMonth();
         $months = [];
         $tempDate = $startDate->copy();
         $endDate = now();
 
-        while ($tempDate <= $endDate && count($months) < 6) {
+        while ($tempDate <= $endDate) {
             $months[] = [
                 'name' => $tempDate->format('M'),
+                'full_month' => $tempDate->format('M Y'),
+                'year' => $tempDate->format('Y'),
                 'start' => $tempDate->copy()->startOfMonth(),
                 'end' => $tempDate->copy()->endOfMonth(),
             ];
             $tempDate->addMonth();
         }
 
-        // If we don't have 6 months of data, add additional months to reach 6
-        while (count($months) < 6) {
-            $tempDate = end($months)['end']->copy()->addDay();
-            $months[] = [
-                'name' => $tempDate->format('M'),
-                'start' => $tempDate->copy()->startOfMonth(),
-                'end' => $tempDate->copy()->endOfMonth(),
-            ];
-        }
-
         // First, add data for "all" business units
         foreach ($months as $month) {
-            $inquiryCount = Inquiry::where('status', '!=', 'closed ')->whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $inquiryCount = Inquiry::where('status', 'process')
+                ->whereBetween('inquiry_date', [$month['start'], $month['end']])
+                ->count();
 
-            $quotationCount = Quotation::where('status', 'val')->whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $quotationCount = Quotation::where('status', 'wip')
+                ->whereBetween('created_at', [$month['start'], $month['end']])
+                ->count();
 
-            $poCount = PurchaseOrder::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $poCount = PurchaseOrder::whereBetween('created_at', [$month['start'], $month['end']])
+                ->count();
 
             // Get target value
             $target = $this->getMonthlyTarget($month['start']);
 
             $data[] = [
                 'month' => $month['name'],
+                'month_year' => $month['full_month'],
+                'year' => $month['year'],
                 'inquiry' => $inquiryCount,
                 'quotation' => $quotationCount,
                 'po' => $poCount,
@@ -257,7 +256,7 @@ class DashboardController extends Controller
         foreach ($businessUnits as $businessUnit) {
             foreach ($months as $month) {
                 $inquiryCount = Inquiry::where('business_unit_id', $businessUnit['id'])
-                    ->whereBetween('created_at', [$month['start'], $month['end']])
+                    ->whereBetween('inquiry_date', [$month['start'], $month['end']])
                     ->count();
 
                 $quotationCount = Quotation::join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
@@ -273,6 +272,8 @@ class DashboardController extends Controller
 
                 $data[] = [
                     'month' => $month['name'],
+                    'month_year' => $month['full_month'],
+                    'year' => $month['year'],
                     'inquiry' => $inquiryCount,
                     'quotation' => $quotationCount,
                     'po' => $poCount,
@@ -521,7 +522,7 @@ class DashboardController extends Controller
 
         // Use actual data from DB, but if status field doesn't exist,
         // add random statuses for demo purposes
-        $statuses = ['WIP', 'AR', 'IST'];
+        $statuses = ['WIP', 'AR', 'IST', 'CLSD'];
         foreach ($poData as &$po) {
             if (empty($po['status'])) {
                 $po['status'] = $statuses[array_rand($statuses)];
