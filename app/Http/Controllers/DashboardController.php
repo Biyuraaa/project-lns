@@ -226,19 +226,14 @@ class DashboardController extends Controller
 
         // First, add data for "all" business units
         foreach ($months as $month) {
-            $inquiryCount = Inquiry::where('status', 'process')
-                ->whereBetween('inquiry_date', [$month['start'], $month['end']])
+            $inquiryCount = Inquiry::whereBetween('created_at', [$month['start'], $month['end']])
                 ->count();
 
-            $quotationCount = Quotation::where('status', 'wip')
-                ->whereBetween('created_at', [$month['start'], $month['end']])
+            $quotationCount = Quotation::whereBetween('created_at', [$month['start'], $month['end']])
                 ->count();
 
             $poCount = PurchaseOrder::whereBetween('created_at', [$month['start'], $month['end']])
                 ->count();
-
-            // Get target value
-            $target = $this->getMonthlyTarget($month['start']);
 
             $data[] = [
                 'month' => $month['name'],
@@ -247,7 +242,6 @@ class DashboardController extends Controller
                 'inquiry' => $inquiryCount,
                 'quotation' => $quotationCount,
                 'po' => $poCount,
-                'target' => $target,
                 'business_unit_id' => 'all',
             ];
         }
@@ -277,7 +271,6 @@ class DashboardController extends Controller
                     'inquiry' => $inquiryCount,
                     'quotation' => $quotationCount,
                     'po' => $poCount,
-                    'target' => $target,
                     'business_unit_id' => $businessUnit['id'],
                 ];
             }

@@ -114,6 +114,9 @@ class QuotationController extends Controller
                 'file' => $validatedData['file'] ?? null,
             ]);
 
+            // Update the inquiry status to 'process'
+            $inquiry->update(['status' => 'process']);
+
             return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Failed to create quotation: ' . $e->getMessage());

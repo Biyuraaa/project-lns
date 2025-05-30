@@ -12,6 +12,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\BusinessUnit;
+use App\Models\Quotation;
+use Illuminate\Support\Facades\Log;
 
 class InquiryController extends Controller
 {
@@ -251,34 +253,78 @@ class InquiryController extends Controller
     public function storeQuotation(Request $request, Inquiry $inquiry)
     {
         // Validate the request
+        // Validate the request
         $validatedData = $request->validate([
-            'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
             'due_date' => 'required|date',
         ]);
 
-
         try {
+            // Generate file name and process file upload
+            $filename = null;
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
-                $filename = Str::slug($validatedData['code']) . '-' . time() . '.' . $extension;
+                // Use inquiry id instead of non-existent 'code'
+                $filename = 'quotation-inquiry-' . $inquiry->id . '-' . time() . '.' . $extension;
                 $file->storeAs('files/quotations', $filename, 'public');
-                $validatedData['file'] = $filename;
+            }
+
+            // Get date information for code generation
+            $dueDate = new \DateTime($validatedData['due_date']);
+            $year = $dueDate->format('Y');
+            $month = (int)$dueDate->format('n');
+
+            // Convert month to Roman numeral
+            $romanMonths = [
+                1 => 'I',
+                2 => 'II',
+                3 => 'III',
+                4 => 'IV',
+                5 => 'V',
+                6 => 'VI',
+                7 => 'VII',
+                8 => 'VIII',
+                9 => 'IX',
+                10 => 'X',
+                11 => 'XI',
+                12 => 'XII'
+            ];
+            $romanMonth = $romanMonths[$month];
+
+            // Count existing quotations for this inquiry
+            $quotationCount = Quotation::where('inquiry_id', $inquiry->id)->count();
+
+            // Generate the correct code format
+            if ($quotationCount > 0) {
+                // This is a revision
+                $code = "{$inquiry->id}/Q{$quotationCount}/LNS/{$romanMonth}/{$year}";
+            } else {
+                // This is the first quotation
+                $code = "{$inquiry->id}/Q/LNS/{$romanMonth}/{$year}";
             }
 
             // Create the quotation
             $inquiry->quotation()->create([
-                'file' => $validatedData['file'] ?? null,
+                'code' => $code,
+                'file' => $filename,
                 'due_date' => $validatedData['due_date'],
             ]);
 
             // Update the inquiry status to 'process'
             $inquiry->update(['status' => 'process']);
 
-            return redirect()->route('inquiries.show',  $inquiry)
+            return redirect()->route('inquiries.show', $inquiry)
                 ->with('success', 'Quotation created successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Failed to create quotation: ' . $e->getMessage());
+            Log::error('Failed to create quotation: ' . $e->getMessage(), [
+                'inquiry_id' => $inquiry->id,
+                'request_data' => $request->all(),
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->withInput()
+                ->with('error', 'Failed to create quotation. Please try again.');
         }
     }
 }

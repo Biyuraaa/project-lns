@@ -19,6 +19,8 @@ import {
     Upload,
     X,
     Hash,
+    ChevronLeft,
+    CalendarDays,
 } from "lucide-react";
 import { Separator } from "@/Components/ui/separator";
 import { Badge } from "@/Components/ui/badge";
@@ -32,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/Components/ui/alert";
 import type { Inquiry, PageProps } from "@/types";
+import { motion } from "framer-motion";
 
 interface CreateQuotationProps extends PageProps {
     inquiry: Inquiry;
@@ -45,7 +48,6 @@ const QuotationsCreate = () => {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         inquiry_id: inquiry.id,
-        code: "",
         due_date: "",
         file: null as File | null,
     });
@@ -116,41 +118,78 @@ const QuotationsCreate = () => {
     return (
         <AuthenticatedLayout>
             <Head title="Create Quotation" />
+            <Breadcrumb
+                items={[
+                    {
+                        label: "Inquiries",
+                        href: route("inquiries.index"),
+                    },
+                    {
+                        label: inquiry.code,
+                        href: route("inquiries.show", inquiry.id),
+                    },
+                    { label: "Create Quotation" },
+                ]}
+            />
 
-            <div className="py-6">
+            <div className="py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Breadcrumb and actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-                        <Breadcrumb
-                            items={[
-                                {
-                                    label: "Inquiry Management",
-                                    href: route("inquiries.index"),
-                                },
-                                {
-                                    label: inquiry.code,
-                                    href: route("inquiries.show", inquiry.id),
-                                },
-                                { label: "Create Quotation" },
-                            ]}
-                        />
+                    {/* Hero Section - Updated to match Quotations.Create */}
+                    <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-600 to-yellow-500 p-8 shadow-xl">
+                        <div className="absolute bottom-0 right-0 -mb-12 -mr-12 h-64 w-64 rounded-full bg-amber-500/30 blur-2xl"></div>
+                        <div className="absolute top-0 left-0 -mt-12 -ml-12 h-48 w-48 rounded-full bg-yellow-500/30 blur-2xl"></div>
 
-                        <div className="flex items-center gap-2">
-                            <Link href={route("inquiries.show", inquiry.id)}>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9"
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div className="mb-6 md:mb-0">
+                                <h1 className="text-3xl font-bold tracking-tight text-white mb-2 flex items-center">
+                                    <FileText className="mr-3 h-8 w-8" />
+                                    Create Quotation for Inquiry #{inquiry.code}
+                                </h1>
+                                <p className="mt-1.5 max-w-2xl text-amber-100 text-lg">
+                                    Create a new quotation for this customer
+                                    inquiry
+                                </p>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
+                                    >
+                                        <FileText className="h-3.5 w-3.5" />
+                                        <span>New Quotation</span>
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
+                                    >
+                                        <CalendarDays className="h-3.5 w-3.5" />
+                                        <span>
+                                            Today:{" "}
+                                            {new Date().toLocaleDateString()}
+                                        </span>
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="flex flex-shrink-0 items-center space-x-3">
+                                <Link
+                                    href={route("inquiries.show", inquiry.id)}
                                 >
-                                    Cancel
-                                </Button>
-                            </Link>
+                                    <Button className="shadow-lg shadow-amber-900/30 bg-white text-amber-700 hover:bg-amber-50 gap-1.5 font-medium transition-all duration-200">
+                                        <ChevronLeft className="h-4 w-4" />
+                                        <span>Back to Inquiry</span>
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Left column - Form */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="lg:col-span-2"
+                        >
                             <form onSubmit={handleSubmit}>
                                 <Card>
                                     <CardHeader className="pb-3 bg-muted/40">
@@ -172,48 +211,6 @@ const QuotationsCreate = () => {
                                     </CardHeader>
 
                                     <CardContent className="p-6 space-y-6">
-                                        {/* Quotation Code */}
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="code"
-                                                className="text-base"
-                                            >
-                                                Quotation Code{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="flex flex-col space-y-2">
-                                                <div className="relative">
-                                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                                        <Hash className="h-4 w-4 text-muted-foreground" />
-                                                    </div>
-                                                    <Input
-                                                        id="code"
-                                                        type="text"
-                                                        placeholder="QT-INQ-001"
-                                                        value={data.code}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                "code",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        className="h-10 pl-9"
-                                                    />
-                                                </div>
-                                                {errors.code && (
-                                                    <span className="text-sm text-red-500">
-                                                        {errors.code}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">
-                                                Enter a unique code for this
-                                                quotation
-                                            </p>
-                                        </div>
-
                                         {/* Due Date */}
                                         <div className="space-y-2">
                                             <Label
@@ -406,7 +403,6 @@ const QuotationsCreate = () => {
                                                 disabled={
                                                     processing ||
                                                     isSubmitting ||
-                                                    !data.code ||
                                                     !data.due_date ||
                                                     !selectedFile
                                                 }
@@ -419,10 +415,15 @@ const QuotationsCreate = () => {
                                     </CardContent>
                                 </Card>
                             </form>
-                        </div>
+                        </motion.div>
 
                         {/* Right column - Inquiry details */}
-                        <div className="space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="space-y-6"
+                        >
                             <Card>
                                 <CardHeader className="pb-3 bg-muted/40">
                                     <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -485,6 +486,9 @@ const QuotationsCreate = () => {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-border/60">
+                                                <span className="text-sm text-muted-foreground">
+                                                    Business Unit
+                                                </span>
                                                 <span className="text-sm font-medium">
                                                     {inquiry.business_unit.name}
                                                 </span>
@@ -542,7 +546,7 @@ const QuotationsCreate = () => {
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>

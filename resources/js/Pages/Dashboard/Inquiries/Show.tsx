@@ -89,24 +89,6 @@ const InquiriesShow = () => {
                                 { label: inquiry.code },
                             ]}
                         />
-
-                        <div className="flex items-center gap-2">
-                            {!quotation && (
-                                <Link
-                                    href={route("quotations.create", {
-                                        inquiry_id: inquiry.id,
-                                    })}
-                                >
-                                    <Button
-                                        size="sm"
-                                        className="h-9 bg-amber-600 hover:bg-amber-700 text-white"
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Create Quotation
-                                    </Button>
-                                </Link>
-                            )}
-                        </div>
                     </div>
 
                     {/* Header with status and key info */}
@@ -433,9 +415,9 @@ const InquiriesShow = () => {
                                                     {!quotation && (
                                                         <Link
                                                             href={route(
-                                                                "quotations.create",
+                                                                "inquiries.quotations.create",
                                                                 {
-                                                                    inquiry_id:
+                                                                    inquiry:
                                                                         inquiry.id,
                                                                 }
                                                             )}
@@ -587,9 +569,9 @@ const InquiriesShow = () => {
                                                         </p>
                                                         <Link
                                                             href={route(
-                                                                "quotations.create",
+                                                                "inquiries.quotations.create",
                                                                 {
-                                                                    inquiry_id:
+                                                                    inquiry:
                                                                         inquiry.id,
                                                                 }
                                                             )}
