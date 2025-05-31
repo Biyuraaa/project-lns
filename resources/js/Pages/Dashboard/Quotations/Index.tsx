@@ -23,10 +23,11 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    Building2,
-    Mail,
     Plus,
     Calendar,
+    MoreVertical,
+    DollarSign,
+    Building,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,8 +37,6 @@ import { Badge } from "@/Components/ui/badge";
 import { useForm } from "@inertiajs/react";
 import {
     format,
-    addMonths,
-    addYears,
     startOfDay,
     endOfDay,
     isWithinInterval,
@@ -49,36 +48,32 @@ import {
     parseISO,
     isValid,
 } from "date-fns";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
 
-interface QuotationsIndexProps extends PageProps {
+interface QuotationsIndexPageProps extends PageProps {
     quotations: Quotation[];
 }
 
 const QuotationsIndex = () => {
-    const { quotations } = usePage<QuotationsIndexProps>().props;
+    const { quotations } = usePage<QuotationsIndexPageProps>().props;
     const [searchTerm, setSearchTerm] = useState("");
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortField, setSortField] = useState<keyof Quotation>("code");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [showFilters, setShowFilters] = useState(false);
     const [statusFilter, setStatusFilter] = useState("");
+    const [businessUnitFilter, setBusinessUnitFilter] = useState("");
 
     // Date filter states
     const [dateFilterType, setDateFilterType] = useState<string>("all"); // all, 1month, 3months, 6months, 1year, custom
     const [customStartDate, setCustomStartDate] = useState<string>("");
     const [customEndDate, setCustomEndDate] = useState<string>("");
-
-    // Format date for display safely
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A";
-        try {
-            const date = parseISO(dateString);
-            if (!isValid(date)) return "N/A";
-            return format(date, "MMM dd, yyyy");
-        } catch (error) {
-            return "N/A";
-        }
-    };
 
     // Format date for summary display safely
     const formatDateSafe = (dateString: string) => {
@@ -131,7 +126,18 @@ const QuotationsIndex = () => {
         }
     };
 
-    // Filter quotations based on search term, status, and date
+    // Get unique business units from quotations
+    const getBusinessUnits = () => {
+        const businessUnits = new Set();
+        quotations.forEach((quotation) => {
+            if (quotation.inquiry?.business_unit?.name) {
+                businessUnits.add(quotation.inquiry.business_unit.name);
+            }
+        });
+        return Array.from(businessUnits) as string[];
+    };
+
+    // Filter quotations based on search term, status, business unit and date
     const filteredQuotations = quotations.filter((quotation) => {
         const matchesSearch =
             quotation.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -144,6 +150,10 @@ const QuotationsIndex = () => {
 
         const matchesStatus =
             statusFilter === "" || quotation.status === statusFilter;
+
+        const matchesBusinessUnit =
+            businessUnitFilter === "" ||
+            quotation.inquiry?.business_unit?.name === businessUnitFilter;
 
         // Date filtering logic based on dateFilterType
         let matchesDate = true;
@@ -220,7 +230,9 @@ const QuotationsIndex = () => {
             }
         }
 
-        return matchesSearch && matchesStatus && matchesDate;
+        return (
+            matchesSearch && matchesStatus && matchesBusinessUnit && matchesDate
+        );
     });
 
     // Sort quotations
@@ -245,6 +257,15 @@ const QuotationsIndex = () => {
             return sortDirection === "asc"
                 ? dateA.getTime() - dateB.getTime()
                 : dateB.getTime() - dateA.getTime();
+        }
+
+        if (sortField === "amount") {
+            const amountA = a.amount || 0;
+            const amountB = b.amount || 0;
+
+            return sortDirection === "asc"
+                ? amountA - amountB
+                : amountB - amountA;
         }
 
         if (a[sortField] === undefined || b[sortField] === undefined) return 0;
@@ -284,6 +305,7 @@ const QuotationsIndex = () => {
     }, [
         searchTerm,
         statusFilter,
+        businessUnitFilter,
         dateFilterType,
         customStartDate,
         customEndDate,
@@ -327,6 +349,7 @@ const QuotationsIndex = () => {
     const resetFilters = () => {
         setSearchTerm("");
         setStatusFilter("");
+        setBusinessUnitFilter("");
         setSortField("code");
         setSortDirection("desc");
         setDateFilterType("all");
@@ -395,7 +418,7 @@ const QuotationsIndex = () => {
                                     </div>
                                     <Input
                                         type="text"
-                                        placeholder="Search quotations by code, inquiry number or customer..."
+                                        placeholder="Search quotations by code or customer..."
                                         className="pl-10 w-full bg-gray-50 border-gray-200 focus:ring-amber-500 focus:border-amber-500"
                                         value={searchTerm}
                                         onChange={(e) =>
@@ -483,6 +506,36 @@ const QuotationsIndex = () => {
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Business Unit
+                                            </label>
+                                            <select
+                                                className="w-full h-9 rounded-md border border-gray-200 bg-gray-50 text-gray-700 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                value={businessUnitFilter}
+                                                onChange={(e) =>
+                                                    setBusinessUnitFilter(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="">
+                                                    All Business Units
+                                                </option>
+                                                {getBusinessUnits().map(
+                                                    (unit, index) => (
+                                                        <option
+                                                            key={index}
+                                                            value={unit}
+                                                        >
+                                                            {unit}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Sort By
@@ -506,11 +559,15 @@ const QuotationsIndex = () => {
                                                 <option value="status">
                                                     Status
                                                 </option>
+                                                <option value="amount">
+                                                    Amount
+                                                </option>
                                                 <option value="created_at">
                                                     Created Date
                                                 </option>
                                             </select>
                                         </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Sort Direction
@@ -787,6 +844,13 @@ const QuotationsIndex = () => {
                                     "
                                 </span>
                             )}
+                            {businessUnitFilter && (
+                                <span>
+                                    {" "}
+                                    in business unit "
+                                    <strong>{businessUnitFilter}</strong>"
+                                </span>
+                            )}
                             {dateFilterType !== "all" && (
                                 <span>
                                     {" "}
@@ -876,10 +940,21 @@ const QuotationsIndex = () => {
                                         </th>
                                         <th
                                             scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                            onClick={() => handleSort("amount")}
                                         >
                                             <div className="flex items-center">
-                                                Inquiry Details
+                                                Amount
+                                                {sortField === "amount" && (
+                                                    <span className="ml-1">
+                                                        {sortDirection ===
+                                                        "asc" ? (
+                                                            <ArrowUp className="h-3 w-3" />
+                                                        ) : (
+                                                            <ArrowDown className="h-3 w-3" />
+                                                        )}
+                                                    </span>
+                                                )}
                                             </div>
                                         </th>
                                         <th
@@ -924,6 +999,12 @@ const QuotationsIndex = () => {
                                         </th>
                                         <th
                                             scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Business Unit
+                                        </th>
+                                        <th
+                                            scope="col"
                                             className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                                         >
                                             Actions
@@ -956,11 +1037,11 @@ const QuotationsIndex = () => {
                                                                     }
                                                                 </div>
                                                                 <div className="text-xs text-gray-500 mt-1">
-                                                                    Created{" "}
-                                                                    {formatDate(
-                                                                        quotation.created_at ||
-                                                                            ""
-                                                                    )}
+                                                                    {quotation
+                                                                        .inquiry
+                                                                        ?.customer
+                                                                        ?.name ||
+                                                                        "N/A"}
                                                                 </div>
                                                                 {quotation.file && (
                                                                     <div className="flex items-center mt-2">
@@ -983,37 +1064,13 @@ const QuotationsIndex = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="space-y-1.5">
-                                                            <div className="flex items-center text-sm text-gray-900">
-                                                                <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                                                                <Link
-                                                                    href={route(
-                                                                        "inquiries.show",
-                                                                        quotation
-                                                                            .inquiry
-                                                                            ?.id
-                                                                    )}
-                                                                    className="font-medium text-blue-600 hover:underline"
-                                                                >
-                                                                    Inquiry #
-                                                                    {
-                                                                        quotation
-                                                                            .inquiry
-                                                                            ?.code
-                                                                    }
-                                                                </Link>
-                                                            </div>
-                                                            <div className="flex items-center text-sm text-gray-600">
-                                                                <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                                                                <span>
-                                                                    {
-                                                                        quotation
-                                                                            .inquiry
-                                                                            ?.customer
-                                                                            ?.name
-                                                                    }
-                                                                </span>
-                                                            </div>
+                                                        <div className="flex items-center text-sm text-gray-600">
+                                                            <DollarSign className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                                                            <span className="font-medium">
+                                                                {formatCurrency(
+                                                                    quotation.amount
+                                                                )}
+                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1033,38 +1090,76 @@ const QuotationsIndex = () => {
                                                                 ""
                                                         )}
                                                     </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center text-sm text-gray-600">
+                                                            <Building className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                                                            <span>
+                                                                {quotation
+                                                                    .inquiry
+                                                                    ?.business_unit
+                                                                    ?.name ||
+                                                                    "N/A"}
+                                                            </span>
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex items-center justify-end space-x-2">
-                                                            <Link
-                                                                href={route(
-                                                                    "quotations.edit",
-                                                                    quotation.id
-                                                                )}
-                                                                className="text-amber-600 hover:text-amber-900"
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Link>
-                                                            <Link
-                                                                href={route(
-                                                                    "quotations.show",
-                                                                    quotation.id
-                                                                )}
-                                                                className="text-blue-600 hover:text-blue-900"
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                            </Link>
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleDelete(
-                                                                        Number(
-                                                                            quotation.id
-                                                                        )
-                                                                    )
-                                                                }
-                                                                className="text-red-600 hover:text-red-900"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
+                                                        <div className="flex items-center justify-end">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger
+                                                                    asChild
+                                                                >
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0"
+                                                                    >
+                                                                        <MoreVertical className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem
+                                                                        asChild
+                                                                    >
+                                                                        <Link
+                                                                            href={route(
+                                                                                "quotations.show",
+                                                                                quotation.id
+                                                                            )}
+                                                                            className="cursor-pointer flex items-center"
+                                                                        >
+                                                                            <Eye className="h-4 w-4 mr-2" />
+                                                                            View
+                                                                            Details
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        asChild
+                                                                    >
+                                                                        <Link
+                                                                            href={route(
+                                                                                "quotations.edit",
+                                                                                quotation.id
+                                                                            )}
+                                                                            className="cursor-pointer flex items-center"
+                                                                        >
+                                                                            <Edit className="h-4 w-4 mr-2" />
+                                                                            Edit
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            handleDelete(
+                                                                                Number(
+                                                                                    quotation.id
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                        className="cursor-pointer text-red-600 focus:text-red-600 flex items-center"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
                                                     </td>
                                                 </motion.tr>
@@ -1073,7 +1168,7 @@ const QuotationsIndex = () => {
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan={5}
+                                                colSpan={6}
                                                 className="px-6 py-12 text-center"
                                             >
                                                 <div className="flex flex-col items-center">
@@ -1083,6 +1178,7 @@ const QuotationsIndex = () => {
                                                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                                                         {searchTerm ||
                                                         statusFilter ||
+                                                        businessUnitFilter ||
                                                         dateFilterType !== "all"
                                                             ? "No quotations found matching your criteria"
                                                             : "No quotations available"}
@@ -1090,6 +1186,7 @@ const QuotationsIndex = () => {
                                                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                                         {searchTerm ||
                                                         statusFilter ||
+                                                        businessUnitFilter ||
                                                         dateFilterType !== "all"
                                                             ? "Try adjusting your search filters to see more results"
                                                             : "There are no quotations in the system yet"}
@@ -1097,6 +1194,7 @@ const QuotationsIndex = () => {
 
                                                     {(searchTerm ||
                                                         statusFilter ||
+                                                        businessUnitFilter ||
                                                         dateFilterType !==
                                                             "all") && (
                                                         <Button

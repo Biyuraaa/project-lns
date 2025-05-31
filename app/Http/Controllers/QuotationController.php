@@ -22,6 +22,7 @@ class QuotationController extends Controller
             ->with([
                 'inquiry',
                 'inquiry.customer:id,name',
+                'inquiry.businessUnit:id,name',
             ])
             ->get();
 
