@@ -11,7 +11,7 @@ use App\Models\PurchaseOrder;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Support\Collection;
-
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -139,13 +139,13 @@ class DashboardController extends Controller
     // Add this function to ensure we have data for all months in order
     private function prepareCompanyGrowthSellingCumulative()
     {
-        $growthSellingData = CompanyGrowthSelling::orderBy('year')
+        $growthSellingData = CompanyGrowthSelling::with('businessUnit')
+            ->orderBy('year')
             ->orderBy('month')
             ->get();
 
-        $cumulativeData = [];
+        $cumulativeData = collect();
 
-        // Prepare month names for display
         $monthNames = [
             1 => 'Jan',
             2 => 'Feb',
@@ -161,40 +161,98 @@ class DashboardController extends Controller
             12 => 'Dec'
         ];
 
-        // Group data by year
-        $dataByYear = $growthSellingData->groupBy('year');
-        foreach ($dataByYear as $year => $yearData) {
-            $cumulativeTarget = 0;
-            $cumulativeActual = 0;
+        $groupedByBusinessUnit = $growthSellingData->groupBy('business_unit_id');
 
-            foreach ($yearData as $item) {
-                // Add to running totals
-                $cumulativeTarget += $item->target;
-                $cumulativeActual += $item->actual;
-                $cumulativeDifference = $cumulativeActual - $cumulativeTarget;
+        foreach ($groupedByBusinessUnit as $businessUnitId => $businessUnitItems) {
+            $businessUnit = $businessUnitItems->first()->businessUnit;
+            if (is_null($businessUnitId) && is_null($businessUnit)) {
+                Log::warning("Data CompanyGrowthSelling ditemukan tanpa business_unit_id yang valid.");
+                continue;
+            }
 
-                // Calculate percentage (avoid division by zero)
-                $cumulativePercentage = $cumulativeTarget > 0
-                    ? round(($cumulativeActual / $cumulativeTarget) * 100)
-                    : 0;
+            $groupedByYear = $businessUnitItems->groupBy('year');
 
-                $cumulativeData[] = [
-                    'month' => $item->month,
-                    'year' => $item->year,
-                    'month_name' => $monthNames[$item->month] ?? '',
-                    'target' => $item->target,
-                    'actual' => $item->actual,
-                    'difference' => $item->difference,
-                    'percentage' => $item->percentage,
-                    'cumulative_target' => $cumulativeTarget,
-                    'cumulative_actual' => $cumulativeActual,
-                    'cumulative_difference' => $cumulativeDifference,
-                    'cumulative_percentage' => $cumulativePercentage
-                ];
+            foreach ($groupedByYear as $year => $yearItems) {
+                $cumulativeTarget = 0;
+                $cumulativeActual = 0;
+                $sortedYearItems = $yearItems->sortBy('month');
+
+                foreach ($sortedYearItems as $item) {
+                    $cumulativeTarget += (float)$item->target;
+                    $cumulativeActual += (float)$item->actual;
+                    $cumulativeDifference = $cumulativeActual - $cumulativeTarget;
+                    $cumulativePercentage = $cumulativeTarget > 0
+                        ? round(($cumulativeActual / $cumulativeTarget) * 100)
+                        : ($cumulativeActual > 0 ? 100 : 0); // Jika target 0 tapi actual > 0, bisa dianggap 100% atau sesuai kebutuhan
+
+                    $cumulativeData->push([
+                        'month' => $item->month,
+                        'year' => $item->year,
+                        'month_name' => $monthNames[$item->month] ?? '',
+                        'target' => (float)$item->target,
+                        'actual' => (float)$item->actual,
+                        // Pastikan $item->difference dan $item->percentage ada dan numerik
+                        'difference' => (float)($item->actual - $item->target), // Hitung ulang untuk konsistensi
+                        'percentage' => $item->target > 0 ? round(((float)$item->actual / (float)$item->target) * 100) : ((float)$item->actual > 0 ? 100 : 0), // Hitung ulang
+                        'cumulative_target' => $cumulativeTarget,
+                        'cumulative_actual' => $cumulativeActual,
+                        'cumulative_difference' => $cumulativeDifference,
+                        'cumulative_percentage' => $cumulativePercentage,
+                        'business_unit' => [
+                            // Gunakan $businessUnitId yang didapat dari groupBy
+                            'id' => $businessUnit ? $businessUnit->id : ($businessUnitId ?: 'unknown'),
+                            'name' => $businessUnit ? $businessUnit->name : ($businessUnitId ? 'Unknown BU ' . $businessUnitId : 'Data without BU')
+                        ]
+                    ]);
+                }
             }
         }
+        $allBuDataByYear = $growthSellingData->groupBy('year');
+        $allBusinessUnitsCumulative = collect();
 
-        return $cumulativeData;
+        foreach ($allBuDataByYear as $year => $yearItems) {
+            $cumulativeTargetAll = 0;
+            $cumulativeActualAll = 0;
+            $monthlyAggregated = $yearItems->groupBy('month')->map(function ($monthItems, $month) use ($monthNames, $year) {
+                return [
+                    'year' => $year,
+                    'month' => $month,
+                    'month_name' => $monthNames[$month] ?? '',
+                    'target' => $monthItems->sum(fn($it) => (float)$it->target),
+                    'actual' => $monthItems->sum(fn($it) => (float)$it->actual),
+                ];
+            })->sortBy('month');
+
+            foreach ($monthlyAggregated as $data) {
+                $cumulativeTargetAll += $data['target'];
+                $cumulativeActualAll += $data['actual'];
+                $cumulativeDifferenceAll = $cumulativeActualAll - $cumulativeTargetAll;
+                $cumulativePercentageAll = $cumulativeTargetAll > 0
+                    ? round(($cumulativeActualAll / $cumulativeTargetAll) * 100)
+                    : ($cumulativeActualAll > 0 ? 100 : 0);
+
+                $allBusinessUnitsCumulative->push([
+                    'month' => $data['month'],
+                    'year' => $data['year'],
+                    'month_name' => $data['month_name'],
+                    'target' => $data['target'], // Monthly total for all BUs
+                    'actual' => $data['actual'], // Monthly total for all BUs
+                    'difference' => $data['actual'] - $data['target'],
+                    'percentage' => $data['target'] > 0 ? round(($data['actual'] / $data['target']) * 100) : ($data['actual'] > 0 ? 100 : 0),
+                    'cumulative_target' => $cumulativeTargetAll,
+                    'cumulative_actual' => $cumulativeActualAll,
+                    'cumulative_difference' => $cumulativeDifferenceAll,
+                    'cumulative_percentage' => $cumulativePercentageAll,
+                    'business_unit' => [
+                        'id' => 'all',
+                        'name' => 'All Business Units'
+                    ]
+                ]);
+            }
+        }
+        $finalData = $cumulativeData->merge($allBusinessUnitsCumulative);
+
+        return $finalData->all();
     }
 
     /**
@@ -409,74 +467,68 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get monthly target value
-     * 
-     * @param Carbon $date
-     * @param int|null $businessUnitId
-     * @return int
-     */
-    private function getMonthlyTarget(Carbon $date, $businessUnitId = null)
-    {
-        // This would typically come from a targets/goals table
-        // For now, using simple logic based on month
-        $monthNumber = $date->format('n'); // 1-12 for Jan-Dec
-
-        // Base target values by month
-        $baseTarget = 0;
-        if ($monthNumber >= 10) { // Oct-Dec (Q4)
-            $baseTarget = 30; // Higher end-of-year targets
-        } elseif ($monthNumber >= 7) { // Jul-Sep (Q3)
-            $baseTarget = 25;
-        } elseif ($monthNumber >= 4) { // Apr-Jun (Q2)
-            $baseTarget = 28;
-        } else { // Jan-Mar (Q1)
-            $baseTarget = 22; // Lower beginning-of-year targets
-        }
-
-        // If business unit is specified, adjust target based on business unit
-        // This is just an example - in a real app, you'd get this from a database
-        if ($businessUnitId !== null && $businessUnitId !== 'all') {
-            // Simple adjustment based on business unit ID
-            // In a real app, you'd have a more sophisticated approach
-            $adjustment = ($businessUnitId % 3) + 1; // Just an example
-            return $baseTarget - $adjustment;
-        }
-
-        return $baseTarget;
-    }
-
-
     private function prepareCompanyGrowthSellingData()
     {
-        $growthSellingData = CompanyGrowthSelling::orderBy('year')
-            ->orderBy('month')
-            ->get()
-            ->map(function ($item) {
-                // Format data consistently
-                $monthNames = [
-                    1 => 'Jan',
-                    2 => 'Feb',
-                    3 => 'Mar',
-                    4 => 'Apr',
-                    5 => 'May',
-                    6 => 'Jun',
-                    7 => 'Jul',
-                    8 => 'Aug',
-                    9 => 'Sep',
-                    10 => 'Oct',
-                    11 => 'Nov',
-                    12 => 'Dec'
+        try {
+            // Safely retrieve data with business unit relationships
+            $growthSellingData = CompanyGrowthSelling::with('businessUnit')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get();
+
+            // Month names for consistent formatting
+            $monthNames = [
+                1 => 'Jan',
+                2 => 'Feb',
+                3 => 'Mar',
+                4 => 'Apr',
+                5 => 'May',
+                6 => 'Jun',
+                7 => 'Jul',
+                8 => 'Aug',
+                9 => 'Sep',
+                10 => 'Oct',
+                11 => 'Nov',
+                12 => 'Dec'
+            ];
+
+            // Process each item to ensure consistent structure
+            $formattedData = $growthSellingData->map(function ($item) use ($monthNames) {
+                // Make sure we extract business unit details safely
+                $businessUnitId = $item->businessUnit ? $item->businessUnit->id : 'all';
+                $businessUnitName = $item->businessUnit ? $item->businessUnit->name : 'All Business Units';
+
+                // Create a consistent structure for frontend
+                return [
+                    'id' => $item->id,
+                    'month' => $item->month,
+                    'year' => $item->year,
+                    'month_name' => $monthNames[$item->month] ?? '',
+                    'target' => (float)$item->target,
+                    'actual' => (float)$item->actual,
+                    'difference' => (float)$item->difference,
+                    'percentage' => (float)$item->percentage,
+                    'business_unit' => [
+                        'id' => $businessUnitId,
+                        'name' => $businessUnitName
+                    ]
                 ];
+            })->toArray();
 
-                // Add month_name field for easier display
-                $item['month_name'] = $monthNames[$item->month] ?? '';
+            // If there's no data, return at least an empty array with proper structure
+            if (empty($formattedData)) {
+                Log::info('No company growth selling data found');
+            }
 
-                return $item;
-            })
-            ->toArray();
+            return $formattedData;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error in prepareCompanyGrowthSellingData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
 
-        return $growthSellingData;
+            // Return empty array with proper structure to prevent frontend errors
+            return [];
+        }
     }
 
     /**

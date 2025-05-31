@@ -91,6 +91,7 @@ export interface Negotiation {
     id: number;
     quotation: Quotation;
     file: string;
+    amount: number;
     created_at?: string;
     updated_at?: string;
 }
@@ -124,7 +125,19 @@ interface TopCustomerData {
     poCount: number;
     business_unit_id: string;
 }
-
+interface CompanyGrowthSellingData {
+    id: number;
+    month: number;
+    year: number;
+    month_name: string;
+    target: number;
+    actual: number;
+    difference: number;
+    business_unit: {
+        id: number | string;
+        name: string;
+    };
+}
 interface CompanyGrowthSelling {
     id: number;
     month: number;

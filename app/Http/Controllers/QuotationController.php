@@ -51,6 +51,7 @@ class QuotationController extends Controller
             'inquiries' => $inquiries
         ]);
     }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -249,7 +250,8 @@ class QuotationController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:2048', // Adjust file types and size as needed
+                'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:2048',
+                'amount' => 'required|integer|min:0',
             ]);
             $file = $request->file('file');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -258,7 +260,8 @@ class QuotationController extends Controller
 
             $quotation->negotiations()->create([
                 'file' => $validatedData['file'],
-                'quotation_id' => $quotation->id
+                'quotation_id' => $quotation->id,
+                'amount' => $validatedData['amount'],
             ]);
 
             $inquiry = $quotation->inquiry;
@@ -291,7 +294,8 @@ class QuotationController extends Controller
 
             // Update the quotation with the new revision code
             $quotation->update([
-                'code' => $revisedCode
+                'code' => $revisedCode,
+                'amount' => $validatedData['amount'],
             ]);
 
             return redirect()->route('quotations.show', $quotation)->with('success', 'Negotiation created successfully.');

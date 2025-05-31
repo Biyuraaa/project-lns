@@ -13,6 +13,7 @@ class Negotiation extends Model
     protected $fillable = [
         'file',
         'quotation_id',
+        'amount',
     ];
 
     /**

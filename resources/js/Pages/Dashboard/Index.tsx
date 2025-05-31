@@ -5,7 +5,7 @@ import { Head, usePage } from "@inertiajs/react";
 import type {
     BusinessUnit,
     CompanyGrowthData,
-    CompanyGrowthSelling,
+    CompanyGrowthSellingData,
     PageProps,
     PurchaseOrderDetail,
     TopCustomerData,
@@ -50,10 +50,10 @@ interface Statistics {
 
 interface ChartData {
     companyGrowthData: CompanyGrowthData[];
-    cumulativeCompanyGrowthSellingData: any[]; // Changed to match our new data
+    cumulativeCompanyGrowthSellingData: any[];
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
-    companyGrowthSellingData: CompanyGrowthSelling[];
+    companyGrowthSellingData: CompanyGrowthSellingData[];
     poDetailData: PurchaseOrderDetail[];
     totalPOCount: number;
     totalPOValue: number;

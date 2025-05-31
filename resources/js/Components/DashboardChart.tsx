@@ -6,7 +6,7 @@ import { TopCustomerChart } from "./TopCustomerChart";
 import {
     BusinessUnit,
     CompanyGrowthData,
-    CompanyGrowthSelling,
+    CompanyGrowthSellingData,
     TopCustomerData,
 } from "@/types";
 import { CompanyGrowthSellingChart } from "./CompanyGrowthSellingChart";
@@ -19,7 +19,7 @@ interface DashboardChartsProps {
     cumulativeCompanyGrowthSellingData: any[];
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
-    companyGrowthSellingData: CompanyGrowthSelling[];
+    companyGrowthSellingData: CompanyGrowthSellingData[];
     purchaseOrderDetails: {
         id: number;
         amount: number;
@@ -80,10 +80,14 @@ const DashboardCharts = ({
                 />
             </div>
 
-            <CompanyGrowthSellingChart data={companyGrowthSellingData} />
+            <CompanyGrowthSellingChart
+                data={companyGrowthSellingData}
+                businessUnits={businessUnits}
+            />
 
             <CumulativeCompanyGrowthSellingChart
                 data={cumulativeCompanyGrowthSellingData}
+                businessUnits={businessUnits}
                 className="h-full"
             />
 
