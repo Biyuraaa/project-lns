@@ -69,6 +69,7 @@ export interface BusinessUnit {
     name: string;
     description?: string;
     inquiries: Inquiry[];
+    companyGrowthSellings: CompanyGrowthSelling[];
     created_at?: string;
     updated_at?: string;
 }
@@ -80,6 +81,7 @@ export interface Quotation {
     status: string;
     file: string;
     due_date: string;
+    amount: number;
     negotiations: Negotiation[];
     created_at?: string;
     updated_at?: string;
@@ -131,6 +133,9 @@ interface CompanyGrowthSelling {
     actual: number;
     difference: number;
     percentage: number;
+    business_unit: BusinessUnit;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface PurchaseOrderDetail {

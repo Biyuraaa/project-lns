@@ -6,17 +6,19 @@ use App\Models\BusinessUnit;
 use App\Models\Customer;
 use App\Models\Inquiry;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Faker\Factory as Faker;
 
 class InquirySeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
+    protected $faker;
     public function run(): void
     {
+        $this->faker = Faker::create();
         // Make sure we have customers, users and business units first
         if (Customer::count() === 0) {
             $this->command->info('Seeding customers first...');
@@ -82,6 +84,11 @@ class InquirySeeder extends Seeder
                 if ($inquiryDate > $now) {
                     $inquiryDate = $now;
                 }
+
+                // Simple status distribution: 70% pending, 30% process
+                // Note: The QuotationSeeder will later convert some 'pending' to 'process' when adding quotations
+                $status = $this->faker->randomElement(['pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'process', 'process', 'process']);
+
                 // Create the inquiry
                 Inquiry::factory()->create([
                     'customer_id' => $customer->id,
@@ -94,6 +101,7 @@ class InquirySeeder extends Seeder
                     'end_user_address' => fake()->address(),
                     'pic_engineer_id' => $engineerUsers->isNotEmpty() ? $engineerUsers->random()->id : null,
                     'sales_id' => $salesUsers->isNotEmpty() ? $salesUsers->random()->id : null,
+                    'status' => $status,
                 ]);
             }
 

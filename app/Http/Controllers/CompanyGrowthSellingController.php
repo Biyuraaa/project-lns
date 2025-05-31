@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CompanyGrowthSelling;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreCompanyGrowthSellingRequest;
 use App\Http\Requests\UpdateCompanyGrowthSellingRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\BusinessUnit;
 use Inertia\Inertia;
 
 class CompanyGrowthSellingController extends Controller
@@ -15,11 +17,63 @@ class CompanyGrowthSellingController extends Controller
      */
     public function index()
     {
-        // Fetch all records from the CompanyGrowthSelling model
-        $companyGrowthSellings = CompanyGrowthSelling::all();
+        // Get all unique month and year combinations
+        $uniquePeriods = CompanyGrowthSelling::select('month', 'year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get();
+
+        // Create summary data structure
+        $summaryData = [];
+
+        foreach ($uniquePeriods as $period) {
+            // Get all records for this month/year
+            $records = CompanyGrowthSelling::where('month', $period->month)
+                ->where('year', $period->year)
+                ->with('businessUnit:id,name')
+                ->get();
+
+            // Calculate totals
+            $totalTarget = $records->sum('target');
+            $totalActual = $records->sum('actual');
+            $totalDifference = $totalActual - $totalTarget;
+            $totalPercentage = $totalTarget > 0 ? round(($totalActual / $totalTarget) * 100, 2) : 0;
+
+            // Create summary record
+            $summary = [
+                'id' => "{$period->year}-{$period->month}", // Create a unique ID for the summary
+                'month' => $period->month,
+                'year' => $period->year,
+                'target' => $totalTarget,
+                'actual' => $totalActual,
+                'difference' => $totalDifference,
+                'percentage' => $totalPercentage,
+                'is_summary' => true,
+                'business_units' => $records->map(function ($record) {
+                    return [
+                        'id' => $record->id,
+                        'business_unit_id' => $record->business_unit_id,
+                        'business_unit_name' => $record->businessUnit->name,
+                        'month' => $record->month,
+                        'year' => $record->year,
+                        'target' => $record->target,
+                        'actual' => $record->actual,
+                        'difference' => $record->difference,
+                        'percentage' => $record->percentage,
+                    ];
+                })
+            ];
+
+            $summaryData[] = $summary;
+        }
+
+        // Get all business units for filtering
+        $businessUnits = BusinessUnit::select('id', 'name')->get();
 
         return Inertia::render('Dashboard/CompanyGrowthSelling/Index', [
-            'companyGrowthSellings' => $companyGrowthSellings,
+            'companyGrowthSellings' => $summaryData,
+            'businessUnits' => $businessUnits,
         ]);
     }
 
@@ -34,49 +88,98 @@ class CompanyGrowthSellingController extends Controller
         // Create an array of available months for each year (2023-2025)
         $availableMonths = $this->getAvailableMonths($existingRecords);
 
+        $businessUnits = BusinessUnit::select('id', 'name')->get();
+
         // Render the form for creating a new Dashboard/CompanyGrowthSelling record
         return Inertia::render('Dashboard/CompanyGrowthSelling/Create', [
             'availableMonths' => $availableMonths,
+            'businessUnits' => $businessUnits,
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCompanyGrowthSellingRequest $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
     {
+        // Validate the request
+        $validatedData = $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000|max:2050',
+            'uniformTarget' => 'required_if:useUniformTargets,true|nullable|numeric|min:0',
+            'businessUnitTargets' => 'required_if:useUniformTargets,false|array',
+            'businessUnitTargets.*' => 'required_if:useUniformTargets,false|numeric|min:0',
+            'useUniformTargets' => 'required|boolean',
+        ]);
+
+        // Get all business units
+        $businessUnits = BusinessUnit::all();
+
+        // Start a transaction to ensure all operations complete successfully
+        DB::beginTransaction();
+
         try {
-            $validatedData = $request->validated();
+            // Process based on whether uniform targets are used
+            if ($validatedData['useUniformTargets']) {
+                // When using uniform targets, ignore businessUnitTargets and apply the uniform value
+                $targetValue = $validatedData['uniformTarget'];
 
-            // Check if a record with the same month and year already exists
-            $exists = CompanyGrowthSelling::where('month', $validatedData['month'])
-                ->where('year', $validatedData['year'])
-                ->exists();
+                // Create records for all business units with the same target
+                foreach ($businessUnits as $businessUnit) {
+                    // Check if a record already exists for this month/year/business unit
+                    $existingRecord = CompanyGrowthSelling::where('month', $validatedData['month'])
+                        ->where('year', $validatedData['year'])
+                        ->where('business_unit_id', $businessUnit->id)
+                        ->exists();
 
-            if ($exists) {
-                return redirect()->back()->withErrors([
-                    'month' => 'A record for this month and year already exists.',
-                ])->withInput();
-            }
-
-            // Calculate difference and percentage if actual is provided
-            if (isset($validatedData['actual'])) {
-                $validatedData['difference'] = $validatedData['actual'] - $validatedData['target'];
-                $validatedData['percentage'] = $validatedData['target'] > 0
-                    ? round(($validatedData['actual'] / $validatedData['target']) * 100)
-                    : 0;
+                    if (!$existingRecord) {
+                        CompanyGrowthSelling::create([
+                            'month' => $validatedData['month'],
+                            'year' => $validatedData['year'],
+                            'target' => $targetValue,
+                            'actual' => 0, // Default value, will be updated later
+                            'difference' => 0 - $targetValue, // Initial difference (0 - target)
+                            'percentage' => 0, // Initial percentage
+                            'business_unit_id' => $businessUnit->id,
+                        ]);
+                    }
+                }
             } else {
-                // Default values if actual is not provided
-                $validatedData['actual'] = 0;
-                $validatedData['difference'] = -$validatedData['target'];
-                $validatedData['percentage'] = 0;
+                // When using custom targets, ignore uniformTarget and use individual values
+                foreach ($validatedData['businessUnitTargets'] as $businessUnitId => $targetValue) {
+                    // Check if the business unit exists
+                    if ($businessUnits->contains('id', $businessUnitId)) {
+                        // Check if a record already exists for this month/year/business unit
+                        $existingRecord = CompanyGrowthSelling::where('month', $validatedData['month'])
+                            ->where('year', $validatedData['year'])
+                            ->where('business_unit_id', $businessUnitId)
+                            ->exists();
+
+                        if (!$existingRecord) {
+                            CompanyGrowthSelling::create([
+                                'month' => $validatedData['month'],
+                                'year' => $validatedData['year'],
+                                'target' => $targetValue,
+                                'actual' => 0, // Default value, will be updated later
+                                'difference' => 0 - $targetValue, // Initial difference (0 - target)
+                                'percentage' => 0, // Initial percentage
+                                'business_unit_id' => $businessUnitId,
+                            ]);
+                        }
+                    }
+                }
             }
 
-            CompanyGrowthSelling::create($validatedData);
+            DB::commit();
 
-            return redirect()->route('targetSales.index')->with('success', 'Company Growth Selling record created successfully.');
+            return redirect()->route('targetSales.index')
+                ->with('success', 'Sales targets created successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create Company Growth Selling record: ' . $e->getMessage());
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Failed to create sales targets. ' . $e->getMessage());
         }
     }
 

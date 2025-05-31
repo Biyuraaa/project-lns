@@ -11,9 +11,9 @@ import {
     BarChart4,
     Target,
     CalendarDays,
-    TrendingUp,
     Clock,
     Info,
+    Building2,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -21,8 +21,10 @@ import { Label } from "@/Components/ui/label";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Badge } from "@/Components/ui/badge";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
-import { PageProps } from "@/types";
+import { BusinessUnit, PageProps } from "@/types";
+import { Switch } from "@/Components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface MonthOption {
     value: number;
@@ -35,10 +37,11 @@ interface AvailableMonths {
 
 interface CreateProps extends PageProps {
     availableMonths: AvailableMonths;
+    businessUnits: BusinessUnit[];
 }
 
 const CompanyGrowthSellingCreate = () => {
-    const { availableMonths } = usePage<CreateProps>().props;
+    const { availableMonths, businessUnits } = usePage<CreateProps>().props;
     const currentYear = new Date().getFullYear();
 
     // Find years with available months
@@ -64,22 +67,31 @@ const CompanyGrowthSellingCreate = () => {
             ? availableMonths[defaultYear][0].value
             : 1;
 
+    // State for uniform targets toggle
+    const [useUniformTargets, setUseUniformTargets] = useState(true);
+    const [activeTab, setActiveTab] = useState<string>(
+        businessUnits.length > 0 ? businessUnits[0].id.toString() : "0"
+    );
+
+    // Initialize business unit targets
+    const initialBusinessUnitTargets = businessUnits.reduce((acc, unit) => {
+        acc[unit.id] = "";
+        return acc;
+    }, {} as Record<number, string>);
+
     const { data, setData, post, processing, errors } = useForm({
         month: defaultMonth,
         year: defaultYear,
-        target: "",
-        actual: "0", // Default to 0
+        uniformTarget: null as number | null,
+        businessUnitTargets: initialBusinessUnitTargets,
+        useUniformTargets: true as boolean,
     });
 
-    // State to track available months for the selected year
     const [monthOptions, setMonthOptions] = useState<MonthOption[]>([]);
 
-    // Update month options when year changes
     useEffect(() => {
         if (availableMonths[data.year]) {
             setMonthOptions(availableMonths[data.year]);
-
-            // If current month is not available in the new year, pick the first available month
             if (
                 !availableMonths[data.year].some(
                     (option) => option.value === data.month
@@ -93,6 +105,14 @@ const CompanyGrowthSellingCreate = () => {
             setMonthOptions([]);
         }
     }, [data.year, availableMonths]);
+    useEffect(() => {
+        setData("useUniformTargets", useUniformTargets);
+        if (useUniformTargets) {
+            setData("uniformTarget", data.uniformTarget || 0);
+        } else {
+            setData("uniformTarget", 0);
+        }
+    }, [useUniformTargets]);
 
     // Generate year options
     const yearOptions = availableYears.map((year) => ({
@@ -100,46 +120,61 @@ const CompanyGrowthSellingCreate = () => {
         label: year.toString(),
     }));
 
+    // Handle uniform target change
+    const handleUniformTargetChange = (value: string) => {
+        setData("uniformTarget", Number(value));
+
+        // Also update all business unit targets with the same value for preview
+        const updatedTargets = { ...data.businessUnitTargets };
+        Object.keys(updatedTargets).forEach((id) => {
+            updatedTargets[Number(id)] = value;
+        });
+
+        setData("businessUnitTargets", updatedTargets);
+    };
+
+    // Handle individual business unit target change
+    const handleBusinessUnitTargetChange = (unitId: number, value: string) => {
+        const updatedTargets = { ...data.businessUnitTargets };
+        updatedTargets[unitId] = value;
+        setData("businessUnitTargets", updatedTargets);
+    };
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(route("targetSales.store"));
+
+        const formData = {
+            ...data,
+            businessUnitTargets: useUniformTargets
+                ? {}
+                : data.businessUnitTargets,
+            uniformTarget: useUniformTargets ? data.uniformTarget : "",
+        };
+
+        post(route("targetSales.store"), formData as any);
     };
 
     const validateForm = () => {
-        return (
-            data.month >= 1 &&
-            data.month <= 12 &&
-            data.year >= 2000 &&
-            data.year <= 2025 &&
-            data.target !== "" &&
-            Number(data.target) >= 0
-        );
-    };
-
-    // Format currency
-    const formatCurrency = (value: string | number) => {
-        const numValue = typeof value === "string" ? parseFloat(value) : value;
-        if (isNaN(numValue)) return "0";
-        return new Intl.NumberFormat().format(numValue);
-    };
-
-    // Get month name
-    const getMonthName = (monthNumber: number) => {
-        const months = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-        ];
-        return months[monthNumber - 1] || "Unknown";
+        if (useUniformTargets) {
+            return (
+                data.month >= 1 &&
+                data.month <= 12 &&
+                data.year >= 2000 &&
+                data.year <= 2050 &&
+                data.uniformTarget !== 0 &&
+                Number(data.uniformTarget) >= 0
+            );
+        } else {
+            return (
+                data.month >= 1 &&
+                data.month <= 12 &&
+                data.year >= 2000 &&
+                data.year <= 2050 &&
+                Object.values(data.businessUnitTargets).every(
+                    (target) => target !== "" && Number(target) >= 0
+                )
+            );
+        }
     };
 
     return (
@@ -190,6 +225,16 @@ const CompanyGrowthSellingCreate = () => {
                                             {new Date().toLocaleDateString()}
                                         </span>
                                     </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-white/10 text-white border-white/20 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5"
+                                    >
+                                        <Building2 className="h-3.5 w-3.5" />
+                                        <span>
+                                            {businessUnits.length} Business
+                                            Units
+                                        </span>
+                                    </Badge>
                                 </div>
                             </div>
                             <div className="flex flex-shrink-0 items-center space-x-3">
@@ -212,15 +257,15 @@ const CompanyGrowthSellingCreate = () => {
                     >
                         <form onSubmit={handleSubmit}>
                             <div className="p-6 divide-y divide-gray-200">
-                                {/* Target Information Section */}
-                                <div className="pb-8">
+                                {/* Date Selection Section */}
+                                <div className="pb-6">
                                     <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                                        <BarChart4 className="w-5 h-5 mr-2 text-blue-600" />
-                                        Target Information
+                                        <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                                        Time Period
                                     </h2>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {/* Year Field - Positioned first since month depends on year */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Year Field */}
                                         <div className="space-y-1">
                                             <Label
                                                 htmlFor="year"
@@ -358,54 +403,286 @@ const CompanyGrowthSellingCreate = () => {
                                                 </p>
                                             )}
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {/* Target Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="target"
-                                                className="text-sm font-medium"
-                                            >
-                                                Target Sales Amount{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Target className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="target"
-                                                    type="number"
-                                                    value={data.target}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "target",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.target
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="500000"
-                                                    min="0"
-                                                    required
-                                                />
-                                            </div>
-                                            {errors.target && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.target}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Enter the target sales amount
-                                                for this month
-                                            </p>
+                                {/* Target Information Section */}
+                                <div className="py-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                                            <Target className="w-5 h-5 mr-2 text-blue-600" />
+                                            Target Information
+                                        </h2>
+
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-sm text-gray-600">
+                                                {useUniformTargets
+                                                    ? "Same target for all units"
+                                                    : "Custom targets per unit"}
+                                            </span>
+                                            <Switch
+                                                checked={useUniformTargets}
+                                                onCheckedChange={(checked) => {
+                                                    setUseUniformTargets(
+                                                        checked
+                                                    );
+                                                }}
+                                                className="data-[state=checked]:bg-blue-600"
+                                            />
                                         </div>
                                     </div>
+
+                                    {useUniformTargets ? (
+                                        <div className="space-y-4">
+                                            {/* Uniform Target Input */}
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="uniformTarget"
+                                                    className="text-sm font-medium"
+                                                >
+                                                    Target Sales Amount (All
+                                                    Business Units){" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Target className="h-4 w-4 text-gray-400" />
+                                                    </div>
+                                                    <Input
+                                                        id="uniformTarget"
+                                                        type="number"
+                                                        value={
+                                                            data.uniformTarget ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleUniformTargetChange(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`pl-10 ${
+                                                            errors.uniformTarget
+                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                                                        }`}
+                                                        placeholder="500000"
+                                                        min="0"
+                                                        required
+                                                    />
+                                                </div>
+                                                {errors.uniformTarget && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {errors.uniformTarget}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    This target will be applied
+                                                    to all business units
+                                                </p>
+                                            </div>
+
+                                            {/* Business Unit Preview */}
+                                            <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
+                                                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                                                    Business Units Preview
+                                                </h3>
+                                                <div className="space-y-2">
+                                                    {businessUnits.map(
+                                                        (unit) => (
+                                                            <div
+                                                                key={unit.id}
+                                                                className="flex justify-between items-center p-2 bg-white rounded border border-gray-200"
+                                                            >
+                                                                <span className="text-sm font-medium">
+                                                                    {unit.name}
+                                                                </span>
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-blue-700 bg-blue-50 border-blue-200"
+                                                                >
+                                                                    Target:{" "}
+                                                                    {formatCurrency(
+                                                                        data.uniformTarget ||
+                                                                            0
+                                                                    )}
+                                                                </Badge>
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {/* Per Business Unit Targets */}
+                                            <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                                <Tabs
+                                                    defaultValue={activeTab}
+                                                    value={activeTab}
+                                                    onValueChange={setActiveTab}
+                                                    className="w-full"
+                                                >
+                                                    <div className="bg-gray-50 border-b border-gray-200 px-2">
+                                                        <TabsList className="h-auto bg-transparent flex flex-wrap">
+                                                            {businessUnits.map(
+                                                                (unit) => (
+                                                                    <TabsTrigger
+                                                                        key={
+                                                                            unit.id
+                                                                        }
+                                                                        value={unit.id.toString()}
+                                                                        className={cn(
+                                                                            "py-2 px-4 text-sm rounded-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent",
+                                                                            activeTab ===
+                                                                                unit.id.toString()
+                                                                                ? "text-blue-700 font-medium"
+                                                                                : "text-gray-600"
+                                                                        )}
+                                                                    >
+                                                                        {
+                                                                            unit.name
+                                                                        }
+                                                                    </TabsTrigger>
+                                                                )
+                                                            )}
+                                                        </TabsList>
+                                                    </div>
+
+                                                    {businessUnits.map(
+                                                        (unit) => (
+                                                            <TabsContent
+                                                                key={unit.id}
+                                                                value={unit.id.toString()}
+                                                                className="p-4 bg-white focus-visible:outline-none focus-visible:ring-0"
+                                                            >
+                                                                <div className="space-y-4">
+                                                                    <h3 className="font-medium">
+                                                                        {
+                                                                            unit.name
+                                                                        }{" "}
+                                                                        - Target
+                                                                        Setting
+                                                                    </h3>
+
+                                                                    <div className="space-y-2">
+                                                                        <Label
+                                                                            htmlFor={`target-${unit.id}`}
+                                                                            className="text-sm font-medium"
+                                                                        >
+                                                                            Target
+                                                                            Sales
+                                                                            Amount{" "}
+                                                                            <span className="text-red-500">
+                                                                                *
+                                                                            </span>
+                                                                        </Label>
+                                                                        <div className="relative">
+                                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                                <Target className="h-4 w-4 text-gray-400" />
+                                                                            </div>
+                                                                            <Input
+                                                                                id={`target-${unit.id}`}
+                                                                                type="number"
+                                                                                value={
+                                                                                    data
+                                                                                        .businessUnitTargets[
+                                                                                        unit
+                                                                                            .id
+                                                                                    ] ||
+                                                                                    ""
+                                                                                }
+                                                                                onChange={(
+                                                                                    e
+                                                                                ) =>
+                                                                                    handleBusinessUnitTargetChange(
+                                                                                        unit.id,
+                                                                                        e
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                                className="pl-10"
+                                                                                placeholder="500000"
+                                                                                min="0"
+                                                                                required
+                                                                            />
+                                                                        </div>
+                                                                        {errors
+                                                                            .businessUnitTargets?.[
+                                                                            unit
+                                                                                .id
+                                                                        ] && (
+                                                                            <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                                                <AlertCircle className="h-3 w-3 mr-1" />
+                                                                                {
+                                                                                    errors
+                                                                                        .businessUnitTargets[
+                                                                                        unit
+                                                                                            .id
+                                                                                    ]
+                                                                                }
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </TabsContent>
+                                                        )
+                                                    )}
+                                                </Tabs>
+                                            </div>
+
+                                            {/* Summary of All Targets */}
+                                            <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
+                                                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                                                    Summary of Custom Targets
+                                                </h3>
+                                                <div className="space-y-2">
+                                                    {businessUnits.map(
+                                                        (unit) => (
+                                                            <div
+                                                                key={unit.id}
+                                                                className="flex justify-between items-center p-2 bg-white rounded border border-gray-200"
+                                                            >
+                                                                <span className="text-sm font-medium">
+                                                                    {unit.name}
+                                                                </span>
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className={
+                                                                        data
+                                                                            .businessUnitTargets[
+                                                                            unit
+                                                                                .id
+                                                                        ]
+                                                                            ? "text-blue-700 bg-blue-50 border-blue-200"
+                                                                            : "text-amber-700 bg-amber-50 border-amber-200"
+                                                                    }
+                                                                >
+                                                                    {data
+                                                                        .businessUnitTargets[
+                                                                        unit.id
+                                                                    ]
+                                                                        ? `Target: ${formatCurrency(
+                                                                              Number(
+                                                                                  data
+                                                                                      .businessUnitTargets[
+                                                                                      unit
+                                                                                          .id
+                                                                                  ]
+                                                                              )
+                                                                          )}`
+                                                                        : "Not set"}
+                                                                </Badge>
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
                                         <div className="flex">
@@ -414,17 +691,18 @@ const CompanyGrowthSellingCreate = () => {
                                             </div>
                                             <div className="ml-3">
                                                 <h3 className="text-sm font-medium text-blue-800">
-                                                    About Available Months
+                                                    Target Setting Options
                                                 </h3>
                                                 <div className="mt-2 text-sm text-blue-700">
                                                     <p>
-                                                        Only months that don't
-                                                        already have records are
-                                                        shown in the dropdown.
-                                                        If you need to modify an
-                                                        existing record, please
-                                                        use the edit function
-                                                        from the dashboard.
+                                                        You can set either the
+                                                        same target for all
+                                                        business units, or
+                                                        customize targets for
+                                                        each unit individually.
+                                                        Toggle the switch above
+                                                        to change between these
+                                                        options.
                                                     </p>
                                                 </div>
                                             </div>

@@ -25,4 +25,9 @@ class BusinessUnit extends Model
     {
         return $this->hasMany(Inquiry::class);
     }
+
+    public function companyGrowthSellings()
+    {
+        return $this->hasMany(CompanyGrowthSelling::class);
+    }
 }

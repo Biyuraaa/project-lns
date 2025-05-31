@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('status', ['n/a', 'val', 'lost', 'wip'])->default('val');
             $table->string('file')->nullable();
             $table->date('due_date')->nullable();
+            $table->integer('amount')->default(0)->comment('Total amount of the quotation');
             $table->timestamps();
         });
     }

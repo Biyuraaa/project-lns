@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\BusinessUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +20,11 @@ class CompanyGrowthSellingFactory extends Factory
         $target = $this->faker->numberBetween(500000, 1000000);
         $actual = $this->faker->numberBetween(400000, 1200000);
         $difference = $actual - $target;
-        $percentage = round(($actual / $target) * 100);
+        $percentage = round(($actual / $target) * 100, 2);
+
+        // Get a random business unit ID from the database
+        // If none exists, BusinessUnit::factory will be used in the seeder
+        $businessUnitId = BusinessUnit::inRandomOrder()->first()?->id;
 
         return [
             'month' => $this->faker->numberBetween(1, 12),
@@ -28,6 +33,7 @@ class CompanyGrowthSellingFactory extends Factory
             'actual' => $actual,
             'difference' => $difference,
             'percentage' => $percentage,
+            'business_unit_id' => $businessUnitId ?? null,
         ];
     }
 
@@ -60,7 +66,7 @@ class CompanyGrowthSellingFactory extends Factory
 
             $actual = round($target * $seasonalFactor * $fluctuation);
             $difference = $actual - $target;
-            $percentage = round(($actual / $target) * 100);
+            $percentage = round(($actual / $target) * 100, 2);
 
             return [
                 'month' => $month,
@@ -69,7 +75,21 @@ class CompanyGrowthSellingFactory extends Factory
                 'actual' => $actual,
                 'difference' => $difference,
                 'percentage' => $percentage,
+                // We don't set business_unit_id here as it will be handled in the seeder
             ];
         });
+    }
+
+    /**
+     * Set the business unit for the growth selling record
+     * 
+     * @param int $businessUnitId
+     * @return $this
+     */
+    public function forBusinessUnit(int $businessUnitId)
+    {
+        return $this->state([
+            'business_unit_id' => $businessUnitId,
+        ]);
     }
 }

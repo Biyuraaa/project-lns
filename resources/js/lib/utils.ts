@@ -53,7 +53,6 @@ export const formatFileSize = (bytes: number): string => {
     );
 };
 
-// Add these functions after the existing file handling functions
 export const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();

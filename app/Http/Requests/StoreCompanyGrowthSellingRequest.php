@@ -25,7 +25,6 @@ class StoreCompanyGrowthSellingRequest extends FormRequest
             //
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2000|max:2025',
-            'target' => 'required|integer|min:0',
         ];
     }
 }

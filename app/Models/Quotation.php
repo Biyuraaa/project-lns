@@ -19,6 +19,7 @@ class Quotation extends Model
         'due_date',
         'inquiry_id',
         'file',
+        'amount',
     ];
 
     protected $casts = [

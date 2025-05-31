@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('quotation_id')
                 ->constrained('quotations')
                 ->onDelete('cascade');
+            $table->integer('amount')->default(0)->comment('Total amount of the negotiation');
             $table->timestamps();
         });
     }

@@ -110,6 +110,7 @@ class QuotationController extends Controller
                 'code' => $code,
                 'status' => 'val',
                 'due_date' => $validatedData['due_date'],
+                'amount' => $validatedData['amount'] ?? 0,
                 'inquiry_id' => $validatedData['inquiry_id'],
                 'file' => $validatedData['file'] ?? null,
             ]);

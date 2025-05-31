@@ -17,6 +17,7 @@ class CompanyGrowthSelling extends Model
         'actual',
         'difference',
         'percentage',
+        'business_unit_id',
     ];
 
     protected $casts = [
@@ -27,4 +28,9 @@ class CompanyGrowthSelling extends Model
         'difference' => 'integer',
         'percentage' => 'integer',
     ];
+
+    public function businessUnit()
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
 }

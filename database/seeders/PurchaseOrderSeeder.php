@@ -33,24 +33,23 @@ class PurchaseOrderSeeder extends Seeder
 
         $this->command->info("Found {$validatedQuotations->count()} validated quotations.");
 
+        // Track used codes to avoid duplicates
+        $usedCodes = [];
+
         foreach ($validatedQuotations as $quotation) {
-            // Each validated quotation gets a purchase order
             $this->command->info("Creating purchase order for quotation {$quotation->code}");
-
-            // Calculate date based on quotation due date
             $quotationDueDate = $quotation->due_date ?? Carbon::now();
-
-            // PO date is usually a bit after the quotation is validated
             $poDate = Carbon::parse($quotationDueDate)->subDays(rand(5, 30));
-
-            // Ensure PO date isn't in the future
             if ($poDate->isFuture()) {
                 $poDate = Carbon::now()->subDays(rand(1, 7));
             }
+            $baseCode = 'PO-' . substr($quotation->code, 4) . '-' . Carbon::parse($poDate)->format('Ymd');
+            $uniqueCode = $this->generateUniqueCode($baseCode, $usedCodes);
+            $usedCodes[] = $uniqueCode;
 
             // Create the purchase order
             PurchaseOrder::factory()->create([
-                'code' => 'PO-' . substr($quotation->code, 4) . '-' . Carbon::parse($poDate)->format('Ymd'),
+                'code' => $uniqueCode,
                 'quotation_id' => $quotation->id,
                 'amount' => fake()->numberBetween(10000000, 500000000), // 10M to 500M
                 'contract_number' => 'CTR-' . fake()->numerify('######'),
@@ -60,5 +59,33 @@ class PurchaseOrderSeeder extends Seeder
         }
 
         $this->command->info('Purchase orders seeded successfully!');
+    }
+
+    /**
+     * Generate a unique code based on the base code
+     * 
+     * @param string $baseCode
+     * @param array $usedCodes
+     * @return string
+     */
+    private function generateUniqueCode(string $baseCode, array $usedCodes): string
+    {
+        if (!in_array($baseCode, $usedCodes)) {
+            return $baseCode;
+        }
+        $attempt = 1;
+        $maxAttempts = 10;
+
+        while ($attempt <= $maxAttempts) {
+            $randomSuffix = '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+            $candidateCode = $baseCode . $randomSuffix;
+
+            if (!in_array($candidateCode, $usedCodes)) {
+                return $candidateCode;
+            }
+
+            $attempt++;
+        }
+        return $baseCode . '-' . time() . rand(100, 999);
     }
 }

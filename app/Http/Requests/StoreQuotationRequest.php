@@ -26,6 +26,7 @@ class StoreQuotationRequest extends FormRequest
             'inquiry_id' => 'required|exists:inquiries,id',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
             'due_date' => 'nullable|date',
+            'amount' => 'required|integer|min:0',
         ];
     }
 }

@@ -19,6 +19,10 @@ return new class extends Migration
             $table->unsignedBigInteger('actual')->comment('Actual sales for the month')->default(0);
             $table->integer('difference')->comment('Difference between target and actual sales')->default(0);
             $table->decimal('percentage', 5, 2)->comment('Percentage of actual sales against target')->default(0);
+            $table->foreignId('business_unit_id')
+                ->constrained('business_units')
+                ->onDelete('cascade')
+                ->comment('Foreign key to the business unit this record belongs to');
             $table->timestamps();
         });
     }

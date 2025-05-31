@@ -5,13 +5,6 @@ import { usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import { Button } from "@/Components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/Components/ui/card";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import {
@@ -20,8 +13,6 @@ import {
     Info,
     Upload,
     X,
-    Hash,
-    ArrowLeft,
     AlertTriangle,
     Check,
     Clock,
@@ -34,20 +25,16 @@ import {
     Paperclip,
     FileIcon,
     CalendarDays,
+    DollarSign,
 } from "lucide-react";
-import { Separator } from "@/Components/ui/separator";
 import { Badge } from "@/Components/ui/badge";
-import { Calendar } from "@/Components/ui/calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/Components/ui/popover";
 import {
     cn,
     formatDate as formatDateUtil,
     handleDragOver,
     handleDragLeave,
+    formatDate,
+    formatFileSize,
 } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/Components/ui/alert";
@@ -82,6 +69,7 @@ const QuotationEdit = () => {
             ? format(parseISO(quotation.due_date), "yyyy-MM-dd")
             : "",
         file: null as File | null,
+        amount: quotation.amount ? String(quotation.amount) : "",
         _removeFile: false as boolean,
     });
 
@@ -97,6 +85,12 @@ const QuotationEdit = () => {
             const fileUrl = URL.createObjectURL(file);
             setPreviewUrl(fileUrl);
         }
+    };
+    // Handle amount input (numbers only with commas for display)
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Strip all non-numeric characters
+        const rawValue = e.target.value.replace(/[^0-9]/g, "");
+        setData("amount", rawValue);
     };
 
     // Remove selected file
@@ -248,26 +242,6 @@ const QuotationEdit = () => {
         }
     };
 
-    // Format file size
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    };
-
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
-
     return (
         <AuthenticatedLayout>
             <Head title={`Edit Quotation ${quotation.code}`} />
@@ -333,13 +307,12 @@ const QuotationEdit = () => {
                     </div>
 
                     {/* Main Content */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left column - Form */}
+                    <div className="grid grid-cols-1 gap-6">
+                        {/* Form */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="lg:col-span-2"
                         >
                             <form
                                 onSubmit={handleSubmit}
@@ -353,7 +326,7 @@ const QuotationEdit = () => {
                                             Quotation Information
                                         </h2>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {/* Due Date */}
                                             <div className="space-y-1">
                                                 <Label
@@ -458,6 +431,56 @@ const QuotationEdit = () => {
                                                 <p className="text-xs text-gray-500 mt-1">
                                                     Current status of this
                                                     quotation
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="amount"
+                                                    className="text-sm font-medium"
+                                                >
+                                                    Quotation Amount{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <DollarSign className="h-4 w-4 text-gray-400" />
+                                                    </div>
+                                                    <Input
+                                                        id="amount"
+                                                        type="text"
+                                                        value={
+                                                            data.amount
+                                                                ? new Intl.NumberFormat().format(
+                                                                      Number(
+                                                                          data.amount
+                                                                      )
+                                                                  )
+                                                                : ""
+                                                        }
+                                                        onChange={
+                                                            handleAmountChange
+                                                        }
+                                                        placeholder="0"
+                                                        className={`pl-10 ${
+                                                            errors.amount
+                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
+                                                        }`}
+                                                        required
+                                                    />
+                                                </div>
+                                                {errors.amount && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {errors.amount}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Enter the total amount for
+                                                    this quotation
                                                 </p>
                                             </div>
                                         </div>
@@ -701,228 +724,13 @@ const QuotationEdit = () => {
                             </form>
                         </motion.div>
 
-                        {/* Right column - Sidebar information */}
+                        {/* Information Box - Moved below the form */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.1 }}
-                            className="space-y-6"
                         >
-                            {/* Inquiry Information Card */}
-                            <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-100/50">
-                                    <h2 className="font-medium text-base text-blue-800 flex items-center">
-                                        <Info className="h-4.5 w-4.5 mr-2 text-blue-600" />
-                                        Inquiry Information
-                                    </h2>
-                                    <p className="text-sm text-blue-600/80 mt-0.5">
-                                        Details of the inquiry this quotation is
-                                        for
-                                    </p>
-                                </div>
-
-                                <div className="p-4">
-                                    <div className="bg-gradient-to-r from-blue-50 to-blue-50/30 rounded-lg p-4 border border-blue-100">
-                                        <div className="flex items-center">
-                                            <div className="w-10 h-10 rounded-md bg-blue-100 flex items-center justify-center mr-3">
-                                                <FileText className="h-5 w-5 text-blue-700" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-medium">
-                                                    <Link
-                                                        href={route(
-                                                            "inquiries.show",
-                                                            quotation.inquiry.id
-                                                        )}
-                                                        className="text-blue-600 hover:underline"
-                                                    >
-                                                        Inquiry #
-                                                        {quotation.inquiry.code}
-                                                    </Link>
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Created on{" "}
-                                                    {formatDateUtil(
-                                                        quotation.inquiry
-                                                            .created_at || ""
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3 mt-4">
-                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                            <span className="text-sm text-gray-500">
-                                                Customer
-                                            </span>
-                                            <span className="text-sm font-medium">
-                                                {
-                                                    quotation.inquiry.customer
-                                                        .name
-                                                }
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                            <span className="text-sm text-gray-500">
-                                                End User
-                                            </span>
-                                            <span className="text-sm font-medium">
-                                                {quotation.inquiry
-                                                    .end_user_name ||
-                                                    "Not specified"}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                            <span className="text-sm text-gray-500">
-                                                Inquiry Date
-                                            </span>
-                                            <span className="text-sm font-medium">
-                                                {formatDateUtil(
-                                                    quotation.inquiry
-                                                        .inquiry_date
-                                                )}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                            <span className="text-sm text-gray-500">
-                                                Business Unit
-                                            </span>
-                                            <span className="text-sm font-medium">
-                                                {
-                                                    quotation.inquiry
-                                                        .business_unit.name
-                                                }
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between py-2">
-                                            <span className="text-sm text-gray-500">
-                                                Status
-                                            </span>
-                                            <Badge
-                                                className={
-                                                    quotation.inquiry.status ===
-                                                    "pending"
-                                                        ? "bg-amber-100 text-amber-800"
-                                                        : quotation.inquiry
-                                                              .status ===
-                                                          "resolved"
-                                                        ? "bg-emerald-100 text-emerald-800"
-                                                        : "bg-slate-100 text-slate-800"
-                                                }
-                                            >
-                                                {quotation.inquiry.status
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    quotation.inquiry.status.slice(
-                                                        1
-                                                    )}
-                                            </Badge>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 pt-1">
-                                        <Link
-                                            href={route(
-                                                "inquiries.show",
-                                                quotation.inquiry.id
-                                            )}
-                                        >
-                                            <Button
-                                                variant="outline"
-                                                className="w-full"
-                                            >
-                                                View Inquiry
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Assigned Personnel Card */}
-                            <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
-                                <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-4 border-b border-gray-100">
-                                    <h2 className="font-medium text-base text-gray-800 flex items-center">
-                                        <User className="h-4.5 w-4.5 mr-2 text-gray-600" />
-                                        Assigned Personnel
-                                    </h2>
-                                </div>
-
-                                <div className="p-4 space-y-4">
-                                    {quotation.inquiry.sales && (
-                                        <div className="space-y-2">
-                                            <h4 className="text-xs uppercase text-gray-500 font-medium tracking-wide">
-                                                Sales Representative
-                                            </h4>
-                                            <div className="flex items-center">
-                                                <div className="bg-indigo-100 p-2 rounded-full mr-3">
-                                                    <User className="h-4 w-4 text-indigo-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium">
-                                                        {
-                                                            quotation.inquiry
-                                                                .sales.name
-                                                        }
-                                                    </p>
-                                                    <div className="flex items-center text-xs text-gray-500 mt-0.5">
-                                                        <Mail className="h-3 w-3 mr-1" />
-                                                        <a
-                                                            href={`mailto:${quotation.inquiry.sales.email}`}
-                                                            className="text-blue-600 hover:underline"
-                                                        >
-                                                            {
-                                                                quotation
-                                                                    .inquiry
-                                                                    .sales.email
-                                                            }
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {quotation.inquiry.pic_engineer && (
-                                        <div className="space-y-2">
-                                            <h4 className="text-xs uppercase text-gray-500 font-medium tracking-wide">
-                                                PIC Engineer
-                                            </h4>
-                                            <div className="flex items-center">
-                                                <div className="bg-emerald-100 p-2 rounded-full mr-3">
-                                                    <User className="h-4 w-4 text-emerald-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium">
-                                                        {
-                                                            quotation.inquiry
-                                                                .pic_engineer
-                                                                .name
-                                                        }
-                                                    </p>
-                                                    <div className="flex items-center text-xs text-gray-500 mt-0.5">
-                                                        <Mail className="h-3 w-3 mr-1" />
-                                                        <a
-                                                            href={`mailto:${quotation.inquiry.pic_engineer.email}`}
-                                                            className="text-blue-600 hover:underline"
-                                                        >
-                                                            {
-                                                                quotation
-                                                                    .inquiry
-                                                                    .pic_engineer
-                                                                    .email
-                                                            }
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Information Box */}
-                            <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
+                            <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 shadow-sm">
                                 <div className="flex">
                                     <div className="flex-shrink-0">
                                         <AlertCircle className="h-5 w-5 text-amber-400" />
@@ -947,6 +755,255 @@ const QuotationEdit = () => {
                                 </div>
                             </div>
                         </motion.div>
+
+                        {/* Inquiry Information & Assigned Personnel Cards - Now in a grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Inquiry Information Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.2 }}
+                            >
+                                <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 h-full">
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-100/50">
+                                        <h2 className="font-medium text-base text-blue-800 flex items-center">
+                                            <Info className="h-4.5 w-4.5 mr-2 text-blue-600" />
+                                            Inquiry Information
+                                        </h2>
+                                        <p className="text-sm text-blue-600/80 mt-0.5">
+                                            Details of the inquiry this
+                                            quotation is for
+                                        </p>
+                                    </div>
+
+                                    <div className="p-4">
+                                        <div className="bg-gradient-to-r from-blue-50 to-blue-50/30 rounded-lg p-4 border border-blue-100">
+                                            <div className="flex items-center">
+                                                <div className="w-10 h-10 rounded-md bg-blue-100 flex items-center justify-center mr-3">
+                                                    <FileText className="h-5 w-5 text-blue-700" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-medium">
+                                                        <Link
+                                                            href={route(
+                                                                "inquiries.show",
+                                                                quotation
+                                                                    .inquiry.id
+                                                            )}
+                                                            className="text-blue-600 hover:underline"
+                                                        >
+                                                            Inquiry #
+                                                            {
+                                                                quotation
+                                                                    .inquiry
+                                                                    .code
+                                                            }
+                                                        </Link>
+                                                    </h3>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Created on{" "}
+                                                        {formatDateUtil(
+                                                            quotation.inquiry
+                                                                .created_at ||
+                                                                ""
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3 mt-4">
+                                            <div className="flex justify-between py-2 border-b border-gray-100">
+                                                <span className="text-sm text-gray-500">
+                                                    Customer
+                                                </span>
+                                                <span className="text-sm font-medium">
+                                                    {
+                                                        quotation.inquiry
+                                                            .customer.name
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between py-2 border-b border-gray-100">
+                                                <span className="text-sm text-gray-500">
+                                                    End User
+                                                </span>
+                                                <span className="text-sm font-medium">
+                                                    {quotation.inquiry
+                                                        .end_user_name ||
+                                                        "Not specified"}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between py-2 border-b border-gray-100">
+                                                <span className="text-sm text-gray-500">
+                                                    Inquiry Date
+                                                </span>
+                                                <span className="text-sm font-medium">
+                                                    {formatDateUtil(
+                                                        quotation.inquiry
+                                                            .inquiry_date
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between py-2 border-b border-gray-100">
+                                                <span className="text-sm text-gray-500">
+                                                    Business Unit
+                                                </span>
+                                                <span className="text-sm font-medium">
+                                                    {
+                                                        quotation.inquiry
+                                                            .business_unit.name
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between py-2">
+                                                <span className="text-sm text-gray-500">
+                                                    Status
+                                                </span>
+                                                <Badge
+                                                    className={
+                                                        quotation.inquiry
+                                                            .status ===
+                                                        "pending"
+                                                            ? "bg-amber-100 text-amber-800"
+                                                            : quotation.inquiry
+                                                                  .status ===
+                                                              "resolved"
+                                                            ? "bg-emerald-100 text-emerald-800"
+                                                            : "bg-slate-100 text-slate-800"
+                                                    }
+                                                >
+                                                    {quotation.inquiry.status
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        quotation.inquiry.status.slice(
+                                                            1
+                                                        )}
+                                                </Badge>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 pt-1">
+                                            <Link
+                                                href={route(
+                                                    "inquiries.show",
+                                                    quotation.inquiry.id
+                                                )}
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full"
+                                                >
+                                                    View Inquiry
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Assigned Personnel Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.3 }}
+                            >
+                                <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 h-full">
+                                    <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-4 border-b border-gray-100">
+                                        <h2 className="font-medium text-base text-gray-800 flex items-center">
+                                            <User className="h-4.5 w-4.5 mr-2 text-gray-600" />
+                                            Assigned Personnel
+                                        </h2>
+                                    </div>
+
+                                    <div className="p-4 space-y-4">
+                                        {quotation.inquiry.sales && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-xs uppercase text-gray-500 font-medium tracking-wide">
+                                                    Sales Representative
+                                                </h4>
+                                                <div className="flex items-center">
+                                                    <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                                                        <User className="h-4 w-4 text-indigo-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            {
+                                                                quotation
+                                                                    .inquiry
+                                                                    .sales.name
+                                                            }
+                                                        </p>
+                                                        <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                                                            <Mail className="h-3 w-3 mr-1" />
+                                                            <a
+                                                                href={`mailto:${quotation.inquiry.sales.email}`}
+                                                                className="text-blue-600 hover:underline"
+                                                            >
+                                                                {
+                                                                    quotation
+                                                                        .inquiry
+                                                                        .sales
+                                                                        .email
+                                                                }
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {quotation.inquiry.pic_engineer && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-xs uppercase text-gray-500 font-medium tracking-wide">
+                                                    PIC Engineer
+                                                </h4>
+                                                <div className="flex items-center">
+                                                    <div className="bg-emerald-100 p-2 rounded-full mr-3">
+                                                        <User className="h-4 w-4 text-emerald-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            {
+                                                                quotation
+                                                                    .inquiry
+                                                                    .pic_engineer
+                                                                    .name
+                                                            }
+                                                        </p>
+                                                        <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                                                            <Mail className="h-3 w-3 mr-1" />
+                                                            <a
+                                                                href={`mailto:${quotation.inquiry.pic_engineer.email}`}
+                                                                className="text-blue-600 hover:underline"
+                                                            >
+                                                                {
+                                                                    quotation
+                                                                        .inquiry
+                                                                        .pic_engineer
+                                                                        .email
+                                                                }
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!quotation.inquiry.sales &&
+                                            !quotation.inquiry.pic_engineer && (
+                                                <div className="p-4 text-center text-gray-500">
+                                                    <User className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                                                    <p>
+                                                        No personnel assigned to
+                                                        this inquiry yet.
+                                                    </p>
+                                                </div>
+                                            )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -47,11 +47,15 @@ class QuotationFactory extends Factory
         // Generate a due date between now and 3 months in the future
         $dueDate = Carbon::now()->addDays(rand(7, 90));
 
-        // Default status
+        // Generate an amount between 10M and 500M
+        $amount = $this->faker->numberBetween(10000000, 500000000);
+
+        // Default state
         return [
-            'inquiry_id' => Inquiry::factory(),
-            'file' => null, // No files as requested
+            'inquiry_id' => Inquiry::factory()->state(['status' => 'process']), // Ensure inquiry is in process state
+            'file' => null,
             'due_date' => $dueDate,
+            'amount' => $amount,
             'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
     }
@@ -78,6 +82,13 @@ class QuotationFactory extends Factory
 
             // Update the code
             $quotation->code = "{$inquiry->id}/{$qPrefix}/LNS/{$romanMonth}/{$year}";
+
+            // Set inquiry to "process" status since it has a quotation now
+            if ($inquiry->status === 'pending') {
+                $inquiry->status = 'process';
+                $inquiry->save();
+            }
+
             $quotation->save();
         });
     }
@@ -119,17 +130,8 @@ class QuotationFactory extends Factory
     }
 
     /**
-     * Set the quotation as closed (clsd)
+     * Set the quotation as work in progress
      */
-    public function closed()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'status' => 'clsd',
-            ];
-        });
-    }
-
     public function workInProgress()
     {
         return $this->state(function (array $attributes) {

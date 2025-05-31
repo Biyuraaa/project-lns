@@ -20,9 +20,10 @@ import {
     FileIcon,
     Search,
     CalendarDays,
-    Check,
+    DollarSign,
     Clock,
-    CheckCircle,
+    Calculator,
+    CreditCard,
 } from "lucide-react";
 import { Badge } from "@/Components/ui/badge";
 import {
@@ -30,6 +31,7 @@ import {
     formatFileSize,
     handleDragLeave,
     handleDragOver,
+    formatCurrency,
 } from "@/lib/utils";
 import type { Inquiry, PageProps } from "@/types";
 import { motion } from "framer-motion";
@@ -60,6 +62,7 @@ const QuotationsCreate = () => {
         due_date: "",
         file: null as File | null,
         inquiry_id: "",
+        amount: "", // Add the amount field
     });
 
     // Handle file selection
@@ -80,6 +83,13 @@ const QuotationsCreate = () => {
         setSelectedFile(null);
         setPreviewUrl(null);
         setData("file", null);
+    };
+
+    // Handle amount input (numbers only with commas for display)
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Strip all non-numeric characters
+        const rawValue = e.target.value.replace(/[^0-9]/g, "");
+        setData("amount", rawValue);
     };
 
     // Handle inquiry search
@@ -187,7 +197,9 @@ const QuotationsCreate = () => {
         return (
             data.due_date !== "" &&
             selectedFile !== null &&
-            data.inquiry_id !== ""
+            data.inquiry_id !== "" &&
+            data.amount !== "" && // Validate amount field
+            Number(data.amount) > 0 // Ensure amount is greater than zero
         );
     };
 
@@ -316,9 +328,9 @@ const QuotationsCreate = () => {
                                         Quotation Information
                                     </h2>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1">
                                         {/* Inquiry Selection */}
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 md:col-span-2">
                                             <Label
                                                 htmlFor="inquiry_search"
                                                 className="text-sm font-medium"
@@ -441,8 +453,8 @@ const QuotationsCreate = () => {
                                                 quotation is for
                                             </p>
                                         </div>
-
-                                        {/* Due Date Field */}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                                         <div className="space-y-1">
                                             <Label
                                                 htmlFor="due_date"
@@ -488,6 +500,56 @@ const QuotationsCreate = () => {
                                             )}
                                             <p className="text-xs text-gray-500 mt-1">
                                                 Set the expiration date for this
+                                                quotation
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="space-y-1">
+                                            <Label
+                                                htmlFor="amount"
+                                                className="text-sm font-medium"
+                                            >
+                                                Quotation Amount{" "}
+                                                <span className="text-red-500">
+                                                    *
+                                                </span>
+                                            </Label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <DollarSign className="h-4 w-4 text-gray-400" />
+                                                </div>
+                                                <Input
+                                                    id="amount"
+                                                    type="text"
+                                                    value={
+                                                        data.amount
+                                                            ? new Intl.NumberFormat().format(
+                                                                  Number(
+                                                                      data.amount
+                                                                  )
+                                                              )
+                                                            : ""
+                                                    }
+                                                    onChange={
+                                                        handleAmountChange
+                                                    }
+                                                    placeholder="0"
+                                                    className={`pl-10 ${
+                                                        errors.amount
+                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
+                                                    }`}
+                                                    required
+                                                />
+                                            </div>
+                                            {errors.amount && (
+                                                <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                                    {errors.amount}
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Enter the total amount for this
                                                 quotation
                                             </p>
                                         </div>
@@ -601,6 +663,54 @@ const QuotationsCreate = () => {
                                                 {errors.file}
                                             </p>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* Quotation Summary - NEW */}
+                                <div className="py-8">
+                                    <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                                        <Calculator className="w-5 h-5 mr-2 text-amber-600" />
+                                        Quotation Summary
+                                    </h2>
+
+                                    <div className="bg-amber-50 rounded-lg border border-amber-200 p-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">
+                                                    Due Date
+                                                </p>
+                                                <p className="text-sm text-gray-900">
+                                                    {data.due_date
+                                                        ? formatDate(
+                                                              data.due_date
+                                                          )
+                                                        : "Not set"}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">
+                                                    Quotation Amount
+                                                </p>
+                                                <p className="text-lg font-semibold text-amber-700">
+                                                    {data.amount
+                                                        ? new Intl.NumberFormat(
+                                                              "en-US",
+                                                              {
+                                                                  style: "currency",
+                                                                  currency:
+                                                                      "IDR",
+                                                                  minimumFractionDigits: 0,
+                                                                  maximumFractionDigits: 0,
+                                                              }
+                                                          ).format(
+                                                              Number(
+                                                                  data.amount
+                                                              )
+                                                          )
+                                                        : "Rp 0"}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -786,11 +896,9 @@ const QuotationsCreate = () => {
                                     </p>
                                     <p className="mt-1">
                                         The quotation code and status will be
-                                        automatically generated. Once created,
-                                        this quotation will be linked to the
-                                        selected inquiry and can be accessed
-                                        through both the quotation and inquiry
-                                        management sections.
+                                        automatically generated. The amount
+                                        value should represent the total value
+                                        of this quotation.
                                     </p>
                                 </div>
                             </div>

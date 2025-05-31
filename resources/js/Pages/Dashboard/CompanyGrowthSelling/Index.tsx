@@ -1,6 +1,6 @@
 "use client";
 
-import type { PageProps } from "@/types";
+import type { BusinessUnit, PageProps } from "@/types";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { useState, useEffect, useMemo } from "react";
 import { usePagination } from "@/hooks/use-pagination";
@@ -12,16 +12,14 @@ import {
     ChevronDown,
     Edit,
     Trash2,
-    Eye,
     Plus,
     CalendarDays,
     ArrowUp,
     ArrowDown,
     BarChart4,
     Target,
-    TrendingUp,
     MoreHorizontal,
-    Download,
+    ChevronRight,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,44 +35,65 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
-import {
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    Line,
-    ComposedChart,
-} from "recharts";
+import React from "react";
 
-interface CompanyGrowthSelling {
+// Extended interface for business unit details
+interface BusinessUnitDetail {
     id: number;
+    business_unit_id: number;
+    business_unit_name: string;
     month: number;
     year: number;
     target: number;
     actual: number;
     difference: number;
     percentage: number;
-    created_at?: string;
-    updated_at?: string;
+}
+
+// Updated CompanyGrowthSelling type to include business units and summary flag
+interface CompanyGrowthSelling {
+    id: string | number;
+    month: number;
+    year: number;
+    target: number;
+    actual: number;
+    difference: number;
+    percentage: number;
+    is_summary: boolean;
+    business_units?: BusinessUnitDetail[];
 }
 
 interface CompanyGrowthSellingIndexProps extends PageProps {
     companyGrowthSellings: CompanyGrowthSelling[];
+    businessUnits: BusinessUnit[];
 }
 
 const CompanyGrowthSellingIndex = () => {
-    const { companyGrowthSellings } =
+    const { companyGrowthSellings, businessUnits } =
         usePage<CompanyGrowthSellingIndexProps>().props;
     const [searchTerm, setSearchTerm] = useState("");
     const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [sortField, setSortField] = useState<string>("month");
-    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [sortField, setSortField] = useState<string>("year");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [showFilters, setShowFilters] = useState(false);
     const [yearFilter, setYearFilter] = useState<number | string>("all");
+    const [businessUnitFilter, setBusinessUnitFilter] = useState<
+        number | string
+    >("all");
+
+    // State to track expanded rows for business unit details
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+    // Toggle row expansion
+    const toggleRowExpansion = (rowId: string) => {
+        const newExpandedRows = new Set(expandedRows);
+        if (newExpandedRows.has(rowId)) {
+            newExpandedRows.delete(rowId);
+        } else {
+            newExpandedRows.add(rowId);
+        }
+        setExpandedRows(newExpandedRows);
+    };
 
     // Format month number to name
     const getMonthName = (monthNumber: number) => {
@@ -95,25 +114,6 @@ const CompanyGrowthSellingIndex = () => {
         return months[monthNumber - 1] || "Unknown";
     };
 
-    // Get short month name
-    const getShortMonthName = (monthNumber: number) => {
-        const months = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ];
-        return months[monthNumber - 1] || "Unknown";
-    };
-
     // Get available years from data
     const availableYears = useMemo(() => {
         const years = [
@@ -122,9 +122,10 @@ const CompanyGrowthSellingIndex = () => {
         return years.sort((a, b) => b - a); // Sort years in descending order
     }, [companyGrowthSellings]);
 
-    // Filter data based on search term and year
+    // Filter data based on search term, year, and business unit
     const filteredData = useMemo(() => {
         return companyGrowthSellings.filter((item) => {
+            // Search term matching
             const matchesSearch =
                 getMonthName(item.month)
                     .toLowerCase()
@@ -133,12 +134,23 @@ const CompanyGrowthSellingIndex = () => {
                 item.target.toString().includes(searchTerm.toLowerCase()) ||
                 item.actual.toString().includes(searchTerm.toLowerCase());
 
+            // Year filter matching
             const matchesYear =
                 yearFilter === "all" || item.year === Number(yearFilter);
 
-            return matchesSearch && matchesYear;
+            // Business unit filter (only applies to detailed view)
+            let matchesBusinessUnit = true;
+            if (businessUnitFilter !== "all" && item.business_units) {
+                // For summary rows, check if they have the filtered business unit
+                matchesBusinessUnit = item.business_units.some(
+                    (unit) =>
+                        unit.business_unit_id === Number(businessUnitFilter)
+                );
+            }
+
+            return matchesSearch && matchesYear && matchesBusinessUnit;
         });
-    }, [companyGrowthSellings, searchTerm, yearFilter]);
+    }, [companyGrowthSellings, searchTerm, yearFilter, businessUnitFilter]);
 
     // Sort data
     const sortedData = useMemo(() => {
@@ -196,91 +208,10 @@ const CompanyGrowthSellingIndex = () => {
         }
     };
 
-    // Reset to first page when search term or year filter changes
+    // Reset to first page when search term, year filter, or business unit filter changes
     useEffect(() => {
         pagination.goToFirstPage();
-    }, [searchTerm, yearFilter]);
-
-    // Prepare chart data
-    const chartData = useMemo(() => {
-        // If year filter is active, show only that year's data
-        const dataForChart =
-            yearFilter === "all"
-                ? sortedData
-                : sortedData.filter((item) => item.year === Number(yearFilter));
-
-        // Sort by month for chart display
-        return [...dataForChart]
-            .sort((a, b) => {
-                if (a.year !== b.year) {
-                    return a.year - b.year;
-                }
-                return a.month - b.month;
-            })
-            .map((item) => ({
-                name: getShortMonthName(item.month),
-                target: item.target,
-                actual: item.actual,
-                difference: item.difference,
-                percentage: item.percentage,
-                month: item.month,
-                year: item.year,
-            }));
-    }, [sortedData, yearFilter]);
-
-    // Custom tooltip for the chart
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-white p-4 shadow-lg rounded-md border border-gray-100">
-                    <p className="font-medium mb-2">{`${label}`}</p>
-                    <div className="space-y-1">
-                        <p className="text-sm flex justify-between">
-                            <span className="text-blue-600 font-medium">
-                                Target:
-                            </span>
-                            <span className="font-semibold ml-4">
-                                {new Intl.NumberFormat().format(
-                                    payload[0].value
-                                )}
-                            </span>
-                        </p>
-                        <p className="text-sm flex justify-between">
-                            <span className="text-red-500 font-medium">
-                                Actual PO:
-                            </span>
-                            <span className="font-semibold ml-4">
-                                {new Intl.NumberFormat().format(
-                                    payload[1].value
-                                )}
-                            </span>
-                        </p>
-                        <div className="border-t border-gray-100 mt-2 pt-2">
-                            <p className="text-sm flex justify-between">
-                                <span className="text-gray-600 font-medium">
-                                    Achievement:
-                                </span>
-                                <span
-                                    className={`font-semibold ${
-                                        payload[1].value >= payload[0].value
-                                            ? "text-green-600"
-                                            : "text-red-500"
-                                    }`}
-                                >
-                                    {Math.round(
-                                        (payload[1].value / payload[0].value) *
-                                            100
-                                    )}
-                                    %
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return null;
-    };
+    }, [searchTerm, yearFilter, businessUnitFilter]);
 
     // Delete handler
     const { delete: destroy } = useForm({});
@@ -355,132 +286,6 @@ const CompanyGrowthSellingIndex = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Chart Card */}
-                    <Card className="mb-8 shadow-lg border-0">
-                        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100/50">
-                            <div className="flex justify-between items-center">
-                                <CardTitle className="text-lg font-semibold text-gray-800">
-                                    Company Growth Selling
-                                </CardTitle>
-                                <div className="flex items-center space-x-3">
-                                    <select
-                                        className="h-9 rounded-md border border-gray-200 bg-white text-gray-700 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value={yearFilter}
-                                        onChange={(e) =>
-                                            setYearFilter(e.target.value)
-                                        }
-                                    >
-                                        <option value="all">All Years</option>
-                                        {availableYears.map((year) => (
-                                            <option key={year} value={year}>
-                                                {year}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex items-center gap-1"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        Export
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart
-                                        data={chartData}
-                                        margin={{
-                                            top: 20,
-                                            right: 30,
-                                            left: 20,
-                                            bottom: 20,
-                                        }}
-                                    >
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            vertical={false}
-                                        />
-                                        <XAxis
-                                            dataKey="name"
-                                            tick={{ fontSize: 12 }}
-                                            axisLine={{ stroke: "#E5E7EB" }}
-                                        />
-                                        <YAxis
-                                            yAxisId="left"
-                                            axisLine={{ stroke: "#E5E7EB" }}
-                                            tick={{ fontSize: 12 }}
-                                            tickFormatter={(value) =>
-                                                value >= 1000
-                                                    ? `${value / 1000}k`
-                                                    : value
-                                            }
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Legend
-                                            verticalAlign="top"
-                                            height={50}
-                                            iconType="circle"
-                                        />
-                                        <Bar
-                                            yAxisId="left"
-                                            dataKey="target"
-                                            name="Target Sales"
-                                            fill="#3B82F6"
-                                            barSize={30}
-                                            radius={[4, 4, 0, 0]}
-                                        />
-                                        <Line
-                                            yAxisId="left"
-                                            type="monotone"
-                                            dataKey="actual"
-                                            name="PO Realization"
-                                            stroke="#EF4444"
-                                            strokeWidth={3}
-                                            dot={{
-                                                r: 6,
-                                                fill: "#EF4444",
-                                                strokeWidth: 2,
-                                                stroke: "#fff",
-                                            }}
-                                            activeDot={{
-                                                r: 8,
-                                                fill: "#EF4444",
-                                                strokeWidth: 2,
-                                                stroke: "#fff",
-                                            }}
-                                        />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="mt-6 pt-6 border-t border-gray-100">
-                                <div className="flex items-start gap-2">
-                                    <TrendingUp className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                                    <div className="text-sm text-gray-600 space-y-1">
-                                        <p className="leading-relaxed">
-                                            <span className="font-medium">
-                                                Insight:
-                                            </span>{" "}
-                                            Menunjukkan kinerja vs target tiap
-                                            bulan, membandingkan target
-                                            penjualan dengan realisasi PO.
-                                        </p>
-                                        <p className="leading-relaxed">
-                                            <span className="font-medium">
-                                                Tujuan:
-                                            </span>{" "}
-                                            Menilai efektivitas pencapaian
-                                            target PO.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
 
                     {/* Search and Filter Section */}
                     <div className="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
@@ -571,7 +376,7 @@ const CompanyGrowthSellingIndex = () => {
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Sort By
@@ -596,7 +401,7 @@ const CompanyGrowthSellingIndex = () => {
                                                     Actual
                                                 </option>
                                                 <option value="percentage">
-                                                    Percentage
+                                                    Achievement
                                                 </option>
                                             </select>
                                         </div>
@@ -630,9 +435,11 @@ const CompanyGrowthSellingIndex = () => {
                                             size="sm"
                                             onClick={() => {
                                                 setSearchTerm("");
-                                                setSortField("month");
-                                                setSortDirection("asc");
+                                                setSortField("year");
+                                                setSortDirection("desc");
                                                 setYearFilter("all");
+                                                setBusinessUnitFilter("all");
+                                                setExpandedRows(new Set());
                                             }}
                                         >
                                             Reset Filters
@@ -654,6 +461,27 @@ const CompanyGrowthSellingIndex = () => {
                                     for "<strong>{searchTerm}</strong>"
                                 </span>
                             )}
+                            {yearFilter !== "all" && (
+                                <span>
+                                    {" "}
+                                    in year <strong>{yearFilter}</strong>
+                                </span>
+                            )}
+                            {businessUnitFilter !== "all" && (
+                                <span>
+                                    {" "}
+                                    for{" "}
+                                    <strong>
+                                        {
+                                            businessUnits.find(
+                                                (bu) =>
+                                                    bu.id.toString() ===
+                                                    businessUnitFilter.toString()
+                                            )?.name
+                                        }
+                                    </strong>
+                                </span>
+                            )}
                         </p>
                     </div>
 
@@ -663,34 +491,15 @@ const CompanyGrowthSellingIndex = () => {
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
+                                        <th className="pl-6 py-3 w-12"></th>
                                         <th
                                             scope="col"
                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                             onClick={() => handleSort("month")}
                                         >
                                             <div className="flex items-center">
-                                                Month
+                                                Month / Year
                                                 {sortField === "month" && (
-                                                    <span className="ml-1">
-                                                        {sortDirection ===
-                                                        "asc" ? (
-                                                            <ArrowUp className="h-3 w-3" />
-                                                        ) : (
-                                                            <ArrowDown className="h-3 w-3" />
-                                                        )}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </th>
-
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                                            onClick={() => handleSort("year")}
-                                        >
-                                            <div className="flex items-center">
-                                                Year
-                                                {sortField === "year" && (
                                                     <span className="ml-1">
                                                         {sortDirection ===
                                                         "asc" ? (
@@ -786,151 +595,304 @@ const CompanyGrowthSellingIndex = () => {
                                                 )}
                                             </div>
                                         </th>
-
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                        >
-                                            Actions
-                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {currentData.length > 0 ? (
+                                        // Render all main rows and their child rows if expanded
                                         currentData.map((item, index) => (
-                                            <motion.tr
-                                                key={item.id}
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{
-                                                    delay: index * 0.05,
-                                                    duration: 0.2,
-                                                }}
-                                                className="hover:bg-gray-50 transition-colors"
-                                            >
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-medium text-blue-600">
-                                                        {getMonthName(
-                                                            item.month
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm text-gray-900">
-                                                        {item.year}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center">
-                                                        <div className="h-8 w-1 bg-blue-500 rounded-sm mr-3"></div>
-                                                        <span className="text-sm text-gray-900 font-medium">
-                                                            {formatNumber(
-                                                                item.target
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center">
-                                                        <div className="h-8 w-1 bg-red-500 rounded-sm mr-3"></div>
-                                                        <span className="text-sm text-gray-900 font-medium">
-                                                            {formatNumber(
-                                                                item.actual
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4">
-                                                    <div
-                                                        className={`text-sm font-medium ${
-                                                            item.difference >= 0
-                                                                ? "text-green-600"
-                                                                : "text-red-600"
-                                                        }`}
-                                                    >
-                                                        {item.difference >= 0
-                                                            ? "+"
-                                                            : ""}
-                                                        {formatNumber(
-                                                            item.difference
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4">
-                                                    <div
-                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                            item.percentage >=
-                                                            100
-                                                                ? "bg-green-100 text-green-800"
-                                                                : item.percentage >=
-                                                                  80
-                                                                ? "bg-yellow-100 text-yellow-800"
-                                                                : "bg-red-100 text-red-800"
-                                                        }`}
-                                                    >
-                                                        {item.percentage}%
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="h-8 w-8 p-0 border-gray-200"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">
-                                                                    Open menu
-                                                                </span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-[160px]"
-                                                        >
-                                                            <DropdownMenuLabel>
-                                                                Actions
-                                                            </DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                asChild
-                                                            >
-                                                                <Link
-                                                                    href={route(
-                                                                        "targetSales.edit",
-                                                                        item.id
-                                                                    )}
-                                                                    className="cursor-pointer flex items-center w-full"
+                                            <React.Fragment key={item.id}>
+                                                <motion.tr
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    transition={{
+                                                        delay: index * 0.05,
+                                                        duration: 0.2,
+                                                    }}
+                                                    className={`hover:bg-gray-50 transition-colors ${
+                                                        expandedRows.has(
+                                                            item.id.toString()
+                                                        )
+                                                            ? "bg-blue-50"
+                                                            : ""
+                                                    }`}
+                                                >
+                                                    <td className="pl-6 py-4">
+                                                        {item.business_units &&
+                                                            item.business_units
+                                                                .length > 0 && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        toggleRowExpansion(
+                                                                            item.id.toString()
+                                                                        )
+                                                                    }
+                                                                    className="p-1 rounded-full hover:bg-blue-100 transition-colors"
                                                                 >
-                                                                    <Edit className="h-4 w-4 mr-2" />
-                                                                    Edit
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                className="text-red-600 focus:text-red-700 cursor-pointer"
-                                                                onClick={() =>
-                                                                    handleDelete(
-                                                                        item.id
-                                                                    )
-                                                                }
+                                                                    <ChevronRight
+                                                                        className={`h-4 w-4 text-blue-600 transform transition-transform duration-200 ${
+                                                                            expandedRows.has(
+                                                                                item.id.toString()
+                                                                            )
+                                                                                ? "rotate-90"
+                                                                                : ""
+                                                                        }`}
+                                                                    />
+                                                                </button>
+                                                            )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex flex-col">
+                                                            <div className="text-sm font-medium text-blue-600">
+                                                                {getMonthName(
+                                                                    item.month
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">
+                                                                {item.year}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center">
+                                                            <div className="h-8 w-1 bg-blue-500 rounded-sm mr-3"></div>
+                                                            <span className="text-sm text-gray-900 font-medium">
+                                                                {formatNumber(
+                                                                    item.target
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center">
+                                                            <div className="h-8 w-1 bg-red-500 rounded-sm mr-3"></div>
+                                                            <span className="text-sm text-gray-900 font-medium">
+                                                                {formatNumber(
+                                                                    item.actual
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        <div
+                                                            className={`text-sm font-medium ${
+                                                                item.difference >=
+                                                                0
+                                                                    ? "text-green-600"
+                                                                    : "text-red-600"
+                                                            }`}
+                                                        >
+                                                            {item.difference >=
+                                                            0
+                                                                ? "+"
+                                                                : ""}
+                                                            {formatNumber(
+                                                                item.difference
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        <div
+                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                item.percentage >=
+                                                                100
+                                                                    ? "bg-green-100 text-green-800"
+                                                                    : item.percentage >=
+                                                                      80
+                                                                    ? "bg-yellow-100 text-yellow-800"
+                                                                    : "bg-red-100 text-red-800"
+                                                            }`}
+                                                        >
+                                                            {item.percentage}%
+                                                        </div>
+                                                    </td>
+                                                </motion.tr>
+
+                                                {/* Expandable detail rows for business units */}
+                                                {expandedRows.has(
+                                                    item.id.toString()
+                                                ) &&
+                                                    item.business_units && (
+                                                        <AnimatePresence>
+                                                            <motion.tr
+                                                                initial={{
+                                                                    opacity: 0,
+                                                                    height: 0,
+                                                                }}
+                                                                animate={{
+                                                                    opacity: 1,
+                                                                    height: "auto",
+                                                                }}
+                                                                exit={{
+                                                                    opacity: 0,
+                                                                    height: 0,
+                                                                }}
+                                                                transition={{
+                                                                    duration: 0.2,
+                                                                }}
+                                                                className="bg-gray-50"
                                                             >
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
-                                            </motion.tr>
+                                                                <td
+                                                                    colSpan={7}
+                                                                    className="px-4 py-4"
+                                                                >
+                                                                    <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                                                        <table className="min-w-full divide-y divide-gray-200">
+                                                                            <thead className="bg-gray-100">
+                                                                                <tr>
+                                                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Business
+                                                                                        Unit
+                                                                                    </th>
+                                                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Target
+                                                                                    </th>
+                                                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Actual
+                                                                                    </th>
+                                                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Difference
+                                                                                    </th>
+                                                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Achievement
+                                                                                    </th>
+                                                                                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                                        Actions
+                                                                                    </th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                                                {item.business_units.map(
+                                                                                    (
+                                                                                        unit
+                                                                                    ) => (
+                                                                                        <tr
+                                                                                            key={
+                                                                                                unit.id
+                                                                                            }
+                                                                                            className="hover:bg-gray-50"
+                                                                                        >
+                                                                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-700">
+                                                                                                {
+                                                                                                    unit.business_unit_name
+                                                                                                }
+                                                                                            </td>
+                                                                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                                                                                {formatNumber(
+                                                                                                    unit.target
+                                                                                                )}
+                                                                                            </td>
+                                                                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                                                                                                {formatNumber(
+                                                                                                    unit.actual
+                                                                                                )}
+                                                                                            </td>
+                                                                                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                                                                                <span
+                                                                                                    className={`font-medium ${
+                                                                                                        unit.difference >=
+                                                                                                        0
+                                                                                                            ? "text-green-600"
+                                                                                                            : "text-red-600"
+                                                                                                    }`}
+                                                                                                >
+                                                                                                    {unit.difference >=
+                                                                                                    0
+                                                                                                        ? "+"
+                                                                                                        : ""}
+                                                                                                    {formatNumber(
+                                                                                                        unit.difference
+                                                                                                    )}
+                                                                                                </span>
+                                                                                            </td>
+                                                                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                                                                <div
+                                                                                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                                                        unit.percentage >=
+                                                                                                        100
+                                                                                                            ? "bg-green-100 text-green-800"
+                                                                                                            : unit.percentage >=
+                                                                                                              80
+                                                                                                            ? "bg-yellow-100 text-yellow-800"
+                                                                                                            : "bg-red-100 text-red-800"
+                                                                                                    }`}
+                                                                                                >
+                                                                                                    {
+                                                                                                        unit.percentage
+                                                                                                    }
+
+                                                                                                    %
+                                                                                                </div>
+                                                                                            </td>
+                                                                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                                                                                                <DropdownMenu>
+                                                                                                    <DropdownMenuTrigger
+                                                                                                        asChild
+                                                                                                    >
+                                                                                                        <Button
+                                                                                                            variant="outline"
+                                                                                                            size="sm"
+                                                                                                            className="h-7 w-7 p-0 border-gray-200"
+                                                                                                        >
+                                                                                                            <MoreHorizontal className="h-3.5 w-3.5" />
+                                                                                                            <span className="sr-only">
+                                                                                                                Open
+                                                                                                                menu
+                                                                                                            </span>
+                                                                                                        </Button>
+                                                                                                    </DropdownMenuTrigger>
+                                                                                                    <DropdownMenuContent
+                                                                                                        align="end"
+                                                                                                        className="w-[160px]"
+                                                                                                    >
+                                                                                                        <DropdownMenuLabel>
+                                                                                                            Actions
+                                                                                                        </DropdownMenuLabel>
+                                                                                                        <DropdownMenuSeparator />
+                                                                                                        <DropdownMenuItem
+                                                                                                            asChild
+                                                                                                        >
+                                                                                                            <Link
+                                                                                                                href={route(
+                                                                                                                    "targetSales.edit",
+                                                                                                                    unit.id
+                                                                                                                )}
+                                                                                                                className="cursor-pointer flex items-center w-full"
+                                                                                                            >
+                                                                                                                <Edit className="h-4 w-4 mr-2" />
+                                                                                                                Edit
+                                                                                                            </Link>
+                                                                                                        </DropdownMenuItem>
+                                                                                                        <DropdownMenuSeparator />
+                                                                                                        <DropdownMenuItem
+                                                                                                            className="text-red-600 focus:text-red-700 cursor-pointer"
+                                                                                                            onClick={() =>
+                                                                                                                handleDelete(
+                                                                                                                    unit.id
+                                                                                                                )
+                                                                                                            }
+                                                                                                        >
+                                                                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                                                                            Delete
+                                                                                                        </DropdownMenuItem>
+                                                                                                    </DropdownMenuContent>
+                                                                                                </DropdownMenu>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    )
+                                                                                )}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </td>
+                                                            </motion.tr>
+                                                        </AnimatePresence>
+                                                    )}
+                                            </React.Fragment>
                                         ))
                                     ) : (
                                         <tr>
@@ -944,19 +906,25 @@ const CompanyGrowthSellingIndex = () => {
                                                     </div>
                                                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                                                         {searchTerm ||
-                                                        yearFilter !== "all"
+                                                        yearFilter !== "all" ||
+                                                        businessUnitFilter !==
+                                                            "all"
                                                             ? "No records found matching your filters"
                                                             : "No records available yet"}
                                                     </h3>
                                                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                                         {searchTerm ||
-                                                        yearFilter !== "all"
+                                                        yearFilter !== "all" ||
+                                                        businessUnitFilter !==
+                                                            "all"
                                                             ? "Try adjusting your search criteria or clear filters to see all records"
                                                             : "Create your first record to start tracking company growth"}
                                                     </p>
 
                                                     {!searchTerm &&
-                                                    yearFilter === "all" ? (
+                                                    yearFilter === "all" &&
+                                                    businessUnitFilter ===
+                                                        "all" ? (
                                                         <Link
                                                             href={route(
                                                                 "targetSales.create"
@@ -975,6 +943,9 @@ const CompanyGrowthSellingIndex = () => {
                                                                     ""
                                                                 );
                                                                 setYearFilter(
+                                                                    "all"
+                                                                );
+                                                                setBusinessUnitFilter(
                                                                     "all"
                                                                 );
                                                             }}
