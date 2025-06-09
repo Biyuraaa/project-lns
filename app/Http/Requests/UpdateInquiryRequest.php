@@ -30,6 +30,7 @@ class UpdateInquiryRequest extends FormRequest
             'description' => 'required|string|max:2000',
             'business_unit_id' => 'required|exists:business_units,id',
             'inquiry_date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:inquiry_date',
             'end_user_name' => 'nullable|string|max:255',
             'end_user_email' => 'nullable|email|max:255',
             'end_user_phone' => 'nullable|string|max:20',

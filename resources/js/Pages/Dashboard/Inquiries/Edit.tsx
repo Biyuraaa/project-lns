@@ -74,6 +74,7 @@ const InquiriesEdit = () => {
             ? inquiry.business_unit.id.toString()
             : "",
         inquiry_date: inquiry.inquiry_date,
+        due_date: inquiry.due_date || "",
         end_user_name: inquiry.end_user_name || "",
         end_user_email: inquiry.end_user_email || "",
         end_user_phone: inquiry.end_user_phone || "",
@@ -572,7 +573,7 @@ const InquiriesEdit = () => {
                                         </div>
 
                                         {/* Inquiry Date Field */}
-                                        <div className="space-y-1 md:col-span-4">
+                                        <div className="space-y-1 md:col-span-6">
                                             <Label
                                                 htmlFor="inquiry_date"
                                                 className="text-sm font-medium"
@@ -598,17 +599,11 @@ const InquiriesEdit = () => {
                                                             e.target.value
                                                         )
                                                     }
-                                                    className={`pl-10 ${
+                                                    className={`pl-10 cursor-pointer ${
                                                         errors.inquiry_date
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    onFocus={() =>
-                                                        setIsPickingDate(true)
-                                                    }
-                                                    onBlur={() =>
-                                                        setIsPickingDate(false)
-                                                    }
+                                                    } appearance-none`}
                                                     required
                                                 />
                                             </div>
@@ -620,8 +615,47 @@ const InquiriesEdit = () => {
                                             )}
                                         </div>
 
+                                        {/* Due Date Field */}
+                                        <div className="space-y-1 md:col-span-6">
+                                            <Label
+                                                htmlFor="due_date"
+                                                className="text-sm font-medium"
+                                            >
+                                                Due Date
+                                            </Label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <CalendarDays className="h-4 w-4 text-gray-400" />
+                                                </div>
+                                                <Input
+                                                    id="due_date"
+                                                    type="date"
+                                                    value={formatDateForInput(
+                                                        data.due_date
+                                                    )}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            "due_date",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    className={`pl-10 cursor-pointer ${
+                                                        errors.due_date
+                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
+                                                    } appearance-none`}
+                                                />
+                                            </div>
+                                            {errors.due_date && (
+                                                <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                                    {errors.due_date}
+                                                </p>
+                                            )}
+                                        </div>
+
                                         {/* Status Field */}
-                                        <div className="space-y-1 md:col-span-4">
+                                        <div className="space-y-1 md:col-span-6">
                                             <Label
                                                 htmlFor="status"
                                                 className="text-sm font-medium"
@@ -669,7 +703,7 @@ const InquiriesEdit = () => {
 
                                         {/* Business Unit Field */}
                                         <div
-                                            className="space-y-1 md:col-span-4"
+                                            className="space-y-1 md:col-span-6"
                                             id="business-unit-dropdown-container"
                                         >
                                             <Label

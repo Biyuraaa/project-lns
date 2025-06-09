@@ -68,7 +68,14 @@ interface InquiriesCreateProps extends PageProps {
 const InquiriesCreate = () => {
     const { customers, picEngineers, sales, businessUnits } =
         usePage<InquiriesCreateProps>().props;
-
+    const calculateDaysRemaining = (dueDate: string): number => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        const diffTime = due.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
     // File input reference
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,6 +90,7 @@ const InquiriesCreate = () => {
         description: "",
         business_unit_id: "",
         inquiry_date: defaultDate,
+        due_date: "",
         new_customer: false as boolean,
         customer_name: "",
         customer_email: "",
@@ -349,134 +357,239 @@ const InquiriesCreate = () => {
                                         <FileText className="w-5 h-5 mr-2 text-blue-600" />
                                         Inquiry Information
                                     </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Inquiry Date Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="inquiry_date"
-                                                className="text-sm font-medium"
-                                            >
-                                                Inquiry Date{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Calendar className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="inquiry_date"
-                                                    type="date"
-                                                    value={data.inquiry_date}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "inquiry_date",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.inquiry_date
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    onFocus={() =>
-                                                        setIsPickingDate(true)
-                                                    }
-                                                    onBlur={() =>
-                                                        setIsPickingDate(false)
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                            {errors.inquiry_date && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.inquiry_date}
-                                                </p>
-                                            )}
-                                        </div>
 
-                                        {/* Business Unit Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="business_unit_id"
-                                                className="text-sm font-medium"
-                                            >
-                                                Business Unit{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                                                    <Package className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Select
-                                                    value={
-                                                        data.business_unit_id.toString() ||
-                                                        ""
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        setData(
-                                                            "business_unit_id",
-                                                            value
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger
-                                                        className={`pl-10 ${
-                                                            errors.business_unit_id
-                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                                : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                        }`}
-                                                    >
-                                                        <SelectValue placeholder="Select business unit" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {businessUnits.map(
-                                                            (unit) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        unit.id
-                                                                    }
-                                                                    value={unit.id.toString()}
-                                                                >
-                                                                    {unit.name}
-                                                                </SelectItem>
-                                                            )
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            {errors.business_unit_id && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.business_unit_id}
-                                                </p>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {businessUnits.find(
-                                                    (unit) =>
-                                                        unit.id.toString() ===
-                                                        data.business_unit_id
-                                                )?.description ||
-                                                    "Select the business unit for this inquiry"}
-                                            </p>
-                                        </div>
-
-                                        {/* Customer Selection Section - Improved Version */}
-                                        <div className="space-y-4 md:col-span-2 lg:col-span-3">
-                                            <div className="flex justify-between items-center">
+                                    {/* Core inquiry fields in a card */}
+                                    <div className="bg-white border border-gray-100 rounded-lg shadow-sm mb-6 p-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                            {/* Inquiry Date Field */}
+                                            <div className="space-y-1 md:col-span-4">
                                                 <Label
-                                                    htmlFor="customer_type"
-                                                    className="text-sm font-medium"
+                                                    htmlFor="inquiry_date"
+                                                    className="text-sm font-medium flex items-center gap-1"
                                                 >
-                                                    Customer Information{" "}
+                                                    Inquiry Date{" "}
                                                     <span className="text-red-500">
                                                         *
                                                     </span>
                                                 </Label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Calendar className="h-4 w-4 text-gray-400" />
+                                                    </div>
+                                                    <Input
+                                                        id="inquiry_date"
+                                                        type="date"
+                                                        value={
+                                                            data.inquiry_date
+                                                        }
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                "inquiry_date",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`pl-10 pr-4 cursor-pointer ${
+                                                            errors.inquiry_date
+                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                                                        } appearance-none`}
+                                                        required
+                                                    />
+                                                </div>
+                                                {errors.inquiry_date && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {errors.inquiry_date}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-gray-500">
+                                                    {data.inquiry_date &&
+                                                        new Date(
+                                                            data.inquiry_date
+                                                        ).toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                weekday: "long",
+                                                                year: "numeric",
+                                                                month: "long",
+                                                                day: "numeric",
+                                                            }
+                                                        )}
+                                                </p>
+                                            </div>
+
+                                            {/* Inquiry Due Date Field */}
+                                            <div className="space-y-1 md:col-span-4">
+                                                <Label
+                                                    htmlFor="due_date"
+                                                    className="text-sm font-medium flex items-center gap-1"
+                                                >
+                                                    Due Date
+                                                </Label>
+                                                <div className="relative group">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Calendar className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                                    </div>
+                                                    <Input
+                                                        id="due_date"
+                                                        type="date"
+                                                        value={data.due_date}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                "due_date",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`pl-10 pr-4 cursor-pointer ${
+                                                            errors.due_date
+                                                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                : "border-gray-200 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400"
+                                                        } transition-colors`}
+                                                    />
+                                                    {data.due_date && (
+                                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setData(
+                                                                        "due_date",
+                                                                        ""
+                                                                    )
+                                                                }
+                                                                className="h-4 w-4 text-gray-400 hover:text-red-500 transition-colors"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {errors.due_date && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {errors.due_date}
+                                                    </p>
+                                                )}
+                                                {data.due_date && (
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-xs ${
+                                                                calculateDaysRemaining(
+                                                                    data.due_date
+                                                                ) <= 3
+                                                                    ? "bg-red-50 text-red-600 border-red-200"
+                                                                    : "bg-blue-50 text-blue-600 border-blue-200"
+                                                            }`}
+                                                        >
+                                                            {calculateDaysRemaining(
+                                                                data.due_date
+                                                            )}{" "}
+                                                            days remaining
+                                                        </Badge>
+                                                        <p className="text-xs text-gray-500">
+                                                            {new Date(
+                                                                data.due_date
+                                                            ).toLocaleDateString(
+                                                                "en-US",
+                                                                {
+                                                                    weekday:
+                                                                        "short",
+                                                                    month: "short",
+                                                                    day: "numeric",
+                                                                }
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Business Unit Field */}
+                                            <div className="space-y-1 md:col-span-4">
+                                                <Label
+                                                    htmlFor="business_unit_id"
+                                                    className="text-sm font-medium flex items-center gap-1"
+                                                >
+                                                    Business Unit{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                                        <Package className="h-4 w-4 text-gray-400" />
+                                                    </div>
+                                                    <Select
+                                                        value={
+                                                            data.business_unit_id.toString() ||
+                                                            ""
+                                                        }
+                                                        onValueChange={(
+                                                            value
+                                                        ) =>
+                                                            setData(
+                                                                "business_unit_id",
+                                                                value
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            className={`pl-10 ${
+                                                                errors.business_unit_id
+                                                                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                                    : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                                                            }`}
+                                                        >
+                                                            <SelectValue placeholder="Select business unit" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {businessUnits.map(
+                                                                (unit) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            unit.id
+                                                                        }
+                                                                        value={unit.id.toString()}
+                                                                    >
+                                                                        {
+                                                                            unit.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                {errors.business_unit_id && (
+                                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {
+                                                            errors.business_unit_id
+                                                        }
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {businessUnits.find(
+                                                        (unit) =>
+                                                            unit.id.toString() ===
+                                                            data.business_unit_id
+                                                    )?.description ||
+                                                        "Select the business unit for this inquiry"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Customer Information Card */}
+                                    <div className="bg-white border border-gray-100 rounded-lg shadow-sm mb-6">
+                                        <div className="p-5 border-b border-gray-100">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+                                                    <Building2 className="w-4 h-4 text-blue-600" />
+                                                    Customer Information{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </h3>
                                                 <div className="flex items-center space-x-2">
                                                     <span
                                                         className={`text-sm ${
@@ -505,7 +618,9 @@ const InquiriesCreate = () => {
                                                     </span>
                                                 </div>
                                             </div>
+                                        </div>
 
+                                        <div className="p-5">
                                             {/* New Customer Form */}
                                             {isNewCustomer ? (
                                                 <div className="space-y-4">
@@ -514,7 +629,7 @@ const InquiriesCreate = () => {
                                                         <div className="space-y-1">
                                                             <Label
                                                                 htmlFor="customer_name"
-                                                                className="text-sm font-medium"
+                                                                className="text-sm font-medium flex items-center gap-1"
                                                             >
                                                                 Customer Name{" "}
                                                                 <span className="text-red-500">
@@ -563,7 +678,7 @@ const InquiriesCreate = () => {
                                                         <div className="space-y-1">
                                                             <Label
                                                                 htmlFor="customer_email"
-                                                                className="text-sm font-medium"
+                                                                className="text-sm font-medium flex items-center gap-1"
                                                             >
                                                                 Customer Email{" "}
                                                                 <span className="text-red-500">
@@ -716,18 +831,9 @@ const InquiriesCreate = () => {
                                                     className="space-y-2"
                                                     id="customer-dropdown-container"
                                                 >
-                                                    <Label
-                                                        htmlFor="customer_search"
-                                                        className="text-sm font-medium"
-                                                    >
-                                                        Select Customer{" "}
-                                                        <span className="text-red-500">
-                                                            *
-                                                        </span>
-                                                    </Label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                            <Building2 className="h-4 w-4 text-gray-400" />
+                                                            <Search className="h-4 w-4 text-gray-400" />
                                                         </div>
                                                         <Input
                                                             id="customer_search"
@@ -876,41 +982,53 @@ const InquiriesCreate = () => {
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
 
-                                        {/* Description Field - Full width */}
-                                        <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                                            <Label
-                                                htmlFor="description"
-                                                className="text-sm font-medium"
-                                            >
-                                                Description{" "}
+                                    {/* Description Card */}
+                                    <div className="bg-white border border-gray-100 rounded-lg shadow-sm">
+                                        <div className="p-5 border-b border-gray-100">
+                                            <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+                                                <FileText className="w-4 h-4 text-blue-600" />
+                                                Inquiry Description{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
-                                            </Label>
-                                            <Textarea
-                                                id="description"
-                                                value={data.description}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "description",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className={`min-h-[100px] ${
-                                                    errors.description
-                                                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                        : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                }`}
-                                                placeholder="Enter detailed inquiry description..."
-                                                required
-                                            />
-                                            {errors.description && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.description}
+                                            </h3>
+                                        </div>
+                                        <div className="p-5">
+                                            <div className="space-y-1">
+                                                <Textarea
+                                                    id="description"
+                                                    value={data.description}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            "description",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    className={`min-h-[150px] ${
+                                                        errors.description
+                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                                                    }`}
+                                                    placeholder="Enter detailed inquiry description..."
+                                                    required
+                                                />
+                                                {errors.description && (
+                                                    <p className="text-red-500 text-xs mt-2 flex items-center">
+                                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                                        {errors.description}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-gray-500 mt-2">
+                                                    Please provide as much
+                                                    detail as possible about the
+                                                    inquiry. Include any
+                                                    relevant specifications,
+                                                    requirements, and
+                                                    expectations.
                                                 </p>
-                                            )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

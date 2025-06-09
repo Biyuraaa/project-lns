@@ -292,6 +292,50 @@ const InquiriesShow = () => {
                                                         </p>
                                                     </div>
 
+                                                    <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                        <h3 className="text-sm font-medium text-muted-foreground">
+                                                            Due Date
+                                                        </h3>
+                                                        <p className="mt-1 flex items-center text-base">
+                                                            <Calendar className="h-4 w-4 text-amber-500 mr-2" />
+                                                            {inquiry.due_date ? (
+                                                                <>
+                                                                    {formatDate(
+                                                                        inquiry.due_date
+                                                                    )}
+                                                                    {new Date(
+                                                                        inquiry.due_date
+                                                                    ) <
+                                                                    new Date() ? (
+                                                                        <Badge className="ml-2 bg-red-100 text-red-800 border-red-200">
+                                                                            Overdue
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
+                                                                            {Math.ceil(
+                                                                                (new Date(
+                                                                                    inquiry.due_date
+                                                                                ).getTime() -
+                                                                                    new Date().getTime()) /
+                                                                                    (1000 *
+                                                                                        60 *
+                                                                                        60 *
+                                                                                        24)
+                                                                            )}{" "}
+                                                                            days
+                                                                            left
+                                                                        </Badge>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-muted-foreground">
+                                                                    Not
+                                                                    specified
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                    </div>
+
                                                     {/* Quantity */}
                                                     <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
                                                         <h3 className="text-sm font-medium text-muted-foreground">

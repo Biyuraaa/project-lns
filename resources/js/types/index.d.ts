@@ -54,6 +54,7 @@ export interface Inquiry {
     description: string;
     business_unit: BusinessUnit;
     inquiry_date: string;
+    due_date: string;
     end_user_name: string;
     end_user_email: string;
     end_user_phone: string;

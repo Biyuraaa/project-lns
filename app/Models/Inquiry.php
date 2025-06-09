@@ -27,6 +27,7 @@ class Inquiry extends Model
         'end_user_phone',
         'end_user_address',
         'file',
+        'due_date',
         'status',
     ];
 

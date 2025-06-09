@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('end_user_phone')->nullable();
             $table->string('end_user_address')->nullable();
             $table->string('file')->nullable();
+            $table->date('due_date')->nullable();
             $table->foreignId('pic_engineer_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('sales_id')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('status', ['pending', 'process'])->default('pending');
