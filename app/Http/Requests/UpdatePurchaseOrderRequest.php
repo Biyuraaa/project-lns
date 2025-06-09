@@ -23,10 +23,10 @@ class UpdatePurchaseOrderRequest extends FormRequest
     {
         return [
             //
-            'code' => 'required|string|max:255',
-            'quotation_id' => 'required|exists:quotations,id',
-            'amount' => 'required|numeric',
-            'status' => 'required|in:wip,ar,ibt,clsd',
+            'code' => 'nullable|string|max:255',
+            'quotation_id' => 'nullable|exists:quotations,id',
+            'amount' => 'nullable|numeric',
+            'status' => 'nullable|in:wip,ar,ibt,clsd',
             'contract_number' => 'nullable|string|max:255',
             'job_number' => 'nullable|string|max:255',
             'date' => 'nullable|date',

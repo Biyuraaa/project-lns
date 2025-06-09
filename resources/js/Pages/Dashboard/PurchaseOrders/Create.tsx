@@ -176,12 +176,7 @@ const PurchaseOrdersCreate = () => {
     };
 
     const validateForm = () => {
-        const requiredFields = [
-            data.code,
-            data.quotation_id,
-            data.date,
-            data.amount > 0,
-        ];
+        const requiredFields = [data.quotation_id];
 
         return requiredFields.every((field) => field);
     };
@@ -270,9 +265,6 @@ const PurchaseOrdersCreate = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 PO Number{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -293,7 +285,6 @@ const PurchaseOrdersCreate = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    required
                                                 />
                                             </div>
                                             {errors.code && (
@@ -302,10 +293,6 @@ const PurchaseOrdersCreate = () => {
                                                     {errors.code}
                                                 </p>
                                             )}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                A unique code is auto-generated,
-                                                but you can customize it
-                                            </p>
                                         </div>
                                         {/* PO Date Field */}
                                         <div className="space-y-1">
@@ -314,9 +301,6 @@ const PurchaseOrdersCreate = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 PO Date{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -337,7 +321,6 @@ const PurchaseOrdersCreate = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    required
                                                 />
                                             </div>
                                             {errors.date && (
@@ -353,9 +336,6 @@ const PurchaseOrdersCreate = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 Amount{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -393,7 +373,6 @@ const PurchaseOrdersCreate = () => {
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
                                                     placeholder="0"
-                                                    required
                                                 />
                                             </div>
                                             {errors.amount && (

@@ -22,8 +22,6 @@ Route::get('/', function () {
     ]);
 })->name('welcome');
 
-
-
 Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -35,31 +33,24 @@ Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () 
         'picEngineer' => 'picEngineer'
     ]);
 
-
-    Route::prefix('inquiries/{inquiry}/quotations')->group(function () {
-        Route::get('create', [InquiryController::class, 'createQuotation'])->name('inquiries.quotations.create');
-        Route::post('/', [InquiryController::class, 'storeQuotation'])->name('inquiries.quotations.store');
-        Route::get('edit', [InquiryController::class, 'editQuotation'])->name('inquiries.quotations.edit');
-        Route::patch('/', [InquiryController::class, 'updateQuotation'])->name('inquiries.quotations.update');
+    Route::prefix('inquiries/{inquiry}/quotations')->controller(InquiryController::class)->group(function () {
+        Route::get('create', 'createQuotation')->name('inquiries.quotations.create');
+        Route::post('/',  'storeQuotation')->name('inquiries.quotations.store');
+        Route::get('edit',  'editQuotation')->name('inquiries.quotations.edit');
+        Route::patch('/',  'updateQuotation')->name('inquiries.quotations.update');
     });
 
-    Route::prefix('quotations/{quotation}/negotiations')->group(function () {
-        Route::get('create', [QuotationController::class, 'createNegotiation'])->name('quotations.negotiations.create');
-        Route::post('/', [QuotationController::class, 'storeNegotiation'])->name('quotations.negotiations.store');
-        Route::get('edit', [QuotationController::class, 'editNegotiation'])->name('quotations.negotiations.edit');
-        Route::patch('/', [QuotationController::class, 'updateNegotiation'])->name('quotations.negotiations.update');
+    Route::prefix('quotations/{quotation}/negotiations')->controller(QuotationController::class)->group(function () {
+        Route::get('create', 'createNegotiation')->name('quotations.negotiations.create');
+        Route::post('/',  'storeNegotiation')->name('quotations.negotiations.store');
+        Route::get('edit',  'editNegotiation')->name('quotations.negotiations.edit');
+        Route::patch('/',  'updateNegotiation')->name('quotations.negotiations.update');
     });
 
     Route::resource('inquiries', InquiryController::class);
     Route::resource('quotations', QuotationController::class);
     Route::resource('purchaseOrders', PurchaseOrderController::class);
     Route::resource('targetSales', CompanyGrowthSellingController::class)->except('show');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';

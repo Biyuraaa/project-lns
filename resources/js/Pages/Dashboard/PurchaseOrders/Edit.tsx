@@ -336,9 +336,6 @@ const PurchaseOrdersEdit = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 PO Number{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -359,7 +356,6 @@ const PurchaseOrdersEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    required
                                                 />
                                             </div>
                                             {errors.code && (
@@ -377,9 +373,6 @@ const PurchaseOrdersEdit = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 PO Date{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -402,7 +395,6 @@ const PurchaseOrdersEdit = () => {
                                                             ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
-                                                    required
                                                 />
                                             </div>
                                             {errors.date && (
@@ -420,9 +412,6 @@ const PurchaseOrdersEdit = () => {
                                                 className="text-sm font-medium"
                                             >
                                                 Amount{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -448,7 +437,6 @@ const PurchaseOrdersEdit = () => {
                                                             : "border-gray-200 focus:ring-green-500 focus:border-green-500"
                                                     }`}
                                                     placeholder="0.00"
-                                                    required
                                                 />
                                             </div>
                                             {errors.amount && (

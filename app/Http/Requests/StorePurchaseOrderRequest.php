@@ -23,10 +23,10 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         return [
             //
-            'code' => 'required|string|max:50|unique:purchase_orders,code',
-            'quotation_id' => 'required|exists:quotations,id',
-            'amount' => 'required|integer|min:1',
-            'status' => 'required|string|in:wip,ar,ibt,clsd',
+            'code' => 'nullable|string|max:50|unique:purchase_orders,code',
+            'quotation_id' => 'nullable|exists:quotations,id',
+            'amount' => 'nullable|integer|min:1',
+            'status' => 'nullable|string|in:wip,ar,ibt,clsd',
             'contract_number' => 'nullable|string|max:50',
             'job_number' => 'nullable|string|max:50',
             'date' => 'nullable|date',
