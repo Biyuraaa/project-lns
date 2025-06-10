@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { CompanyGrowthChart } from "./ComponyGrowthChart";
-import { TopCustomerChart } from "./TopCustomerChart";
+import { CompanyGrowthChart } from "./Chart/ComponyGrowthChart";
+import { TopCustomerChart } from "./Chart/TopCustomerChart";
 import {
     BusinessUnit,
     CompanyGrowthData,
     CompanyGrowthSellingData,
+    QuotationAmountData,
     TopCustomerData,
 } from "@/types";
-import { CompanyGrowthSellingChart } from "./CompanyGrowthSellingChart";
-import { PurchaseOrderStatusChart } from "./PurchaseOrderStatusChart";
-import { TotalValueCard } from "./TotalValueCard";
-import { CumulativeCompanyGrowthSellingChart } from "./CumulativeCompanyGrowthChart";
+import { CompanyGrowthSellingChart } from "./Chart/CompanyGrowthSellingChart";
+import { PurchaseOrderStatusChart } from "./Chart/PurchaseOrderStatusChart";
+import { TotalValueCard } from "./Chart/TotalValueCard";
+import { CumulativeCompanyGrowthSellingChart } from "./Chart/CumulativeCompanyGrowthChart";
+import QuotationAmountChart from "./Chart/QuotationAmountChart";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
@@ -20,6 +22,7 @@ interface DashboardChartsProps {
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
     companyGrowthSellingData: CompanyGrowthSellingData[];
+    quotationAmountData: QuotationAmountData[];
     purchaseOrderDetails: {
         id: number;
         amount: number;
@@ -38,6 +41,7 @@ const DashboardCharts = ({
     companyGrowthSellingData,
     cumulativeCompanyGrowthSellingData,
     businessUnits,
+    quotationAmountData,
     topCustomersData,
     totalPOCount,
     totalPOValue,
@@ -79,6 +83,11 @@ const DashboardCharts = ({
                     totalPOCount={totalPOCount}
                 />
             </div>
+
+            <QuotationAmountChart
+                quotations={quotationAmountData}
+                businessUnits={businessUnits}
+            />
 
             <CompanyGrowthSellingChart
                 data={companyGrowthSellingData}

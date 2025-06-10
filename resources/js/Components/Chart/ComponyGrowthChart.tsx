@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BusinessUnit, CompanyGrowthData } from "@/types";
-import { TimeRangeFilter } from "./TimeRangeFilter";
+import { TimeRangeFilter } from "../TimeRangeFilter";
 
 interface CompanyGrowthChartProps {
     data: CompanyGrowthData[];

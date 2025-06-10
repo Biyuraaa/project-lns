@@ -46,6 +46,7 @@ class DashboardController extends Controller
         $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
         $cumulativeCompanyGrowthSellingData = $this->prepareCompanyGrowthSellingCumulative();
         $poDetailData = $this->preparePODetailData($businessUnits);
+        $quotationAmountData = $this->prepareQuotationAmountData();
 
         $totalPOCount = PurchaseOrder::count();
         $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
@@ -65,6 +66,7 @@ class DashboardController extends Controller
                 'topCustomersData' => $topCustomersData,
                 'companyGrowthSellingData' => $companyGrowthSellingData,
                 'cumulativeCompanyGrowthSellingData' => $cumulativeCompanyGrowthSellingData,
+                'quotationAmountData' => $quotationAmountData,
                 'poDetailData' => $poDetailData,
                 'businessUnits' => $businessUnits,
                 'totalPOCount' => $totalPOCount,
@@ -117,7 +119,7 @@ class DashboardController extends Controller
                     ];
                 })
                 ->toArray();
-                
+
             return $dueDateQuotations;
         } catch (\Exception $e) {
             // Log the error for debugging
@@ -249,6 +251,48 @@ class DashboardController extends Controller
             'growth' => $dueDateGrowth,
             'insight' => $dueDateInsight,
         ];
+    }
+
+    /**
+     * Prepare quotation amount data by business unit
+     * 
+     * @return array
+     */
+    private function prepareQuotationAmountData()
+    {
+        try {
+            // Get quotation data with amount, business unit, status, etc.
+            $quotationData = Quotation::join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                ->select(
+                    'quotations.id',
+                    'quotations.amount',
+                    'quotations.status',
+                    'quotations.created_at',
+                    'inquiries.business_unit_id'
+                )
+                ->whereNotNull('quotations.amount') // Only include quotations with amount
+                ->get()
+                ->map(function ($quotation) {
+                    $createdAt = Carbon::parse($quotation->created_at);
+
+                    return [
+                        'id' => $quotation->id,
+                        'amount' => $quotation->amount,
+                        'status' => $quotation->status,
+                        'business_unit_id' => $quotation->business_unit_id,
+                        'created_at' => $quotation->created_at,
+                        'month' => $createdAt->month,
+                        'year' => $createdAt->year
+                    ];
+                })
+                ->toArray();
+
+            return $quotationData;
+        } catch (\Exception $e) {
+            Log::error('Error in prepareQuotationAmountData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return [];
+        }
     }
 
     // Add this function to ensure we have data for all months in order

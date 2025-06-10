@@ -126,6 +126,17 @@ interface TopCustomerData {
     poCount: number;
     business_unit_id: string;
 }
+
+interface QuotationAmountData {
+    id: number;
+    amount: number;
+    business_unit_id: number | string;
+    status: string;
+    created_at: string;
+    month: number;
+    year: number;
+}
+
 interface DueDateQuotationData {
     id: number;
     code: string;

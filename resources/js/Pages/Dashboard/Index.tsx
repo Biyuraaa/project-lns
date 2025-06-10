@@ -9,6 +9,7 @@ import type {
     DueDateQuotationData,
     PageProps,
     PurchaseOrderDetail,
+    QuotationAmountData,
     TopCustomerData,
 } from "@/types";
 import {
@@ -56,6 +57,7 @@ interface ChartData {
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
     companyGrowthSellingData: CompanyGrowthSellingData[];
+    quotationAmountData : QuotationAmountData[];
     poDetailData: PurchaseOrderDetail[];
     totalPOCount: number;
     totalPOValue: number;
@@ -255,6 +257,7 @@ const DashboardIndex = () => {
                             cumulativeCompanyGrowthSellingData={
                                 chartData.cumulativeCompanyGrowthSellingData
                             }
+                            quotationAmountData={chartData.quotationAmountData}
                             businessUnits={chartData.businessUnits}
                             topCustomersData={chartData.topCustomersData}
                             totalPOCount={chartData.totalPOCount}
