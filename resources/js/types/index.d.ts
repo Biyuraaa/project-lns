@@ -44,6 +44,19 @@ export interface PicEngineer {
     updated_at?: string;
 }
 
+export interface CompanyGrowthSelling {
+    id: number;
+    month: number;
+    year: number;
+    target: number;
+    actual: number;
+    difference: number;
+    percentage: number;
+    business_unit: BusinessUnit;
+    created_at?: string;
+    updated_at?: string;
+}
+
 export interface Inquiry {
     id: number;
     code: string;
@@ -120,14 +133,15 @@ export interface CompanyGrowthData {
     target: number;
     business_unit_id: string;
 }
-interface TopCustomerData {
+
+export interface TopCustomerData {
     name: string;
     value: number;
     poCount: number;
     business_unit_id: string;
 }
 
-interface QuotationAmountData {
+export interface QuotationAmountData {
     id: number;
     amount: number;
     business_unit_id: number | string;
@@ -137,7 +151,78 @@ interface QuotationAmountData {
     year: number;
 }
 
-interface DueDateQuotationData {
+export interface CompanyGrowthSellingData {
+    id: number;
+    month: number;
+    year: number;
+    month_name: string;
+    target: number;
+    actual: number;
+    difference: number;
+    business_unit: {
+        id: number | string;
+        name: string;
+    };
+}
+
+export interface CompanyGrowthSellingCumulativeData {
+    month: number;
+    year: number;
+    month_name: string;
+    target: number;
+    actual: number;
+    difference: number;
+    percentage: number;
+    cumulative_target: number;
+    cumulative_actual: number;
+    cumulative_difference: number;
+    cumulative_percentage: number;
+    business_unit: {
+        id: string | number;
+        name: string;
+    };
+}
+
+export interface PurchaseOrderStatusData {
+    id: number;
+    amount: number;
+    raw_amount: number;
+    formatted_amount: string;
+    status: string;
+    business_unit_id: number | string;
+    created_at: string;
+    month: number;
+    year: number;
+}
+
+export interface TotalValueData {
+    count: number;
+    value: number;
+    formatted_value: string;
+}
+
+interface PeriodData {
+    period: string;
+    year: number;
+    month: number;
+    businessUnitId?: string | number;
+    po: TotalValueData;
+    quotation: TotalValueData;
+}
+
+export interface TotalValueCardData {
+    all: {
+        po: TotalValueData;
+        quotation: TotalValueData;
+    };
+    periods: PeriodData[];
+    [businessUnitId: string]: {
+        po: TotalValueData;
+        quotation: TotalValueData;
+    };
+}
+
+export interface DueDateQuotationData {
     id: number;
     code: string;
     due_date: string;
@@ -157,41 +242,6 @@ interface DueDateQuotationData {
         id: number | null;
         name: string;
     };
-}
-interface CompanyGrowthSellingData {
-    id: number;
-    month: number;
-    year: number;
-    month_name: string;
-    target: number;
-    actual: number;
-    difference: number;
-    business_unit: {
-        id: number | string;
-        name: string;
-    };
-}
-interface CompanyGrowthSelling {
-    id: number;
-    month: number;
-    year: number;
-    target: number;
-    actual: number;
-    difference: number;
-    percentage: number;
-    business_unit: BusinessUnit;
-    created_at?: string;
-    updated_at?: string;
-}
-
-export interface PurchaseOrderDetail {
-    id: number;
-    amount: number;
-    status: string;
-    business_unit_id: number | string;
-    created_at: string;
-    month: number;
-    year: number;
 }
 
 export type PageProps<

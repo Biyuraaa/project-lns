@@ -1,9 +1,8 @@
 "use client";
 
-import { Link, usePage } from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import { type ReactNode, useState, useEffect } from "react";
 import Sidebar from "@/Components/Sidebar";
-import Header from "@/Components/Header";
 import { motion } from "framer-motion";
 
 interface AuthenticatedLayoutProps {
@@ -17,12 +16,10 @@ export default function AuthenticatedLayout({
     const [isOpen, setIsOpen] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
 
-    // Handle initial mount - prevents flash of content
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    // Close sidebar when clicking outside on mobile
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 1024) {
@@ -47,8 +44,6 @@ export default function AuthenticatedLayout({
 
             {/* Main content area */}
             <div className="lg:pl-64 flex flex-col min-h-screen">
-                {/* Header component */}
-                <Header isOpen={isOpen} setIsOpen={setIsOpen} />
                 {/* Main content */}
                 <main className="py-6 flex-grow">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

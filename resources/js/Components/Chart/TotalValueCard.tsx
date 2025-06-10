@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Card,
     CardContent,
@@ -8,17 +8,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/Components/ui/card";
-import { BusinessUnit } from "@/types";
+import { BusinessUnit, TotalValueCardData } from "@/types";
 import {
     ChevronDown,
-    Filter,
     DollarSign,
     CalendarRange,
-    Calendar,
-    Settings,
     Check,
     Sliders,
     Building,
+    FileCheck,
+    ClipboardList,
 } from "lucide-react";
 import {
     Popover,
@@ -38,14 +37,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 
 interface TotalValueCardProps {
-    purchaseOrders: {
-        id: number;
-        amount: number;
-        business_unit_id: number | string;
-        created_at: string;
-        month: number;
-        year: number;
-    }[];
+    data: TotalValueCardData;
     businessUnits: BusinessUnit[];
 }
 
@@ -59,23 +51,24 @@ enum DateRange {
     CUSTOM = "custom",
 }
 
+enum ValueType {
+    PO = "po",
+    QUOTATION = "quotation",
+}
+
 export const TotalValueCard = ({
-    purchaseOrders,
+    data,
     businessUnits,
 }: TotalValueCardProps) => {
-    // Get all unique year-month combinations from data
-    const allPeriods = Array.from(
-        new Set(
-            purchaseOrders.map(
-                (po) => `${po.year}-${String(po.month).padStart(2, "0")}`
-            )
-        )
-    ).sort();
-
     // Current date
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
+
+    // Get all unique periods from data
+    const allPeriods = useMemo(() => {
+        return data.periods?.map((period) => period.period) || [];
+    }, [data]);
 
     // State for filters
     const [selectedBusinessUnit, setSelectedBusinessUnit] =
@@ -83,12 +76,15 @@ export const TotalValueCard = ({
     const [dateRangeType, setDateRangeType] = useState<DateRange>(
         DateRange.ALL
     );
+    const [selectedValueType, setSelectedValueType] = useState<ValueType>(
+        ValueType.PO
+    );
 
     // States for custom date range
-    const [startPeriod, setStartPeriod] = useState<string>(allPeriods[0] || "");
-    const [endPeriod, setEndPeriod] = useState<string>(
+    const [startPeriod, setStartPeriod] = useState<string>(
         allPeriods[allPeriods.length - 1] || ""
     );
+    const [endPeriod, setEndPeriod] = useState<string>(allPeriods[0] || "");
     const [customYear, setCustomYear] = useState<number>(currentYear);
     const [customMonth, setCustomMonth] = useState<number>(currentMonth);
 
@@ -97,194 +93,82 @@ export const TotalValueCard = ({
     const [customTab, setCustomTab] = useState<"range" | "specific">("range");
 
     // States for displaying results
-    const [poCount, setPOCount] = useState<number>(0);
-    const [totalValue, setTotalValue] = useState<number>(0);
     const [filterDescription, setFilterDescription] =
-        useState<string>("All time");
+        useState<string>("Semua waktu");
 
-    // Get unique years from data
+    // State for filtered data
+    const [filteredData, setFilteredData] = useState<{
+        count: number;
+        value: number;
+        formatted_value: string;
+    }>({
+        count: 0,
+        value: 0,
+        formatted_value: "Rp 0",
+    });
+
+    // Get unique years from periods
     const uniqueYears = Array.from(
-        new Set(purchaseOrders.map((po) => po.year))
+        new Set(data.periods?.map((period) => period.year) || [])
     ).sort();
 
     // Find selected business unit name
     const getSelectedBusinessUnitName = () => {
-        if (selectedBusinessUnit === "all") return "All Business Units";
+        if (selectedBusinessUnit === "all") return "Semua Business Unit";
         const unit = businessUnits.find(
             (u) => u.id.toString() === selectedBusinessUnit
         );
-        return unit ? unit.name : "All Business Units";
+        return unit ? unit.name : "Semua Business Unit";
     };
-
-    // Apply filters and update data
-    useEffect(() => {
-        // Determine date range based on selected type
-        let periodFilter: string[] = [];
-
-        switch (dateRangeType) {
-            case DateRange.ALL:
-                // Use all periods
-                periodFilter = allPeriods;
-                setFilterDescription("All time");
-                break;
-
-            case DateRange.CURRENT_MONTH:
-                // Current month only
-                const currentPeriod = `${currentYear}-${String(
-                    currentMonth
-                ).padStart(2, "0")}`;
-                periodFilter = allPeriods.filter(
-                    (period) => period === currentPeriod
-                );
-                setFilterDescription(
-                    `Current month (${getMonthName(currentPeriod)})`
-                );
-                break;
-
-            case DateRange.LAST_3_MONTHS:
-                // Last 3 months
-                periodFilter = getLookbackPeriods(3);
-                setFilterDescription("Last 3 months");
-                break;
-
-            case DateRange.LAST_6_MONTHS:
-                // Last 6 months
-                periodFilter = getLookbackPeriods(6);
-                setFilterDescription("Last 6 months");
-                break;
-
-            case DateRange.LAST_YEAR:
-                // Last 12 months
-                periodFilter = getLookbackPeriods(12);
-                setFilterDescription("Last 12 months");
-                break;
-
-            case DateRange.CUSTOM:
-                // Custom date range between start and end
-                if (customTab === "range" && startPeriod && endPeriod) {
-                    const start = new Date(startPeriod);
-                    const end = new Date(endPeriod);
-
-                    periodFilter = allPeriods.filter((period) => {
-                        const date = new Date(period);
-                        return date >= start && date <= end;
-                    });
-
-                    const startDisplay = getMonthName(startPeriod);
-                    const endDisplay = getMonthName(endPeriod);
-                    setFilterDescription(`${startDisplay} to ${endDisplay}`);
-                } else if (customTab === "specific") {
-                    // Specific month-year
-                    const specificPeriod = `${customYear}-${String(
-                        customMonth
-                    ).padStart(2, "0")}`;
-                    periodFilter = allPeriods.filter(
-                        (period) => period === specificPeriod
-                    );
-                    setFilterDescription(getMonthName(specificPeriod));
-                }
-                break;
-        }
-
-        // Filter POs by business unit and date period
-        const filteredPOs = purchaseOrders.filter((po) => {
-            const poPeriod = `${po.year}-${String(po.month).padStart(2, "0")}`;
-            const matchesBusinessUnit =
-                selectedBusinessUnit === "all" ||
-                po.business_unit_id.toString() === selectedBusinessUnit;
-
-            const matchesPeriod = periodFilter.includes(poPeriod);
-
-            return matchesBusinessUnit && matchesPeriod;
-        });
-
-        // Calculate stats
-        setPOCount(filteredPOs.length);
-
-        // Sum total and convert if needed
-        const total = filteredPOs.reduce((sum, po) => sum + po.amount, 0);
-        setTotalValue(total);
-    }, [
-        selectedBusinessUnit,
-        dateRangeType,
-        startPeriod,
-        endPeriod,
-        customYear,
-        customMonth,
-        customTab,
-        purchaseOrders,
-    ]);
 
     // Helper to get periods looking back N months from current
     const getLookbackPeriods = (months: number) => {
-        const result = [];
-        let year = currentYear;
-        let month = currentMonth;
+        let result: string[] = [];
+        let date = new Date(now);
 
         for (let i = 0; i < months; i++) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
             const periodStr = `${year}-${String(month).padStart(2, "0")}`;
+
             if (allPeriods.includes(periodStr)) {
                 result.push(periodStr);
             }
 
             // Move one month back
-            month--;
-            if (month === 0) {
-                month = 12;
-                year--;
-            }
+            date.setMonth(date.getMonth() - 1);
         }
 
         return result;
     };
 
-    // Format month for display
+    // Format month for display in Indonesian
     const getMonthName = (periodString: string) => {
         const [year, month] = periodString.split("-");
         const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-        return date.toLocaleString("default", {
+        return date.toLocaleString("id-ID", {
             month: "long",
             year: "numeric",
         });
-    };
-
-    // Format value display
-    const formatValue = (value: number) => {
-        if (value >= 1000) {
-            return `${(value / 1000).toFixed(1)}`;
-        }
-        return `${value.toFixed(1)}`;
-    };
-
-    // Get value unit (Million or Billion)
-    const getValueUnit = (value: number) => {
-        return value >= 1000 ? "Miliar" : "Million";
-    };
-
-    // Split formatted value into main and decimal parts
-    const getFormattedValueParts = (value: number) => {
-        const formatted = formatValue(value);
-        const [main, decimal = "0"] = formatted.split(".");
-        return { main, decimal };
     };
 
     // Get date range filter label
     const getDateRangeLabel = () => {
         switch (dateRangeType) {
             case DateRange.ALL:
-                return "All Time";
+                return "Semua Waktu";
             case DateRange.CURRENT_MONTH:
-                return "Current Month";
+                return "Bulan Ini";
             case DateRange.LAST_3_MONTHS:
-                return "Last 3 Months";
+                return "3 Bulan Terakhir";
             case DateRange.LAST_6_MONTHS:
-                return "Last 6 Months";
+                return "6 Bulan Terakhir";
             case DateRange.LAST_YEAR:
-                return "Last 12 Months";
+                return "12 Bulan Terakhir";
             case DateRange.CUSTOM:
-                return "Custom Range";
+                return "Rentang Kustom";
             default:
-                return "Select Period";
+                return "Pilih Periode";
         }
     };
 
@@ -292,14 +176,175 @@ export const TotalValueCard = ({
     const applyDateRange = (range: DateRange) => {
         setDateRangeType(range);
         setDatePopoverOpen(false);
+
+        switch (range) {
+            case DateRange.ALL:
+                setFilterDescription("Semua waktu");
+                break;
+            case DateRange.CURRENT_MONTH:
+                setFilterDescription("Bulan ini");
+                break;
+            case DateRange.LAST_3_MONTHS:
+                setFilterDescription("3 Bulan Terakhir");
+                break;
+            case DateRange.LAST_6_MONTHS:
+                setFilterDescription("6 Bulan Terakhir");
+                break;
+            case DateRange.LAST_YEAR:
+                setFilterDescription("12 Bulan Terakhir");
+                break;
+        }
     };
 
     // Apply custom range
     const applyCustomRange = () => {
         setDateRangeType(DateRange.CUSTOM);
         setDatePopoverOpen(false);
+
+        if (customTab === "range" && startPeriod && endPeriod) {
+            const startDisplay = getMonthName(startPeriod);
+            const endDisplay = getMonthName(endPeriod);
+            setFilterDescription(`${startDisplay} ke ${endDisplay}`);
+        } else if (customTab === "specific") {
+            const specificPeriod = `${customYear}-${String(
+                customMonth
+            ).padStart(2, "0")}`;
+            setFilterDescription(getMonthName(specificPeriod));
+        }
     };
 
+    // Helper function to get appropriate icon for value type
+    const getValueTypeIcon = () => {
+        return selectedValueType === ValueType.PO ? (
+            <ClipboardList className="h-5 w-5 text-amber-600" />
+        ) : (
+            <FileCheck className="h-5 w-5 text-amber-600" />
+        );
+    };
+
+    // Helper function to get value type label
+    const getValueTypeLabel = () => {
+        return selectedValueType === ValueType.PO
+            ? "Purchase Order"
+            : "Quotation";
+    };
+
+    useEffect(() => {
+        let result = {
+            count: 0,
+            value: 0,
+            formatted_value: "Rp 0",
+        };
+
+        if (dateRangeType === DateRange.ALL) {
+            const businessUnitData = data[selectedBusinessUnit] || data.all;
+            if (businessUnitData) {
+                result = { ...businessUnitData[selectedValueType] };
+            }
+        } else {
+            let periodFilter: string[] = [];
+
+            switch (dateRangeType) {
+                case DateRange.CURRENT_MONTH:
+                    const currentPeriod = `${currentYear}-${String(
+                        currentMonth
+                    ).padStart(2, "0")}`;
+                    periodFilter = [currentPeriod];
+                    break;
+
+                case DateRange.LAST_3_MONTHS:
+                    periodFilter = getLookbackPeriods(3);
+                    break;
+
+                case DateRange.LAST_6_MONTHS:
+                    periodFilter = getLookbackPeriods(6);
+                    break;
+
+                case DateRange.LAST_YEAR:
+                    periodFilter = getLookbackPeriods(12);
+                    break;
+
+                case DateRange.CUSTOM:
+                    if (customTab === "range" && startPeriod && endPeriod) {
+                        const startDate = new Date(
+                            parseInt(startPeriod.split("-")[0]),
+                            parseInt(startPeriod.split("-")[1]) - 1
+                        );
+                        const endDate = new Date(
+                            parseInt(endPeriod.split("-")[0]),
+                            parseInt(endPeriod.split("-")[1]) - 1
+                        );
+
+                        periodFilter = allPeriods.filter((period) => {
+                            const [year, month] = period.split("-");
+                            const date = new Date(
+                                parseInt(year),
+                                parseInt(month) - 1
+                            );
+                            return date >= startDate && date <= endDate;
+                        });
+                    } else if (customTab === "specific") {
+                        const specificPeriod = `${customYear}-${String(
+                            customMonth
+                        ).padStart(2, "0")}`;
+                        periodFilter = [specificPeriod];
+                    }
+                    break;
+            }
+
+            const filteredPeriods =
+                data.periods?.filter((period) =>
+                    periodFilter.includes(period.period)
+                ) || [];
+
+            if (filteredPeriods.length > 0) {
+                let totalCount = 0;
+                let totalValue = 0;
+
+                filteredPeriods.forEach((period) => {
+                    if (selectedBusinessUnit === "all") {
+                        totalCount += period[selectedValueType].count;
+                        totalValue += period[selectedValueType].value;
+                    } else {
+                        const unitData = data.periods?.find(
+                            (p) =>
+                                p.period === period.period &&
+                                p.businessUnitId?.toString() ===
+                                    selectedBusinessUnit
+                        );
+
+                        if (unitData) {
+                            totalCount += unitData[selectedValueType].count;
+                            totalValue += unitData[selectedValueType].value;
+                        }
+                    }
+                });
+
+                const formattedValue = `Rp ${totalValue
+                    .toFixed(1)
+                    .replace(".", ",")}`;
+
+                result = {
+                    count: totalCount,
+                    value: totalValue,
+                    formatted_value: formattedValue,
+                };
+            }
+        }
+
+        setFilteredData(result);
+    }, [
+        data,
+        selectedBusinessUnit,
+        selectedValueType,
+        dateRangeType,
+        startPeriod,
+        endPeriod,
+        customYear,
+        customMonth,
+        customTab,
+        allPeriods,
+    ]);
     return (
         <Card className="overflow-hidden bg-gradient-to-b from-amber-50/80 to-amber-50">
             <CardHeader className="bg-gradient-to-r from-amber-100 to-amber-50/70 border-b border-amber-200 pb-4">
@@ -307,9 +352,16 @@ export const TotalValueCard = ({
                     <div>
                         <CardTitle className="text-xl font-bold flex items-center gap-2 text-amber-900">
                             <DollarSign className="text-amber-600 h-5 w-5" />
-                            Total Value (Million)
+                            Nilai Total
                         </CardTitle>
-                        <CardDescription className="text-amber-800/70 mt-1 flex items-center gap-1.5">
+                        <CardDescription className="text-amber-800/70 mt-1 flex items-center gap-1.5 flex-wrap">
+                            <Badge
+                                variant="outline"
+                                className="bg-amber-100/50 text-amber-800 border-amber-200 rounded-md"
+                            >
+                                {getValueTypeLabel()}
+                            </Badge>
+                            <span className="mx-0.5">•</span>
                             <Badge
                                 variant="outline"
                                 className="bg-amber-100/50 text-amber-800 border-amber-200 rounded-md"
@@ -326,7 +378,68 @@ export const TotalValueCard = ({
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* Business Unit Filter */}
+                        {/* Value Type Selector */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg flex gap-1.5 items-center"
+                                    size="sm"
+                                >
+                                    {getValueTypeIcon()}
+                                    <span className="text-xs sm:text-sm font-medium truncate max-w-[100px] sm:max-w-[140px]">
+                                        {getValueTypeLabel()}
+                                    </span>
+                                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        setSelectedValueType(ValueType.PO)
+                                    }
+                                    className="flex items-center gap-2"
+                                >
+                                    {selectedValueType === ValueType.PO && (
+                                        <Check className="h-4 w-4 text-amber-600" />
+                                    )}
+                                    <span
+                                        className={
+                                            selectedValueType === ValueType.PO
+                                                ? "font-medium text-amber-800"
+                                                : ""
+                                        }
+                                    >
+                                        Purchase Order
+                                    </span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        setSelectedValueType(
+                                            ValueType.QUOTATION
+                                        )
+                                    }
+                                    className="flex items-center gap-2"
+                                >
+                                    {selectedValueType ===
+                                        ValueType.QUOTATION && (
+                                        <Check className="h-4 w-4 text-amber-600" />
+                                    )}
+                                    <span
+                                        className={
+                                            selectedValueType ===
+                                            ValueType.QUOTATION
+                                                ? "font-medium text-amber-800"
+                                                : ""
+                                        }
+                                    >
+                                        Quotation
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Business Unit Selector */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -358,7 +471,7 @@ export const TotalValueCard = ({
                                                 : ""
                                         }
                                     >
-                                        All Business Units
+                                        Semua Business Unit
                                     </span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -415,10 +528,11 @@ export const TotalValueCard = ({
                             >
                                 <div className="bg-amber-50/50 border-b border-amber-100 py-2 px-3">
                                     <h4 className="font-medium text-amber-900">
-                                        Select Time Period
+                                        Pilih Periode Waktu
                                     </h4>
                                     <p className="text-xs text-amber-700/70">
-                                        Filter data by specific time range
+                                        Filter data berdasarkan rentang waktu
+                                        spesifik
                                     </p>
                                 </div>
 
@@ -445,7 +559,7 @@ export const TotalValueCard = ({
                                                     : ""
                                             )}
                                         >
-                                            Current Month
+                                            Bulan Ini
                                         </Button>
                                         <Button
                                             variant={
@@ -468,7 +582,7 @@ export const TotalValueCard = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 3 Months
+                                            3 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -491,7 +605,7 @@ export const TotalValueCard = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 6 Months
+                                            6 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -514,7 +628,7 @@ export const TotalValueCard = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 12 Months
+                                            12 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -533,7 +647,7 @@ export const TotalValueCard = ({
                                                     : ""
                                             )}
                                         >
-                                            All Time
+                                            Semua Waktu
                                         </Button>
                                     </div>
 
@@ -541,7 +655,7 @@ export const TotalValueCard = ({
                                         <div className="mb-2">
                                             <h5 className="font-medium text-sm flex items-center gap-1.5 text-amber-800">
                                                 <Sliders className="h-3.5 w-3.5" />
-                                                Custom Period
+                                                Periode Kustom
                                             </h5>
                                         </div>
 
@@ -559,13 +673,13 @@ export const TotalValueCard = ({
                                                     value="range"
                                                     className="flex-1 text-xs"
                                                 >
-                                                    Date Range
+                                                    Rentang Tanggal
                                                 </TabsTrigger>
                                                 <TabsTrigger
                                                     value="specific"
                                                     className="flex-1 text-xs"
                                                 >
-                                                    Specific Month
+                                                    Bulan Tertentu
                                                 </TabsTrigger>
                                             </TabsList>
                                             <TabsContent
@@ -575,7 +689,7 @@ export const TotalValueCard = ({
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="text-xs font-medium text-amber-800 block mb-1">
-                                                            From
+                                                            Dari
                                                         </label>
                                                         <select
                                                             value={startPeriod}
@@ -607,7 +721,7 @@ export const TotalValueCard = ({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-amber-800 block mb-1">
-                                                            To
+                                                            Hingga
                                                         </label>
                                                         <select
                                                             value={endPeriod}
@@ -646,7 +760,7 @@ export const TotalValueCard = ({
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="text-xs font-medium text-amber-800 block mb-1">
-                                                            Year
+                                                            Tahun
                                                         </label>
                                                         <select
                                                             value={customYear}
@@ -678,7 +792,7 @@ export const TotalValueCard = ({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-amber-800 block mb-1">
-                                                            Month
+                                                            Bulan
                                                         </label>
                                                         <select
                                                             value={customMonth}
@@ -708,7 +822,7 @@ export const TotalValueCard = ({
                                                                             1,
                                                                         1
                                                                     ).toLocaleString(
-                                                                        "default",
+                                                                        "id-ID",
                                                                         {
                                                                             month: "long",
                                                                         }
@@ -727,7 +841,7 @@ export const TotalValueCard = ({
                                                 onClick={applyCustomRange}
                                                 className="bg-amber-600 hover:bg-amber-700 text-xs"
                                             >
-                                                Apply
+                                                Terapkan
                                             </Button>
                                         </div>
                                     </div>
@@ -741,10 +855,13 @@ export const TotalValueCard = ({
                 <div className="flex flex-col items-center justify-center">
                     <div className="flex flex-col items-center gap-1 mb-4">
                         <div className="text-2xl font-medium text-amber-800/60">
-                            Total POs
+                            Total{" "}
+                            {selectedValueType === ValueType.PO
+                                ? "PO"
+                                : "Quotation"}
                         </div>
                         <div className="text-7xl sm:text-8xl font-black text-amber-950/90 leading-none">
-                            {poCount}
+                            {filteredData.count}
                         </div>
                     </div>
 
@@ -752,16 +869,13 @@ export const TotalValueCard = ({
 
                     <div className="flex flex-col items-center gap-1">
                         <div className="text-2xl font-medium text-amber-800/60">
-                            Total Value
+                            Nilai Total
                         </div>
                         <div className="text-5xl sm:text-6xl font-black text-amber-950/90 leading-none">
-                            {getFormattedValueParts(totalValue).main}
-                            <span className="text-2xl sm:text-3xl">
-                                ,{getFormattedValueParts(totalValue).decimal}
-                            </span>
+                            {filteredData.formatted_value}
                         </div>
                         <div className="text-xl font-medium text-amber-700 mt-1">
-                            {getValueUnit(totalValue)}
+                            Miliar
                         </div>
                     </div>
                 </div>

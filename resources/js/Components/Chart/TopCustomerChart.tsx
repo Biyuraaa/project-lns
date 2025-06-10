@@ -34,8 +34,6 @@ interface TopCustomerChartProps {
     className?: string;
     selectedBusinessUnit?: string;
     onBusinessUnitChange?: (businessUnitId: string) => void;
-    totalPOValue?: number;
-    totalPOCount?: number;
 }
 
 export function TopCustomerChart({
@@ -44,8 +42,6 @@ export function TopCustomerChart({
     className,
     selectedBusinessUnit = "all",
     onBusinessUnitChange,
-    totalPOValue = 0,
-    totalPOCount = 0,
 }: TopCustomerChartProps) {
     const handleBusinessUnitChange = (value: string) => {
         if (onBusinessUnitChange) {
@@ -53,16 +49,13 @@ export function TopCustomerChart({
         }
     };
 
-    // Fixed filter data based on selected business unit
+    // Filter data based on selected business unit
     const filteredData = useMemo(() => {
         if (!data || data.length === 0) return [];
 
         if (selectedBusinessUnit === "all") {
-            // Return data that has business_unit_id = "all" OR return all data if none match
-            const allUnitData = data.filter(
-                (item) => item.business_unit_id === "all"
-            );
-            return allUnitData.length > 0 ? allUnitData : data;
+            // Return data that has business_unit_id = "all"
+            return data.filter((item) => item.business_unit_id === "all");
         }
 
         // Otherwise, filter by the selected business unit
@@ -82,19 +75,41 @@ export function TopCustomerChart({
             .slice(0, 10)
             .map((item) => ({
                 ...item,
-                // Ensure value is a number and convert to millions if needed
+                // Ensure value is a number
                 value:
                     typeof item.value === "number"
                         ? item.value
                         : Number.parseFloat(item.value as any),
-                // Add valueInMillions for display
+                // Already in millions from the backend
                 valueInMillions:
                     typeof item.value === "number"
-                        ? item.value > 1000000
-                            ? item.value / 1000000
-                            : item.value
-                        : Number.parseFloat(item.value as any) / 1000000,
+                        ? item.value
+                        : Number.parseFloat(item.value as any),
             }));
+    }, [filteredData]);
+
+    // Calculate totals
+    const totals = useMemo(() => {
+        if (!filteredData || filteredData.length === 0) {
+            return { poCount: 0, poValue: 0 };
+        }
+
+        const totalCount = filteredData.reduce(
+            (sum, item) => sum + (item.poCount || 0),
+            0
+        );
+
+        // Values are already in millions
+        const totalValue = filteredData.reduce(
+            (sum, item) => sum + (item.value || 0),
+            0
+        );
+
+        // Return value in billions for display
+        return {
+            poCount: totalCount,
+            poValue: totalValue / 1000,
+        };
     }, [filteredData]);
 
     // Custom tooltip component
@@ -109,18 +124,15 @@ export function TopCustomerChart({
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-gray-600">
-                                Total PO Value:
+                                Total Nilai PO:
                             </span>
                             <span className="text-xs font-semibold">
-                                {formatCurrency(
-                                    customer.valueInMillions ||
-                                        customer.value / 1000000
-                                )}
+                                {customer.valueInMillions.toFixed(1)} Juta
                             </span>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-gray-600">
-                                PO Count:
+                                Jumlah PO:
                             </span>
                             <span className="text-xs font-semibold">
                                 {customer.poCount}
@@ -135,11 +147,11 @@ export function TopCustomerChart({
 
     // Selected business unit name
     const selectedBusinessUnitName = useMemo(() => {
-        if (selectedBusinessUnit === "all") return "All Business Units";
+        if (selectedBusinessUnit === "all") return "Semua Business Unit";
         const unit = businessUnits.find(
             (unit) => unit.id?.toString() === selectedBusinessUnit?.toString()
         );
-        return unit ? unit.name : "All Business Units";
+        return unit ? unit.name : "Semua Business Unit";
     }, [selectedBusinessUnit, businessUnits]);
 
     // Check if we have data to display
@@ -150,10 +162,10 @@ export function TopCustomerChart({
             <CardHeader className="flex flex-row items-center justify-between pb-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                 <div>
                     <CardTitle className="text-base font-semibold">
-                        Top 10 Customers
+                        Top 10 Pelanggan
                     </CardTitle>
                     <CardDescription className="text-blue-100">
-                        From the total value of all POs
+                        Berdasarkan total nilai Purchase Order
                     </CardDescription>
                 </div>
                 <Select
@@ -161,12 +173,12 @@ export function TopCustomerChart({
                     onValueChange={handleBusinessUnitChange}
                 >
                     <SelectTrigger className="w-[180px] h-8 text-xs bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Select Business Unit">
+                        <SelectValue placeholder="Pilih Business Unit">
                             {selectedBusinessUnitName}
                         </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Business Units</SelectItem>
+                        <SelectItem value="all">Semua Business Unit</SelectItem>
                         {businessUnits.map((unit) => (
                             <SelectItem
                                 key={unit.id}
@@ -202,7 +214,7 @@ export function TopCustomerChart({
                                     axisLine={{ stroke: "#e5e7eb" }}
                                     tickLine={false}
                                     tickFormatter={(value) =>
-                                        `${value.toFixed(1)} M`
+                                        `${value.toFixed(1)} Juta`
                                     }
                                     domain={[0, "dataMax"]}
                                 />
@@ -222,7 +234,7 @@ export function TopCustomerChart({
                                 <Tooltip content={<CustomTooltip />} />
                                 <Bar
                                     dataKey="valueInMillions"
-                                    name="PO Value"
+                                    name="Nilai PO"
                                     fill="#2563EB"
                                     radius={[0, 4, 4, 0]}
                                     barSize={20}
@@ -231,7 +243,7 @@ export function TopCustomerChart({
                                         dataKey="valueInMillions"
                                         position="right"
                                         formatter={(value: number) =>
-                                            `${value.toFixed(1)} M`
+                                            `${value.toFixed(1)} Juta`
                                         }
                                         style={{
                                             fontSize: "11px",
@@ -245,32 +257,32 @@ export function TopCustomerChart({
                 ) : (
                     <div className="h-[300px] flex items-center justify-center">
                         <p className="text-gray-500">
-                            No data available for the selected business unit
+                            Tidak ada data untuk business unit yang dipilih
                         </p>
                     </div>
                 )}
-                {totalPOValue > 0 && (
+                {hasData && (
                     <div className="mt-4 pt-4 border-t border-gray-100">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                 <div className="text-xs text-gray-500 mb-1">
-                                    Total PO Value
+                                    Total Nilai PO
                                 </div>
                                 <div className="text-lg font-semibold text-blue-700">
-                                    {totalPOValue.toFixed(1)}{" "}
+                                    {totals.poValue.toFixed(1)}{" "}
                                     <span className="text-xs text-gray-500">
-                                        Billion
+                                        Miliar
                                     </span>
                                 </div>
                             </div>
                             <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                                 <div className="text-xs text-gray-500 mb-1">
-                                    Total PO Count
+                                    Total Jumlah PO
                                 </div>
                                 <div className="text-lg font-semibold text-purple-700">
-                                    {totalPOCount}{" "}
+                                    {totals.poCount}{" "}
                                     <span className="text-xs text-gray-500">
-                                        Orders
+                                        Order
                                     </span>
                                 </div>
                             </div>

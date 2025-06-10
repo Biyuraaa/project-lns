@@ -36,28 +36,10 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import { BusinessUnit } from "@/types";
-
-interface CumulativeGrowthItem {
-    month: number;
-    year: number;
-    month_name: string;
-    target: number;
-    actual: number;
-    difference: number;
-    percentage: number;
-    cumulative_target: number;
-    cumulative_actual: number;
-    cumulative_difference: number;
-    cumulative_percentage: number;
-    business_unit: {
-        id: number | string;
-        name: string;
-    };
-}
+import { BusinessUnit, CompanyGrowthSellingCumulativeData } from "@/types";
 
 interface CumulativeCompanyGrowthChartProps {
-    data: CumulativeGrowthItem[];
+    data: CompanyGrowthSellingCumulativeData[];
     className?: string;
     businessUnits?: BusinessUnit[];
 }
@@ -189,7 +171,7 @@ export function CumulativeCompanyGrowthSellingChart({
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             const currentItem = payload[0]?.payload as
-                | CumulativeGrowthItem
+                | CompanyGrowthSellingCumulativeData
                 | undefined;
             if (!currentItem) return null;
             return (

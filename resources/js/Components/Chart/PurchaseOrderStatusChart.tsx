@@ -8,7 +8,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/Components/ui/card";
-import { BusinessUnit } from "@/types";
+import { BusinessUnit, PurchaseOrderStatusData } from "@/types";
 import {
     ChevronDown,
     PieChart,
@@ -43,28 +43,19 @@ import {
     PopoverTrigger,
 } from "@/Components/ui/popover";
 
-interface POStatusChartProps {
-    purchaseOrders: {
-        id: number;
-        status: string;
-        amount: number;
-        business_unit_id: number | string;
-        created_at: string;
-        month: number;
-        year: number;
-    }[];
+const STATUS_COLORS = {
+    wip: "#3b82f6",
+    ar: "#f59e0b",
+    ibt: "#a855f7",
+    clsd: "#10b981",
+    other: "#6b7280",
+};
+
+interface PurchaseOrderStatusChartProps {
+    data: PurchaseOrderStatusData[];
     businessUnits: BusinessUnit[];
 }
 
-// Status color mapping
-const STATUS_COLORS = {
-    wip: "#3b82f6", // blue
-    ar: "#f59e0b", // amber
-    ibt: "#a855f7", // purple
-    clsd: "#10b981", // green
-};
-
-// Predefined date ranges - sama dengan TotalValueCard
 enum DateRange {
     ALL = "all",
     CURRENT_MONTH = "current-month",
@@ -75,23 +66,18 @@ enum DateRange {
 }
 
 export const PurchaseOrderStatusChart = ({
-    purchaseOrders,
+    data,
     businessUnits,
-}: POStatusChartProps) => {
+}: PurchaseOrderStatusChartProps) => {
     const allPeriods = Array.from(
         new Set(
-            purchaseOrders.map(
-                (po) => `${po.year}-${String(po.month).padStart(2, "0")}`
-            )
+            data.map((po) => `${po.year}-${String(po.month).padStart(2, "0")}`)
         )
     ).sort();
 
-    // Current date
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
-
-    // State for filters - menyesuaikan dengan TotalValueCard
     const [selectedBusinessUnit, setSelectedBusinessUnit] =
         useState<string>("all");
     const [dateRangeType, setDateRangeType] = useState<DateRange>(
@@ -100,56 +86,38 @@ export const PurchaseOrderStatusChart = ({
     const [selectedMonth, setSelectedMonth] = useState<string>(
         allPeriods.length > 0 ? allPeriods[allPeriods.length - 1] : ""
     );
-
-    // States for custom date range
     const [startPeriod, setStartPeriod] = useState<string>(allPeriods[0] || "");
     const [endPeriod, setEndPeriod] = useState<string>(
         allPeriods[allPeriods.length - 1] || ""
     );
     const [customYear, setCustomYear] = useState<number>(currentYear);
     const [customMonth, setCustomMonth] = useState<number>(currentMonth);
-
-    // States for popover control
     const [datePopoverOpen, setDatePopoverOpen] = useState<boolean>(false);
     const [customTab, setCustomTab] = useState<"range" | "specific">("range");
-
-    // State for active sector in pie chart
     const [activeIndex, setActiveIndex] = useState<number | undefined>(
         undefined
     );
-
-    // Chart data
     const [chartData, setChartData] = useState<any[]>([]);
     const [totalPOCount, setTotalPOCount] = useState<number>(0);
     const [totalPOValue, setTotalPOValue] = useState<number>(0);
     const [filterDescription, setFilterDescription] =
-        useState<string>("All time");
-
-    // Get unique years from data
-    const uniqueYears = Array.from(
-        new Set(purchaseOrders.map((po) => po.year))
-    ).sort();
-
-    // Format month display
+        useState<string>("Semua waktu");
+    const uniqueYears = Array.from(new Set(data.map((po) => po.year))).sort();
     const getMonthName = (periodString: string) => {
         const [year, month] = periodString.split("-");
         const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-        return date.toLocaleString("default", {
+        return date.toLocaleString("id-ID", {
             month: "long",
             year: "numeric",
         });
     };
-
-    // Get selected business unit name
     const getSelectedBusinessUnitName = () => {
-        if (selectedBusinessUnit === "all") return "All Business Units";
+        if (selectedBusinessUnit === "all") return "Semua Business Unit";
         const unit = businessUnits.find(
             (u) => u.id.toString() === selectedBusinessUnit
         );
-        return unit ? unit.name : "All Business Units";
+        return unit ? unit.name : "Semua Business Unit";
     };
-
-    // Helper to get periods looking back N months from current
     const getLookbackPeriods = (months: number) => {
         const result = [];
         let year = currentYear;
@@ -160,8 +128,6 @@ export const PurchaseOrderStatusChart = ({
             if (allPeriods.includes(periodStr)) {
                 result.push(periodStr);
             }
-
-            // Move one month back
             month--;
             if (month === 0) {
                 month = 12;
@@ -173,18 +139,15 @@ export const PurchaseOrderStatusChart = ({
     };
 
     useEffect(() => {
-        // Determine date range based on selected type
         let periodFilter: string[] = [];
 
         switch (dateRangeType) {
             case DateRange.ALL:
-                // Use all periods
                 periodFilter = allPeriods;
-                setFilterDescription("All time");
+                setFilterDescription("Semua waktu");
                 break;
 
             case DateRange.CURRENT_MONTH:
-                // Current month only
                 const currentPeriod = `${currentYear}-${String(
                     currentMonth
                 ).padStart(2, "0")}`;
@@ -192,34 +155,29 @@ export const PurchaseOrderStatusChart = ({
                     (period) => period === currentPeriod
                 );
                 setFilterDescription(
-                    `Current month (${getMonthName(currentPeriod)})`
+                    `Bulan ini (${getMonthName(currentPeriod)})`
                 );
                 setSelectedMonth(currentPeriod);
                 break;
 
             case DateRange.LAST_3_MONTHS:
-                // Last 3 months
                 periodFilter = getLookbackPeriods(3);
-                setFilterDescription("Last 3 months");
+                setFilterDescription("3 Bulan Terakhir");
                 setSelectedMonth(periodFilter[0] || "");
                 break;
 
             case DateRange.LAST_6_MONTHS:
-                // Last 6 months
                 periodFilter = getLookbackPeriods(6);
-                setFilterDescription("Last 6 months");
+                setFilterDescription("6 Bulan Terakhir");
                 setSelectedMonth(periodFilter[0] || "");
                 break;
 
             case DateRange.LAST_YEAR:
-                // Last 12 months
                 periodFilter = getLookbackPeriods(12);
-                setFilterDescription("Last 12 months");
+                setFilterDescription("12 Bulan Terakhir");
                 setSelectedMonth(periodFilter[0] || "");
                 break;
-
             case DateRange.CUSTOM:
-                // Custom date range between start and end
                 if (customTab === "range" && startPeriod && endPeriod) {
                     const start = new Date(startPeriod);
                     const end = new Date(endPeriod);
@@ -231,10 +189,9 @@ export const PurchaseOrderStatusChart = ({
 
                     const startDisplay = getMonthName(startPeriod);
                     const endDisplay = getMonthName(endPeriod);
-                    setFilterDescription(`${startDisplay} to ${endDisplay}`);
+                    setFilterDescription(`${startDisplay} ke ${endDisplay}`);
                     setSelectedMonth(periodFilter[0] || "");
                 } else if (customTab === "specific") {
-                    // Specific month-year
                     const specificPeriod = `${customYear}-${String(
                         customMonth
                     ).padStart(2, "0")}`;
@@ -247,22 +204,19 @@ export const PurchaseOrderStatusChart = ({
                 break;
         }
 
-        // Filter POs based on selected filters
-        let filteredPOs: typeof purchaseOrders = [];
+        let filteredPOs: PurchaseOrderStatusData[] = [];
 
         if (dateRangeType === DateRange.ALL) {
-            // Untuk "All time", ambil semua PO berdasarkan business unit saja
-            filteredPOs = purchaseOrders.filter((po) => {
+            filteredPOs = data.filter((po) => {
                 return (
                     selectedBusinessUnit === "all" ||
                     po.business_unit_id.toString() === selectedBusinessUnit
                 );
             });
         } else if (selectedMonth) {
-            // Untuk filter bulan tertentu
             const [year, month] = selectedMonth.split("-");
 
-            filteredPOs = purchaseOrders.filter((po) => {
+            filteredPOs = data.filter((po) => {
                 const matchesBusinessUnit =
                     selectedBusinessUnit === "all" ||
                     po.business_unit_id.toString() === selectedBusinessUnit;
@@ -273,16 +227,13 @@ export const PurchaseOrderStatusChart = ({
                 return matchesBusinessUnit && matchesMonth;
             });
         }
-
-        // Aggregate by status
         const statusCounts: Record<string, { count: number; value: number }> =
             {};
 
         filteredPOs.forEach((po) => {
-            // Normalize status
             let status = po.status.toLowerCase();
             if (!["wip", "ar", "ibt", "clsd"].includes(status)) {
-                status = "others";
+                status = "other";
             }
 
             if (!statusCounts[status]) {
@@ -292,23 +243,21 @@ export const PurchaseOrderStatusChart = ({
             statusCounts[status].count += 1;
             statusCounts[status].value += po.amount;
         });
-
-        // Format for chart
-        const data = Object.entries(statusCounts).map(
+        const chartDataArray = Object.entries(statusCounts).map(
             ([status, { count, value }]) => ({
                 name: status.toUpperCase(),
                 value: count,
                 amount: value,
-                color: STATUS_COLORS[status as keyof typeof STATUS_COLORS],
+                color:
+                    STATUS_COLORS[status as keyof typeof STATUS_COLORS] ||
+                    STATUS_COLORS.other,
                 formattedLabel: getStatusLabel(status),
             })
         );
-
-        // Calculate totals
         const totalCount = filteredPOs.length;
         const totalValue = filteredPOs.reduce((sum, po) => sum + po.amount, 0);
 
-        setChartData(data);
+        setChartData(chartDataArray);
         setTotalPOCount(totalCount);
         setTotalPOValue(totalValue);
     }, [
@@ -320,31 +269,33 @@ export const PurchaseOrderStatusChart = ({
         customYear,
         customMonth,
         customTab,
-        purchaseOrders,
+        data,
     ]);
-
-    // Get full status label
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
             wip: "Work in Progress",
             ar: "Account Receivable",
-            ist: "Installation",
-            others: "Other Status",
+            ibt: "Income Before Tax",
+            clsd: "Selesai",
+            other: "Status Lain",
         };
 
         return labels[status.toLowerCase()] || status.toUpperCase();
     };
 
-    // Custom tooltip
+    const formatValueIDR = (value: number) => {
+        if (value >= 1000) {
+            return `Rp ${(value / 1000).toFixed(1).replace(".", ",")} Miliar`;
+        }
+        return `Rp ${value.toFixed(1).replace(".", ",")} Juta`;
+    };
+
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const { name, value, amount, color, formattedLabel } =
                 payload[0].payload;
             const percentage = ((value / totalPOCount) * 100).toFixed(0);
-            const formattedAmount =
-                amount >= 1000
-                    ? `${(amount / 1000).toFixed(1)}B`
-                    : `${amount.toFixed(1)}M`;
+            const formattedAmount = formatValueIDR(amount);
 
             return (
                 <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-100">
@@ -360,17 +311,19 @@ export const PurchaseOrderStatusChart = ({
                     </div>
                     <div className="space-y-1 mt-2">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Count</span>
+                            <span className="text-xs text-gray-600">
+                                Jumlah
+                            </span>
                             <span className="font-medium">{value} POs</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-xs text-gray-600">
-                                Percentage
+                                Persentase
                             </span>
                             <span className="font-medium">{percentage}%</span>
                         </div>
                         <div className="flex justify-between items-center pt-1 border-t border-gray-100">
-                            <span className="text-xs text-gray-600">Value</span>
+                            <span className="text-xs text-gray-600">Nilai</span>
                             <span className="font-medium" style={{ color }}>
                                 {formattedAmount}
                             </span>
@@ -383,7 +336,6 @@ export const PurchaseOrderStatusChart = ({
         return null;
     };
 
-    // Custom legend
     const renderCustomLegend = (props: any) => {
         const { payload } = props;
 
@@ -424,7 +376,6 @@ export const PurchaseOrderStatusChart = ({
         );
     };
 
-    // Custom label
     const renderCustomizedLabel = ({
         cx,
         cy,
@@ -435,7 +386,6 @@ export const PurchaseOrderStatusChart = ({
         index,
         name,
     }: any) => {
-        // Only render labels for segments with enough space (more than 10%)
         if (percent < 0.1) return null;
 
         const RADIAN = Math.PI / 180;
@@ -460,7 +410,6 @@ export const PurchaseOrderStatusChart = ({
         );
     };
 
-    // Active shape when hovering on pie slices
     const renderActiveShape = (props: any) => {
         const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } =
             props;
@@ -481,51 +430,38 @@ export const PurchaseOrderStatusChart = ({
         );
     };
 
-    // Handle pie section hover
     const onPieEnter = (_: any, index: number) => {
         setActiveIndex(index);
     };
 
-    // Handle pie section leave
     const onPieLeave = () => {
         setActiveIndex(undefined);
     };
 
-    // Format currency
-    const formatCurrency = (amount: number) => {
-        if (amount >= 1000) {
-            return `${(amount / 1000).toFixed(1)} Billion`;
-        }
-        return `${amount.toFixed(1)} Million`;
-    };
-
-    // Get date range filter label - sama dengan TotalValueCard
     const getDateRangeLabel = () => {
         switch (dateRangeType) {
             case DateRange.ALL:
-                return "All Time";
+                return "Semua Waktu";
             case DateRange.CURRENT_MONTH:
-                return "Current Month";
+                return "Bulan Ini";
             case DateRange.LAST_3_MONTHS:
-                return "Last 3 Months";
+                return "3 Bulan Terakhir";
             case DateRange.LAST_6_MONTHS:
-                return "Last 6 Months";
+                return "6 Bulan Terakhir";
             case DateRange.LAST_YEAR:
-                return "Last 12 Months";
+                return "12 Bulan Terakhir";
             case DateRange.CUSTOM:
-                return "Custom Range";
+                return "Rentang Kustom";
             default:
-                return "Select Period";
+                return "Pilih Periode";
         }
     };
 
-    // Apply date range selection and close popover
     const applyDateRange = (range: DateRange) => {
         setDateRangeType(range);
         setDatePopoverOpen(false);
     };
 
-    // Apply custom range
     const applyCustomRange = () => {
         setDateRangeType(DateRange.CUSTOM);
         setDatePopoverOpen(false);
@@ -538,7 +474,7 @@ export const PurchaseOrderStatusChart = ({
                     <div>
                         <CardTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
                             <PieChart className="text-indigo-600 h-5 w-5" />
-                            PO with Status
+                            Status Purchase Order
                         </CardTitle>
                         <CardDescription className="text-indigo-800/70 mt-1 flex items-center gap-1.5 flex-wrap">
                             <Badge
@@ -590,7 +526,7 @@ export const PurchaseOrderStatusChart = ({
                                                 : ""
                                         }
                                     >
-                                        All Business Units
+                                        Semua Business Unit
                                     </span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -647,10 +583,11 @@ export const PurchaseOrderStatusChart = ({
                             >
                                 <div className="bg-indigo-50/50 border-b border-indigo-100 py-2 px-3">
                                     <h4 className="font-medium text-indigo-900">
-                                        Select Time Period
+                                        Pilih Periode Waktu
                                     </h4>
                                     <p className="text-xs text-indigo-700/70">
-                                        Filter data by specific time range
+                                        Filter data berdasarkan rentang waktu
+                                        spesifik
                                     </p>
                                 </div>
 
@@ -677,7 +614,7 @@ export const PurchaseOrderStatusChart = ({
                                                     : ""
                                             )}
                                         >
-                                            Current Month
+                                            Bulan Ini
                                         </Button>
                                         <Button
                                             variant={
@@ -700,7 +637,7 @@ export const PurchaseOrderStatusChart = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 3 Months
+                                            3 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -723,7 +660,7 @@ export const PurchaseOrderStatusChart = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 6 Months
+                                            6 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -746,7 +683,7 @@ export const PurchaseOrderStatusChart = ({
                                                     : ""
                                             )}
                                         >
-                                            Last 12 Months
+                                            12 Bulan Terakhir
                                         </Button>
                                         <Button
                                             variant={
@@ -765,7 +702,7 @@ export const PurchaseOrderStatusChart = ({
                                                     : ""
                                             )}
                                         >
-                                            All Time
+                                            Semua Waktu
                                         </Button>
                                     </div>
 
@@ -773,7 +710,7 @@ export const PurchaseOrderStatusChart = ({
                                         <div className="mb-2">
                                             <h5 className="font-medium text-sm flex items-center gap-1.5 text-indigo-800">
                                                 <Sliders className="h-3.5 w-3.5" />
-                                                Custom Period
+                                                Periode Kustom
                                             </h5>
                                         </div>
 
@@ -791,13 +728,13 @@ export const PurchaseOrderStatusChart = ({
                                                     value="range"
                                                     className="flex-1 text-xs"
                                                 >
-                                                    Date Range
+                                                    Rentang Tanggal
                                                 </TabsTrigger>
                                                 <TabsTrigger
                                                     value="specific"
                                                     className="flex-1 text-xs"
                                                 >
-                                                    Specific Month
+                                                    Bulan Tertentu
                                                 </TabsTrigger>
                                             </TabsList>
                                             <TabsContent
@@ -807,7 +744,7 @@ export const PurchaseOrderStatusChart = ({
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="text-xs font-medium text-indigo-800 block mb-1">
-                                                            From
+                                                            Dari
                                                         </label>
                                                         <select
                                                             value={startPeriod}
@@ -839,7 +776,7 @@ export const PurchaseOrderStatusChart = ({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-indigo-800 block mb-1">
-                                                            To
+                                                            Hingga
                                                         </label>
                                                         <select
                                                             value={endPeriod}
@@ -878,7 +815,7 @@ export const PurchaseOrderStatusChart = ({
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="text-xs font-medium text-indigo-800 block mb-1">
-                                                            Year
+                                                            Tahun
                                                         </label>
                                                         <select
                                                             value={customYear}
@@ -910,7 +847,7 @@ export const PurchaseOrderStatusChart = ({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-indigo-800 block mb-1">
-                                                            Month
+                                                            Bulan
                                                         </label>
                                                         <select
                                                             value={customMonth}
@@ -940,7 +877,7 @@ export const PurchaseOrderStatusChart = ({
                                                                             1,
                                                                         1
                                                                     ).toLocaleString(
-                                                                        "default",
+                                                                        "id-ID",
                                                                         {
                                                                             month: "long",
                                                                         }
@@ -959,7 +896,7 @@ export const PurchaseOrderStatusChart = ({
                                                 onClick={applyCustomRange}
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-xs"
                                             >
-                                                Apply
+                                                Terapkan
                                             </Button>
                                         </div>
                                     </div>
@@ -973,7 +910,7 @@ export const PurchaseOrderStatusChart = ({
                 <div className="mb-4 flex flex-wrap gap-4 justify-center sm:justify-start">
                     <div className="flex-1 bg-white p-3 rounded-lg shadow-sm border border-indigo-100/80 min-w-[120px] text-center">
                         <div className="text-sm font-medium text-indigo-600 mb-1">
-                            Total POs
+                            Total PO
                         </div>
                         <div className="text-3xl font-bold text-indigo-900">
                             {totalPOCount}
@@ -981,10 +918,10 @@ export const PurchaseOrderStatusChart = ({
                     </div>
                     <div className="flex-1 bg-white p-3 rounded-lg shadow-sm border border-indigo-100/80 min-w-[120px] text-center">
                         <div className="text-sm font-medium text-indigo-600 mb-1">
-                            Total Value
+                            Nilai Total
                         </div>
                         <div className="text-3xl font-bold text-indigo-900">
-                            {formatCurrency(totalPOValue)}
+                            {formatValueIDR(totalPOValue)}
                         </div>
                     </div>
                 </div>
@@ -1028,11 +965,12 @@ export const PurchaseOrderStatusChart = ({
                         <div className="text-center bg-white/50 p-6 rounded-lg border border-indigo-100">
                             <PieChart className="h-12 w-12 text-indigo-200 mx-auto mb-3" />
                             <p className="text-indigo-800 font-medium">
-                                No data available for the selected period
+                                Tidak ada data tersedia untuk periode yang
+                                dipilih
                             </p>
                             <p className="text-indigo-500 text-sm mt-1">
-                                Try selecting a different period or business
-                                unit
+                                Coba pilih periode atau business unit yang
+                                berbeda
                             </p>
                         </div>
                     )}
@@ -1040,7 +978,7 @@ export const PurchaseOrderStatusChart = ({
 
                 {chartData.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-indigo-100 text-xs text-center text-indigo-500">
-                        Click on legend items to highlight sections
+                        Klik pada item legenda untuk menyorot bagian
                     </div>
                 )}
             </CardContent>

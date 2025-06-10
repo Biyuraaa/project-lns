@@ -16,9 +16,14 @@ use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
+
+    /**
+     * Display the dashboard index page with statistics and charts
+     *
+     * @return \Inertia\Response
+     */
     public function index()
     {
-        // Time periods for statistics
         $currentMonthStart = now()->startOfMonth();
         $lastMonthStart = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->endOfMonth();
@@ -44,12 +49,10 @@ class DashboardController extends Controller
         $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
         $topCustomersData = $this->prepareTopCustomersData($businessUnits);
         $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
-        $cumulativeCompanyGrowthSellingData = $this->prepareCompanyGrowthSellingCumulative();
-        $poDetailData = $this->preparePODetailData($businessUnits);
+        $companyGrowthSellingCumulativeData = $this->prepareCompanyGrowthSellingCumulativeData();
+        $purchaseOrderStatusData = $this->preparePurchaseOrderStatusData();
         $quotationAmountData = $this->prepareQuotationAmountData();
-
-        $totalPOCount = PurchaseOrder::count();
-        $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
+        $totalValueCardData = $this->prepareTotalValueCardData();
 
         return Inertia::render('Dashboard/Index', [
             'statistics' => [
@@ -65,12 +68,11 @@ class DashboardController extends Controller
                 'companyGrowthData' => $companyGrowthData,
                 'topCustomersData' => $topCustomersData,
                 'companyGrowthSellingData' => $companyGrowthSellingData,
-                'cumulativeCompanyGrowthSellingData' => $cumulativeCompanyGrowthSellingData,
+                'companyGrowthSellingCumulativeData' => $companyGrowthSellingCumulativeData,
                 'quotationAmountData' => $quotationAmountData,
-                'poDetailData' => $poDetailData,
+                'purchaseOrderStatusData' => $purchaseOrderStatusData,
                 'businessUnits' => $businessUnits,
-                'totalPOCount' => $totalPOCount,
-                'totalPOValue' => $totalPOValue,
+                'totalValueCardData' => $totalValueCardData,
             ]
         ]);
     }
@@ -130,6 +132,7 @@ class DashboardController extends Controller
             return [];
         }
     }
+
     /**
      * Get statistics for inquiries
      * 
@@ -295,123 +298,143 @@ class DashboardController extends Controller
         }
     }
 
-    // Add this function to ensure we have data for all months in order
-    private function prepareCompanyGrowthSellingCumulative()
+    /**
+     * Prepare cumulative company growth selling data
+     * 
+     * @return array
+     */
+    private function prepareCompanyGrowthSellingCumulativeData()
     {
-        $growthSellingData = CompanyGrowthSelling::with('businessUnit')
-            ->orderBy('year')
-            ->orderBy('month')
-            ->get();
+        try {
+            $growthSellingData = CompanyGrowthSelling::with('businessUnit')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get();
 
-        $cumulativeData = collect();
+            $cumulativeData = collect();
 
-        $monthNames = [
-            1 => 'Jan',
-            2 => 'Feb',
-            3 => 'Mar',
-            4 => 'Apr',
-            5 => 'May',
-            6 => 'Jun',
-            7 => 'Jul',
-            8 => 'Aug',
-            9 => 'Sep',
-            10 => 'Oct',
-            11 => 'Nov',
-            12 => 'Dec'
-        ];
+            $monthNames = [
+                1 => 'Jan',
+                2 => 'Feb',
+                3 => 'Mar',
+                4 => 'Apr',
+                5 => 'May',
+                6 => 'Jun',
+                7 => 'Jul',
+                8 => 'Aug',
+                9 => 'Sep',
+                10 => 'Oct',
+                11 => 'Nov',
+                12 => 'Dec'
+            ];
 
-        $groupedByBusinessUnit = $growthSellingData->groupBy('business_unit_id');
+            $groupedByBusinessUnit = $growthSellingData->groupBy('business_unit_id');
 
-        foreach ($groupedByBusinessUnit as $businessUnitId => $businessUnitItems) {
-            $businessUnit = $businessUnitItems->first()->businessUnit;
-            if (is_null($businessUnitId) && is_null($businessUnit)) {
-                Log::warning("Data CompanyGrowthSelling ditemukan tanpa business_unit_id yang valid.");
-                continue;
-            }
+            foreach ($groupedByBusinessUnit as $businessUnitId => $businessUnitItems) {
+                $businessUnit = $businessUnitItems->first()->businessUnit;
+                if (is_null($businessUnitId) && is_null($businessUnit)) {
+                    Log::warning("Data CompanyGrowthSelling ditemukan tanpa business_unit_id yang valid.");
+                    continue;
+                }
 
-            $groupedByYear = $businessUnitItems->groupBy('year');
+                $groupedByYear = $businessUnitItems->groupBy('year');
 
-            foreach ($groupedByYear as $year => $yearItems) {
-                $cumulativeTarget = 0;
-                $cumulativeActual = 0;
-                $sortedYearItems = $yearItems->sortBy('month');
+                foreach ($groupedByYear as $year => $yearItems) {
+                    $cumulativeTarget = 0;
+                    $cumulativeActual = 0;
+                    $sortedYearItems = $yearItems->sortBy('month');
 
-                foreach ($sortedYearItems as $item) {
-                    $cumulativeTarget += (float)$item->target;
-                    $cumulativeActual += (float)$item->actual;
-                    $cumulativeDifference = $cumulativeActual - $cumulativeTarget;
-                    $cumulativePercentage = $cumulativeTarget > 0
-                        ? round(($cumulativeActual / $cumulativeTarget) * 100)
-                        : ($cumulativeActual > 0 ? 100 : 0); // Jika target 0 tapi actual > 0, bisa dianggap 100% atau sesuai kebutuhan
+                    foreach ($sortedYearItems as $item) {
+                        $cumulativeTarget += (float)$item->target;
+                        $cumulativeActual += (float)$item->actual;
+                        $cumulativeDifference = $cumulativeActual - $cumulativeTarget;
+                        $cumulativePercentage = $cumulativeTarget > 0
+                            ? round(($cumulativeActual / $cumulativeTarget) * 100)
+                            : ($cumulativeActual > 0 ? 100 : 0);
 
-                    $cumulativeData->push([
-                        'month' => $item->month,
-                        'year' => $item->year,
-                        'month_name' => $monthNames[$item->month] ?? '',
-                        'target' => (float)$item->target,
-                        'actual' => (float)$item->actual,
-                        // Pastikan $item->difference dan $item->percentage ada dan numerik
-                        'difference' => (float)($item->actual - $item->target), // Hitung ulang untuk konsistensi
-                        'percentage' => $item->target > 0 ? round(((float)$item->actual / (float)$item->target) * 100) : ((float)$item->actual > 0 ? 100 : 0), // Hitung ulang
-                        'cumulative_target' => $cumulativeTarget,
-                        'cumulative_actual' => $cumulativeActual,
-                        'cumulative_difference' => $cumulativeDifference,
-                        'cumulative_percentage' => $cumulativePercentage,
-                        'business_unit' => [
-                            // Gunakan $businessUnitId yang didapat dari groupBy
-                            'id' => $businessUnit ? $businessUnit->id : ($businessUnitId ?: 'unknown'),
-                            'name' => $businessUnit ? $businessUnit->name : ($businessUnitId ? 'Unknown BU ' . $businessUnitId : 'Data without BU')
-                        ]
-                    ]);
+                        // Fix: Create a single array item, then push it to the collection
+                        $itemData = [
+                            'month' => $item->month,
+                            'year' => $item->year,
+                            'month_name' => $monthNames[$item->month] ?? '',
+                            'target' => (float)$item->target,
+                            'actual' => (float)$item->actual,
+                            'difference' => (float)($item->actual - $item->target),
+                            'percentage' => $item->target > 0 ? round(((float)$item->actual / (float)$item->target) * 100) : ((float)$item->actual > 0 ? 100 : 0),
+                            'cumulative_target' => $cumulativeTarget,
+                            'cumulative_actual' => $cumulativeActual,
+                            'cumulative_difference' => $cumulativeDifference,
+                            'cumulative_percentage' => $cumulativePercentage,
+                            'business_unit' => [
+                                'id' => $businessUnit ? $businessUnit->id : ($businessUnitId ?: 'unknown'),
+                                'name' => $businessUnit ? $businessUnit->name : ($businessUnitId ? 'Unknown BU ' . $businessUnitId : 'Data without BU')
+                            ]
+                        ];
+
+                        // Now push the single item to the collection
+                        $cumulativeData->push($itemData);
+                    }
                 }
             }
-        }
-        $allBuDataByYear = $growthSellingData->groupBy('year');
-        $allBusinessUnitsCumulative = collect();
 
-        foreach ($allBuDataByYear as $year => $yearItems) {
-            $cumulativeTargetAll = 0;
-            $cumulativeActualAll = 0;
-            $monthlyAggregated = $yearItems->groupBy('month')->map(function ($monthItems, $month) use ($monthNames, $year) {
-                return [
-                    'year' => $year,
-                    'month' => $month,
-                    'month_name' => $monthNames[$month] ?? '',
-                    'target' => $monthItems->sum(fn($it) => (float)$it->target),
-                    'actual' => $monthItems->sum(fn($it) => (float)$it->actual),
-                ];
-            })->sortBy('month');
+            $allBuDataByYear = $growthSellingData->groupBy('year');
+            $allBusinessUnitsCumulative = collect();
 
-            foreach ($monthlyAggregated as $data) {
-                $cumulativeTargetAll += $data['target'];
-                $cumulativeActualAll += $data['actual'];
-                $cumulativeDifferenceAll = $cumulativeActualAll - $cumulativeTargetAll;
-                $cumulativePercentageAll = $cumulativeTargetAll > 0
-                    ? round(($cumulativeActualAll / $cumulativeTargetAll) * 100)
-                    : ($cumulativeActualAll > 0 ? 100 : 0);
+            foreach ($allBuDataByYear as $year => $yearItems) {
+                $cumulativeTargetAll = 0;
+                $cumulativeActualAll = 0;
+                $monthlyAggregated = $yearItems->groupBy('month')->map(function ($monthItems, $month) use ($monthNames, $year) {
+                    return [
+                        'year' => $year,
+                        'month' => $month,
+                        'month_name' => $monthNames[$month] ?? '',
+                        'target' => $monthItems->sum(fn($it) => (float)$it->target),
+                        'actual' => $monthItems->sum(fn($it) => (float)$it->actual),
+                    ];
+                })->sortBy('month');
 
-                $allBusinessUnitsCumulative->push([
-                    'month' => $data['month'],
-                    'year' => $data['year'],
-                    'month_name' => $data['month_name'],
-                    'target' => $data['target'], // Monthly total for all BUs
-                    'actual' => $data['actual'], // Monthly total for all BUs
-                    'difference' => $data['actual'] - $data['target'],
-                    'percentage' => $data['target'] > 0 ? round(($data['actual'] / $data['target']) * 100) : ($data['actual'] > 0 ? 100 : 0),
-                    'cumulative_target' => $cumulativeTargetAll,
-                    'cumulative_actual' => $cumulativeActualAll,
-                    'cumulative_difference' => $cumulativeDifferenceAll,
-                    'cumulative_percentage' => $cumulativePercentageAll,
-                    'business_unit' => [
-                        'id' => 'all',
-                        'name' => 'All Business Units'
-                    ]
-                ]);
+                foreach ($monthlyAggregated as $data) {
+                    $cumulativeTargetAll += $data['target'];
+                    $cumulativeActualAll += $data['actual'];
+                    $cumulativeDifferenceAll = $cumulativeActualAll - $cumulativeTargetAll;
+                    $cumulativePercentageAll = $cumulativeTargetAll > 0
+                        ? round(($cumulativeActualAll / $cumulativeTargetAll) * 100)
+                        : ($cumulativeActualAll > 0 ? 100 : 0);
+
+                    // Fix: Create a single array item, then push it to the collection
+                    $allBuItem = [
+                        'month' => $data['month'],
+                        'year' => $data['year'],
+                        'month_name' => $data['month_name'],
+                        'target' => $data['target'],
+                        'actual' => $data['actual'],
+                        'difference' => $data['actual'] - $data['target'],
+                        'percentage' => $data['target'] > 0 ? round(($data['actual'] / $data['target']) * 100) : ($data['actual'] > 0 ? 100 : 0),
+                        'cumulative_target' => $cumulativeTargetAll,
+                        'cumulative_actual' => $cumulativeActualAll,
+                        'cumulative_difference' => $cumulativeDifferenceAll,
+                        'cumulative_percentage' => $cumulativePercentageAll,
+                        'business_unit' => [
+                            'id' => 'all',
+                            'name' => 'All Business Units'
+                        ]
+                    ];
+
+                    // Now push the single item to the collection
+                    $allBusinessUnitsCumulative->push($allBuItem);
+                }
             }
-        }
-        $finalData = $cumulativeData->merge($allBusinessUnitsCumulative);
 
-        return $finalData->all();
+            $finalData = $cumulativeData->merge($allBusinessUnitsCumulative);
+            return $finalData->all();
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error in prepareCompanyGrowthSellingCumulativeData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            // Return empty array to prevent frontend errors
+            return [];
+        }
     }
 
     /**
@@ -555,6 +578,305 @@ class DashboardController extends Controller
     }
 
     /**
+     * Prepare company growth selling data for client-side filtering
+     *
+     * @return array
+     */
+    private function prepareCompanyGrowthSellingData()
+    {
+        try {
+            // Safely retrieve data with business unit relationships
+            $growthSellingData = CompanyGrowthSelling::with('businessUnit')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get();
+
+            // Month names for consistent formatting
+            $monthNames = [
+                1 => 'Jan',
+                2 => 'Feb',
+                3 => 'Mar',
+                4 => 'Apr',
+                5 => 'May',
+                6 => 'Jun',
+                7 => 'Jul',
+                8 => 'Aug',
+                9 => 'Sep',
+                10 => 'Oct',
+                11 => 'Nov',
+                12 => 'Dec'
+            ];
+
+            // Process each item to ensure consistent structure
+            $formattedData = $growthSellingData->map(function ($item) use ($monthNames) {
+                // Make sure we extract business unit details safely
+                $businessUnitId = $item->businessUnit ? $item->businessUnit->id : 'all';
+                $businessUnitName = $item->businessUnit ? $item->businessUnit->name : 'All Business Units';
+
+                // Create a consistent structure for frontend
+                return [
+                    'id' => $item->id,
+                    'month' => $item->month,
+                    'year' => $item->year,
+                    'month_name' => $monthNames[$item->month] ?? '',
+                    'target' => (float)$item->target,
+                    'actual' => (float)$item->actual,
+                    'difference' => (float)$item->difference,
+                    'percentage' => (float)$item->percentage,
+                    'business_unit' => [
+                        'id' => $businessUnitId,
+                        'name' => $businessUnitName
+                    ]
+                ];
+            })->toArray();
+
+            // If there's no data, return at least an empty array with proper structure
+            if (empty($formattedData)) {
+                Log::info('No company growth selling data found');
+            }
+
+            return $formattedData;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error in prepareCompanyGrowthSellingData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            // Return empty array with proper structure to prevent frontend errors
+            return [];
+        }
+    }
+
+    /**
+     * Prepare purchase order status data for dashboard visualization
+     * 
+     * @return array
+     */
+    private function preparePurchaseOrderStatusData()
+    {
+        try {
+            $poData = PurchaseOrder::join('quotations', 'purchase_orders.quotation_id', '=', 'quotations.id')
+                ->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                ->select(
+                    'purchase_orders.id',
+                    'purchase_orders.amount',
+                    'purchase_orders.status',
+                    'purchase_orders.created_at',
+                    'inquiries.business_unit_id'
+                )
+                ->get()
+                ->map(function ($po) {
+                    $createdAt = Carbon::parse($po->created_at);
+
+                    $status = strtoupper(trim($po->status ?? ''));
+
+                    $amountInMillions = $po->amount / 1000000;
+
+                    $formattedAmount = $this->formatIndonesianCurrency($po->amount);
+
+                    return [
+                        'id' => $po->id,
+                        'amount' => $amountInMillions,
+                        'raw_amount' => $po->amount,
+                        'formatted_amount' => $formattedAmount,
+                        'status' => $status,
+                        'business_unit_id' => $po->business_unit_id,
+                        'created_at' => $po->created_at,
+                        'month' => $createdAt->month,
+                        'year' => $createdAt->year
+                    ];
+                })
+                ->toArray();
+
+            $standardizedStatuses = ['WIP', 'AR', 'IST', 'CLSD'];
+
+            foreach ($poData as &$po) {
+                if (empty($po['status'])) {
+                    $po['status'] = $standardizedStatuses[array_rand($standardizedStatuses)];
+                } else {
+                    if (!in_array($po['status'], $standardizedStatuses)) {
+                        $po['status'] = 'OTHER';
+                    }
+                }
+            }
+
+            return $poData;
+        } catch (\Exception $e) {
+            Log::error('Error in preparePurchaseOrderStatusData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return [];
+        }
+    }
+
+    /**
+     * Get total counts and values for quotations and purchase orders with Indonesian currency format
+     * 
+     * @return array
+     */
+    /**
+     * Get total counts and values for quotations and purchase orders with Indonesian currency format
+     * with support for business unit and date filtering
+     * 
+     * @return array
+     */
+    private function prepareTotalValueCardData()
+    {
+        try {
+            $data = [];
+
+            $data['all'] = $this->getTotalValueDataForBusinessUnit(null);
+
+            $businessUnits = BusinessUnit::all();
+            foreach ($businessUnits as $businessUnit) {
+                $data[$businessUnit->id] = $this->getTotalValueDataForBusinessUnit($businessUnit->id);
+            }
+
+            $data['periods'] = $this->getTotalValueDataByPeriod();
+
+            return $data;
+        } catch (\Exception $e) {
+            Log::error('Error in prepareTotalValueCardData: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            return [
+                'all' => [
+                    'po' => [
+                        'count' => 0,
+                        'value' => 0,
+                        'formatted_value' => 'Rp 0'
+                    ],
+                    'quotation' => [
+                        'count' => 0,
+                        'value' => 0,
+                        'formatted_value' => 'Rp 0'
+                    ]
+                ],
+                'periods' => []
+            ];
+        }
+    }
+
+    /**
+     * Get data for specific business unit
+     * 
+     * @param int|null $businessUnitId
+     * @return array
+     */
+    private function getTotalValueDataForBusinessUnit($businessUnitId = null)
+    {
+        $poQuery = PurchaseOrder::query();
+
+        $quotationQuery = Quotation::whereNotNull('amount');
+
+        if ($businessUnitId) {
+            $poQuery->join('quotations', 'purchase_orders.quotation_id', '=', 'quotations.id')
+                ->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                ->where('inquiries.business_unit_id', $businessUnitId);
+
+            $quotationQuery->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                ->where('inquiries.business_unit_id', $businessUnitId);
+        }
+
+        $totalPOCount = $poQuery->count();
+        $totalPOValue = $poQuery->sum('purchase_orders.amount') / 1000000000;
+
+        $totalQuotationCount = $quotationQuery->count();
+        $totalQuotationValue = $quotationQuery->sum('quotations.amount') / 1000000000;
+
+        $formattedPOValue = $this->formatIndonesianCurrency($totalPOValue);
+        $formattedQuotationValue = $this->formatIndonesianCurrency($totalQuotationValue);
+
+        return [
+            'po' => [
+                'count' => $totalPOCount,
+                'value' => $totalPOValue,
+                'formatted_value' => $formattedPOValue
+            ],
+            'quotation' => [
+                'count' => $totalQuotationCount,
+                'value' => $totalQuotationValue,
+                'formatted_value' => $formattedQuotationValue
+            ]
+        ];
+    }
+
+    /**
+     * Get data by monthly periods
+     * 
+     * @return array
+     */
+    private function getTotalValueDataByPeriod()
+    {
+        $periods = [];
+
+        for ($i = 0; $i < 24; $i++) {
+            $date = now()->subMonths($i);
+            $year = $date->year;
+            $month = $date->month;
+            $period = "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT);
+
+            $poValue = PurchaseOrder::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->sum('amount') / 1000000000;
+
+            $poCount = PurchaseOrder::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $quotationValue = Quotation::whereNotNull('amount')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->sum('amount') / 1000000000;
+
+            $quotationCount = Quotation::whereNotNull('amount')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $periods[] = [
+                'period' => $period,
+                'year' => $year,
+                'month' => $month,
+                'po' => [
+                    'count' => $poCount,
+                    'value' => $poValue,
+                    'formatted_value' => $this->formatIndonesianCurrency($poValue)
+                ],
+                'quotation' => [
+                    'count' => $quotationCount,
+                    'value' => $quotationValue,
+                    'formatted_value' => $this->formatIndonesianCurrency($quotationValue)
+                ]
+            ];
+        }
+
+        return $periods;
+    }
+
+    /**
+     * Format currency value to Indonesian format
+     * 
+     * @param float $value
+     * @return string
+     */
+    private function formatIndonesianCurrency($value)
+    {
+        // Handle different scale values with appropriate suffixes
+        if ($value >= 1) {
+            // Billions (in Indonesian: Miliar)
+            return 'Rp ' . number_format($value, 1, ',', '.') . ' Miliar';
+        } elseif ($value >= 0.001) {
+            // Millions (in Indonesian: Juta)
+            return 'Rp ' . number_format($value * 1000, 1, ',', '.') . ' Juta';
+        } elseif ($value >= 0.000001) {
+            // Thousands (in Indonesian: Ribu)
+            return 'Rp ' . number_format($value * 1000000, 1, ',', '.') . ' Ribu';
+        } else {
+            // Regular format
+            return 'Rp ' . number_format($value * 1000000000, 0, ',', '.');
+        }
+    }
+
+    /**
      * Calculate growth percentage with realistic defaults
      * 
      * @param int $currentValue
@@ -624,115 +946,5 @@ class DashboardController extends Controller
             default:
                 return "$trendText $absGrowth% dari bulan lalu.";
         }
-    }
-
-    private function prepareCompanyGrowthSellingData()
-    {
-        try {
-            // Safely retrieve data with business unit relationships
-            $growthSellingData = CompanyGrowthSelling::with('businessUnit')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-
-            // Month names for consistent formatting
-            $monthNames = [
-                1 => 'Jan',
-                2 => 'Feb',
-                3 => 'Mar',
-                4 => 'Apr',
-                5 => 'May',
-                6 => 'Jun',
-                7 => 'Jul',
-                8 => 'Aug',
-                9 => 'Sep',
-                10 => 'Oct',
-                11 => 'Nov',
-                12 => 'Dec'
-            ];
-
-            // Process each item to ensure consistent structure
-            $formattedData = $growthSellingData->map(function ($item) use ($monthNames) {
-                // Make sure we extract business unit details safely
-                $businessUnitId = $item->businessUnit ? $item->businessUnit->id : 'all';
-                $businessUnitName = $item->businessUnit ? $item->businessUnit->name : 'All Business Units';
-
-                // Create a consistent structure for frontend
-                return [
-                    'id' => $item->id,
-                    'month' => $item->month,
-                    'year' => $item->year,
-                    'month_name' => $monthNames[$item->month] ?? '',
-                    'target' => (float)$item->target,
-                    'actual' => (float)$item->actual,
-                    'difference' => (float)$item->difference,
-                    'percentage' => (float)$item->percentage,
-                    'business_unit' => [
-                        'id' => $businessUnitId,
-                        'name' => $businessUnitName
-                    ]
-                ];
-            })->toArray();
-
-            // If there's no data, return at least an empty array with proper structure
-            if (empty($formattedData)) {
-                Log::info('No company growth selling data found');
-            }
-
-            return $formattedData;
-        } catch (\Exception $e) {
-            // Log the error for debugging
-            Log::error('Error in prepareCompanyGrowthSellingData: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-
-            // Return empty array with proper structure to prevent frontend errors
-            return [];
-        }
-    }
-
-    /**
-     * Prepare PO details data for summary and status charts
-     *
-     * @param Collection $businessUnits
-     * @return array
-     */
-    private function preparePODetailData($businessUnits)
-    {
-        // Get PO data with month, year, status, business unit
-        $poData = PurchaseOrder::join('quotations', 'purchase_orders.quotation_id', '=', 'quotations.id')
-            ->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
-            ->select(
-                'purchase_orders.id',
-                'purchase_orders.amount',
-                'purchase_orders.status',
-                'purchase_orders.created_at',
-                'inquiries.business_unit_id'
-            )
-            ->get()
-            ->map(function ($po) {
-                $createdAt = Carbon::parse($po->created_at);
-
-                return [
-                    'id' => $po->id,
-                    'amount' => $po->amount / 1000000, // Convert to millions
-                    'status' => $po->status,
-                    'business_unit_id' => $po->business_unit_id,
-                    'created_at' => $po->created_at,
-                    'month' => $createdAt->month,
-                    'year' => $createdAt->year
-                ];
-            })
-            ->toArray();
-
-        // Use actual data from DB, but if status field doesn't exist,
-        // add random statuses for demo purposes
-        $statuses = ['WIP', 'AR', 'IST', 'CLSD'];
-        foreach ($poData as &$po) {
-            if (empty($po['status'])) {
-                $po['status'] = $statuses[array_rand($statuses)];
-            }
-        }
-
-        return $poData;
     }
 }

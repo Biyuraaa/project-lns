@@ -6,9 +6,12 @@ import { TopCustomerChart } from "./Chart/TopCustomerChart";
 import {
     BusinessUnit,
     CompanyGrowthData,
+    CompanyGrowthSellingCumulativeData,
     CompanyGrowthSellingData,
+    PurchaseOrderStatusData,
     QuotationAmountData,
     TopCustomerData,
+    TotalValueCardData,
 } from "@/types";
 import { CompanyGrowthSellingChart } from "./Chart/CompanyGrowthSellingChart";
 import { PurchaseOrderStatusChart } from "./Chart/PurchaseOrderStatusChart";
@@ -18,41 +21,30 @@ import QuotationAmountChart from "./Chart/QuotationAmountChart";
 
 interface DashboardChartsProps {
     companyGrowthData: CompanyGrowthData[];
-    cumulativeCompanyGrowthSellingData: any[];
+    companyGrowthSellingCumulativeData: CompanyGrowthSellingCumulativeData[];
     businessUnits: BusinessUnit[];
     topCustomersData: TopCustomerData[];
     companyGrowthSellingData: CompanyGrowthSellingData[];
     quotationAmountData: QuotationAmountData[];
-    purchaseOrderDetails: {
-        id: number;
-        amount: number;
-        status: string;
-        business_unit_id: number | string;
-        created_at: string;
-        month: number;
-        year: number;
-    }[];
-    totalPOCount: number;
-    totalPOValue: number;
+    totalValueCardData: TotalValueCardData;
+    purchaseOrderStatusData: PurchaseOrderStatusData[];
 }
 
 const DashboardCharts = ({
     companyGrowthData,
     companyGrowthSellingData,
-    cumulativeCompanyGrowthSellingData,
+    companyGrowthSellingCumulativeData,
     businessUnits,
     quotationAmountData,
     topCustomersData,
-    totalPOCount,
-    totalPOValue,
-    purchaseOrderDetails,
+    totalValueCardData,
+    purchaseOrderStatusData,
 }: DashboardChartsProps) => {
     const [growthChartBusinessUnit, setGrowthChartBusinessUnit] =
         useState<string>("all");
     const [customerChartBusinessUnit, setCustomerChartBusinessUnit] =
         useState<string>("all");
 
-    // Separate handler functions for each chart
     const handleGrowthChartBusinessUnitChange = (businessUnitId: string) => {
         setGrowthChartBusinessUnit(businessUnitId);
     };
@@ -79,13 +71,11 @@ const DashboardCharts = ({
                     onBusinessUnitChange={
                         handleTopCustomerChartBusinessUnitChange
                     }
-                    totalPOValue={totalPOValue}
-                    totalPOCount={totalPOCount}
                 />
             </div>
 
             <QuotationAmountChart
-                quotations={quotationAmountData}
+                data={quotationAmountData}
                 businessUnits={businessUnits}
             />
 
@@ -95,17 +85,17 @@ const DashboardCharts = ({
             />
 
             <CumulativeCompanyGrowthSellingChart
-                data={cumulativeCompanyGrowthSellingData}
+                data={companyGrowthSellingCumulativeData}
                 businessUnits={businessUnits}
                 className="h-full"
             />
 
             <TotalValueCard
-                purchaseOrders={purchaseOrderDetails}
+                data={totalValueCardData}
                 businessUnits={businessUnits}
             />
             <PurchaseOrderStatusChart
-                purchaseOrders={purchaseOrderDetails}
+                data={purchaseOrderStatusData}
                 businessUnits={businessUnits}
             />
         </div>

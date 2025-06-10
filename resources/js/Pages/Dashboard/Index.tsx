@@ -5,12 +5,14 @@ import { Head, usePage } from "@inertiajs/react";
 import type {
     BusinessUnit,
     CompanyGrowthData,
+    CompanyGrowthSellingCumulativeData,
     CompanyGrowthSellingData,
     DueDateQuotationData,
     PageProps,
-    PurchaseOrderDetail,
+    PurchaseOrderStatusData,
     QuotationAmountData,
     TopCustomerData,
+    TotalValueCardData,
 } from "@/types";
 import {
     FileText,
@@ -53,14 +55,13 @@ interface Statistics {
 
 interface ChartData {
     companyGrowthData: CompanyGrowthData[];
-    cumulativeCompanyGrowthSellingData: any[];
+    companyGrowthSellingCumulativeData: CompanyGrowthSellingCumulativeData[];
     topCustomersData: TopCustomerData[];
     businessUnits: BusinessUnit[];
     companyGrowthSellingData: CompanyGrowthSellingData[];
-    quotationAmountData : QuotationAmountData[];
-    poDetailData: PurchaseOrderDetail[];
-    totalPOCount: number;
-    totalPOValue: number;
+    quotationAmountData: QuotationAmountData[];
+    purchaseOrderStatusData: PurchaseOrderStatusData[];
+    totalValueCardData: TotalValueCardData;
     selectedBusinessUnit?: string;
 }
 
@@ -254,15 +255,14 @@ const DashboardIndex = () => {
                             companyGrowthSellingData={
                                 chartData.companyGrowthSellingData
                             }
-                            cumulativeCompanyGrowthSellingData={
-                                chartData.cumulativeCompanyGrowthSellingData
+                            companyGrowthSellingCumulativeData={
+                                chartData.companyGrowthSellingCumulativeData
                             }
                             quotationAmountData={chartData.quotationAmountData}
                             businessUnits={chartData.businessUnits}
                             topCustomersData={chartData.topCustomersData}
-                            totalPOCount={chartData.totalPOCount}
-                            totalPOValue={chartData.totalPOValue}
-                            purchaseOrderDetails={chartData.poDetailData}
+                            totalValueCardData={chartData.totalValueCardData}
+                            purchaseOrderStatusData={chartData.purchaseOrderStatusData}
                         />
                     </motion.div>
                 </div>

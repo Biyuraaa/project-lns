@@ -25,34 +25,29 @@ import {
 } from "recharts";
 
 interface QuotationAmountByBusinessUnitChartProps {
-    quotations: QuotationAmountData[];
+    data: QuotationAmountData[];
     businessUnits: BusinessUnit[];
 }
 
 export function QuotationAmountChart({
-    quotations,
+    data,
     businessUnits,
 }: QuotationAmountByBusinessUnitChartProps) {
-    // Format data for the chart - simple business unit comparison
     const chartData = useMemo(() => {
         if (
-            !quotations ||
-            quotations.length === 0 ||
+            !data ||
+            data.length === 0 ||
             !businessUnits ||
             businessUnits.length === 0
         ) {
             return [];
         }
 
-        // Group quotations by business unit
         const businessUnitTotals = businessUnits.map((unit) => {
-            // Get all quotations for this business unit
-            const unitQuotations = quotations.filter(
+            const unitQuotations = data.filter(
                 (quotation) =>
                     quotation.business_unit_id.toString() === unit.id.toString()
             );
-
-            // Calculate total amount
             const totalAmount = unitQuotations.reduce(
                 (sum, quotation) => sum + (quotation.amount || 0),
                 0
@@ -61,11 +56,8 @@ export function QuotationAmountChart({
             return {
                 name: unit.name,
                 value: totalAmount,
-                // Store the original business unit for reference
                 businessUnit: unit,
-                // Count of quotations
                 count: unitQuotations.length,
-                // Success rate based on status (you can adapt this if you have status in your data)
                 successRate:
                     unitQuotations.length > 0
                         ? (
@@ -78,45 +70,34 @@ export function QuotationAmountChart({
                         : "0.0",
             };
         });
-
-        // Calculate total amount across all business units
         const totalAmount = businessUnitTotals.reduce(
             (sum, unit) => sum + unit.value,
             0
         );
-
-        // Sort by amount (highest first)
         return businessUnitTotals.sort((a, b) => b.value - a.value);
-    }, [quotations, businessUnits]);
+    }, [data, businessUnits]);
 
-    // Generate gradient colors for the bars
     const gradients = [
-        ["#3182CE", "#63B3ED"], // blue gradient
-        ["#805AD5", "#B794F4"], // purple gradient
-        ["#38A169", "#68D391"], // green gradient
-        ["#DD6B20", "#F6AD55"], // orange gradient
-        ["#E53E3E", "#FC8181"], // red gradient
+        ["#3182CE", "#63B3ED"],
+        ["#805AD5", "#B794F4"],
+        ["#38A169", "#68D391"],
+        ["#DD6B20", "#F6AD55"],
+        ["#E53E3E", "#FC8181"],
     ];
 
-    // Format large numbers with Indonesian currency format
     const formatValueIDR = (value: number) => {
-        // Convert to billions with "Miliar" suffix for Indonesian format
         if (value >= 1000000000) {
             return `Rp ${(value / 1000000000).toFixed(1)} Miliar`;
         }
-        // Convert to millions with "Juta" suffix for Indonesian format
         if (value >= 1000000) {
             return `Rp ${(value / 1000000).toFixed(1)} Juta`;
         }
-        // Convert to thousands with "Ribu" suffix for Indonesian format
         if (value >= 1000) {
             return `Rp ${(value / 1000).toFixed(1)} Ribu`;
         }
-        // Format regular number with Indonesian comma/period format
         return `Rp ${value.toLocaleString("id-ID")}`;
     };
 
-    // Format for axis tick labels (shorter)
     const formatAxisTick = (value: number) => {
         if (value >= 1000000000) {
             return `${(value / 1000000000).toFixed(1)} M`;
@@ -130,7 +111,6 @@ export function QuotationAmountChart({
         return value.toString();
     };
 
-    // Custom tooltip component
     const CustomTooltip = ({
         active,
         payload,
@@ -163,7 +143,6 @@ export function QuotationAmountChart({
         return null;
     };
 
-    // Get total amount and quotation count
     const totalAmount = useMemo(
         () => chartData.reduce((sum, unit) => sum + unit.value, 0),
         [chartData]
@@ -218,7 +197,7 @@ export function QuotationAmountChart({
                                 margin={{
                                     top: 20,
                                     right: 40,
-                                    left: 140, // More space for unit names
+                                    left: 140,
                                     bottom: 20,
                                 }}
                             >
@@ -335,8 +314,6 @@ export function QuotationAmountChart({
                         </div>
                     )}
                 </div>
-
-                {/* Summary statistics cards */}
                 {chartData.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                         {chartData.map((data, index) => (
