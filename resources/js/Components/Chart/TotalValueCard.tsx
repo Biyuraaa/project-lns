@@ -251,19 +251,15 @@ export const TotalValueCard = ({
                     ).padStart(2, "0")}`;
                     periodFilter = [currentPeriod];
                     break;
-
                 case DateRange.LAST_3_MONTHS:
                     periodFilter = getLookbackPeriods(3);
                     break;
-
                 case DateRange.LAST_6_MONTHS:
                     periodFilter = getLookbackPeriods(6);
                     break;
-
                 case DateRange.LAST_YEAR:
                     periodFilter = getLookbackPeriods(12);
                     break;
-
                 case DateRange.CUSTOM:
                     if (customTab === "range" && startPeriod && endPeriod) {
                         const startDate = new Date(
@@ -292,32 +288,25 @@ export const TotalValueCard = ({
                     break;
             }
 
-            const filteredPeriods =
+            const filteredByDate =
                 data.periods?.filter((period) =>
                     periodFilter.includes(period.period)
                 ) || [];
 
-            if (filteredPeriods.length > 0) {
+            let finalFilteredData = filteredByDate;
+            if (selectedBusinessUnit !== "all") {
+                finalFilteredData = filteredByDate.filter(
+                    (p) => p.businessUnitId?.toString() === selectedBusinessUnit
+                );
+            }
+
+            if (finalFilteredData.length > 0) {
                 let totalCount = 0;
                 let totalValue = 0;
 
-                filteredPeriods.forEach((period) => {
-                    if (selectedBusinessUnit === "all") {
-                        totalCount += period[selectedValueType].count;
-                        totalValue += period[selectedValueType].value;
-                    } else {
-                        const unitData = data.periods?.find(
-                            (p) =>
-                                p.period === period.period &&
-                                p.businessUnitId?.toString() ===
-                                    selectedBusinessUnit
-                        );
-
-                        if (unitData) {
-                            totalCount += unitData[selectedValueType].count;
-                            totalValue += unitData[selectedValueType].value;
-                        }
-                    }
+                finalFilteredData.forEach((period) => {
+                    totalCount += period[selectedValueType].count;
+                    totalValue += period[selectedValueType].value;
                 });
 
                 const formattedValue = `Rp ${totalValue
@@ -345,6 +334,7 @@ export const TotalValueCard = ({
         customTab,
         allPeriods,
     ]);
+
     return (
         <Card className="overflow-hidden bg-gradient-to-b from-amber-50/80 to-amber-50">
             <CardHeader className="bg-gradient-to-r from-amber-100 to-amber-50/70 border-b border-amber-200 pb-4">

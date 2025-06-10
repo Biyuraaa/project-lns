@@ -709,14 +709,12 @@ class DashboardController extends Controller
 
     /**
      * Get total counts and values for quotations and purchase orders with Indonesian currency format
-     * 
-     * @return array
+     * * @return array
      */
     /**
      * Get total counts and values for quotations and purchase orders with Indonesian currency format
      * with support for business unit and date filtering
-     * 
-     * @return array
+     * * @return array
      */
     private function prepareTotalValueCardData()
     {
@@ -757,8 +755,7 @@ class DashboardController extends Controller
 
     /**
      * Get data for specific business unit
-     * 
-     * @param int|null $businessUnitId
+     * * @param int|null $businessUnitId
      * @return array
      */
     private function getTotalValueDataForBusinessUnit($businessUnitId = null)
@@ -801,57 +798,67 @@ class DashboardController extends Controller
 
     /**
      * Get data by monthly periods
-     * 
-     * @return array
+     * * @return array
      */
     private function getTotalValueDataByPeriod()
     {
-        $periods = [];
+        $periodsData = [];
+        $businessUnits = BusinessUnit::all();
 
+        $dates = [];
         for ($i = 0; $i < 24; $i++) {
-            $date = now()->subMonths($i);
+            $dates[] = now()->subMonths($i);
+        }
+
+        foreach ($dates as $date) {
             $year = $date->year;
             $month = $date->month;
             $period = "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT);
 
-            $poValue = PurchaseOrder::whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->sum('amount') / 1000000000;
+            // Data for each individual business unit for this period
+            foreach ($businessUnits as $businessUnit) {
+                $poQuery = PurchaseOrder::query()
+                    ->join('quotations', 'purchase_orders.quotation_id', '=', 'quotations.id')
+                    ->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                    ->where('inquiries.business_unit_id', $businessUnit->id)
+                    ->whereYear('purchase_orders.created_at', $year)
+                    ->whereMonth('purchase_orders.created_at', $month);
 
-            $poCount = PurchaseOrder::whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
+                $quotationQuery = Quotation::query()
+                    ->join('inquiries', 'quotations.inquiry_id', '=', 'inquiries.id')
+                    ->where('inquiries.business_unit_id', $businessUnit->id)
+                    ->whereNotNull('quotations.amount')
+                    ->whereYear('quotations.created_at', $year)
+                    ->whereMonth('quotations.created_at', $month);
 
-            $quotationValue = Quotation::whereNotNull('amount')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->sum('amount') / 1000000000;
+                $poValue = $poQuery->sum('purchase_orders.amount') / 1000000000;
+                $poCount = $poQuery->count();
+                $quotationValue = $quotationQuery->sum('quotations.amount') / 1000000000;
+                $quotationCount = $quotationQuery->count();
 
-            $quotationCount = Quotation::whereNotNull('amount')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
-
-            $periods[] = [
-                'period' => $period,
-                'year' => $year,
-                'month' => $month,
-                'po' => [
-                    'count' => $poCount,
-                    'value' => $poValue,
-                    'formatted_value' => $this->formatIndonesianCurrency($poValue)
-                ],
-                'quotation' => [
-                    'count' => $quotationCount,
-                    'value' => $quotationValue,
-                    'formatted_value' => $this->formatIndonesianCurrency($quotationValue)
-                ]
-            ];
+                if ($poCount > 0 || $quotationCount > 0) {
+                    $periodsData[] = [
+                        'period' => $period,
+                        'year' => $year,
+                        'month' => $month,
+                        'businessUnitId' => $businessUnit->id,
+                        'po' => [
+                            'count' => $poCount,
+                            'value' => $poValue,
+                            'formatted_value' => $this->formatIndonesianCurrency($poValue)
+                        ],
+                        'quotation' => [
+                            'count' => $quotationCount,
+                            'value' => $quotationValue,
+                            'formatted_value' => $this->formatIndonesianCurrency($quotationValue)
+                        ]
+                    ];
+                }
+            }
         }
 
-        return $periods;
+        return $periodsData;
     }
-
     /**
      * Format currency value to Indonesian format
      * 
