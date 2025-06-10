@@ -145,11 +145,6 @@ export function TopCustomerChart({
     // Check if we have data to display
     const hasData = chartData && chartData.length > 0;
 
-    // Debug logging
-    console.log("Selected BU:", selectedBusinessUnit);
-    console.log("Filtered Data Count:", filteredData?.length);
-    console.log("Chart Data Count:", chartData?.length);
-
     return (
         <Card className={cn("shadow-md border-0", className)}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white">

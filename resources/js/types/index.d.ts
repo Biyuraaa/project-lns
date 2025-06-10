@@ -126,6 +126,27 @@ interface TopCustomerData {
     poCount: number;
     business_unit_id: string;
 }
+interface DueDateQuotationData {
+    id: number;
+    code: string;
+    due_date: string;
+    days_remaining: number;
+    status: string;
+    created_at: string;
+    inquiry: {
+        id: number;
+        code: string;
+        description: string;
+        business_unit: {
+            id: number | null;
+            name: string;
+        };
+    };
+    customer: {
+        id: number | null;
+        name: string;
+    };
+}
 interface CompanyGrowthSellingData {
     id: number;
     month: number;

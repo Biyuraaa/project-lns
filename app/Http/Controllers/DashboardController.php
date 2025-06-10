@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -23,7 +24,120 @@ class DashboardController extends Controller
         $lastMonthEnd = now()->subMonth()->endOfMonth();
         $sixMonthsAgo = now()->subMonths(6)->startOfDay();
 
-        // Inquiries stats
+        // Get all business units for frontend filtering
+        $businessUnits = BusinessUnit::select('id', 'name')->get()
+            ->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'name' => $unit->name,
+                ];
+            });
+
+        // Get statistics
+        $inquiriesStats = $this->getInquiriesStatistics($currentMonthStart, $lastMonthStart, $lastMonthEnd);
+        $activeQuotationsStats = $this->getActiveQuotationsStatistics($lastMonthStart, $lastMonthEnd);
+        $purchaseOrdersStats = $this->getPurchaseOrdersStatistics($currentMonthStart, $lastMonthStart, $lastMonthEnd);
+        $dueDateQuotationsStats = $this->getDueDateQuotationsStatistics($lastMonthStart);
+        $dueDateQuotationsTable = $this->getDueDateQuotationsTable();
+
+        // Prepare data for client-side filtering
+        $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
+        $topCustomersData = $this->prepareTopCustomersData($businessUnits);
+        $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
+        $cumulativeCompanyGrowthSellingData = $this->prepareCompanyGrowthSellingCumulative();
+        $poDetailData = $this->preparePODetailData($businessUnits);
+
+        $totalPOCount = PurchaseOrder::count();
+        $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
+
+        return Inertia::render('Dashboard/Index', [
+            'statistics' => [
+                'inquiries' => $inquiriesStats,
+                'activeQuotations' => $activeQuotationsStats,
+                'purchaseOrders' => $purchaseOrdersStats,
+                'dueDateQuotations' => $dueDateQuotationsStats,
+            ],
+            'tableData' => [
+                'dueDateQuotationsData' => $dueDateQuotationsTable,
+            ],
+            'chartData' => [
+                'companyGrowthData' => $companyGrowthData,
+                'topCustomersData' => $topCustomersData,
+                'companyGrowthSellingData' => $companyGrowthSellingData,
+                'cumulativeCompanyGrowthSellingData' => $cumulativeCompanyGrowthSellingData,
+                'poDetailData' => $poDetailData,
+                'businessUnits' => $businessUnits,
+                'totalPOCount' => $totalPOCount,
+                'totalPOValue' => $totalPOValue,
+            ]
+        ]);
+    }
+
+    /**
+     * Get quotations approaching due date for dashboard table display
+     * 
+     * @return array
+     */
+    private function getDueDateQuotationsTable()
+    {
+        try {
+            // Get quotations that are due within the next 7 days
+            // Exclude closed and lost quotations
+            $dueDateQuotations = Quotation::with(['inquiry.customer', 'inquiry.businessUnit'])
+                ->whereDate('quotations.due_date', '>=', now())
+                ->whereDate('quotations.due_date', '<=', now()->addDays(7))
+                ->whereNotIn('quotations.status', ['clsd', 'lost'])
+                ->orderBy('quotations.due_date', 'asc')
+                ->get()
+                ->map(function ($quotation) {
+                    // Calculate days remaining until due date
+                    $dueDate = Carbon::parse($quotation->due_date);
+                    $daysRemaining = now()->startOfDay()->diffInDays($dueDate->startOfDay());
+
+                    return [
+                        'id' => $quotation->id,
+                        'code' => $quotation->code,
+                        'due_date' => $quotation->due_date,
+                        'days_remaining' => $daysRemaining,
+                        'status' => $quotation->status,
+                        'created_at' => $quotation->created_at,
+                        'inquiry' => [
+                            'id' => $quotation->inquiry->id,
+                            'code' => $quotation->inquiry->code,
+                            'description' => Str::limit($quotation->inquiry->description, 50),
+                            'business_unit' => [
+                                'id' => $quotation->inquiry->businessUnit ? $quotation->inquiry->businessUnit->id : null,
+                                'name' => $quotation->inquiry->businessUnit ? $quotation->inquiry->businessUnit->name : 'Unknown'
+                            ],
+                        ],
+                        'customer' => [
+                            'id' => $quotation->inquiry->customer ? $quotation->inquiry->customer->id : null,
+                            'name' => $quotation->inquiry->customer ? $quotation->inquiry->customer->name : 'Unknown'
+                        ]
+                    ];
+                })
+                ->toArray();
+                
+            return $dueDateQuotations;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error in getDueDateQuotationsTable: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            // Return empty array to prevent frontend errors
+            return [];
+        }
+    }
+    /**
+     * Get statistics for inquiries
+     * 
+     * @param Carbon $currentMonthStart
+     * @param Carbon $lastMonthStart
+     * @param Carbon $lastMonthEnd
+     * @return array
+     */
+    private function getInquiriesStatistics($currentMonthStart, $lastMonthStart, $lastMonthEnd)
+    {
         $inquiriesQuery = Inquiry::query();
         $inquiriesThisMonth = $inquiriesQuery->clone()->whereBetween('created_at', [$currentMonthStart, now()])->count();
         $inquiriesLastMonth = $inquiriesQuery->clone()->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
@@ -31,12 +145,28 @@ class DashboardController extends Controller
         $inquiriesGrowth = $this->calculateGrowth($inquiriesThisMonth, $inquiriesLastMonth);
         $inquiriesInsight = $this->getInsightText('inquiries', $inquiriesGrowth);
 
-        // Active Quotations stats
+        return [
+            'count' => $inquiriesThisMonth,
+            'growth' => $inquiriesGrowth,
+            'insight' => $inquiriesInsight,
+        ];
+    }
+
+    /**
+     * Get statistics for active quotations
+     * 
+     * @param Carbon $currentMonthStart
+     * @param Carbon $lastMonthStart
+     * @param Carbon $lastMonthEnd
+     * @return array
+     */
+    private function getActiveQuotationsStatistics($lastMonthStart, $lastMonthEnd)
+    {
         $quotationsQuery = Quotation::query();
 
         $activeQuotations = $quotationsQuery->clone()
             ->whereDate('quotations.due_date', '>=', now())
-            ->whereNotIn('quotations.status', ['lost', 'clsd'])
+            ->whereNotIn('quotations.status', ['lost', 'n/a'])
             ->where('quotations.status', 'wip')
             ->count();
 
@@ -44,13 +174,29 @@ class DashboardController extends Controller
             ->whereDate('quotations.created_at', '>=', $lastMonthStart)
             ->whereDate('quotations.created_at', '<=', $lastMonthEnd)
             ->whereDate('quotations.due_date', '>=', $lastMonthEnd)
-            ->whereNotIn('quotations.status', ['lost', 'clsd'])
+            ->whereNotIn('quotations.status', ['lost', 'n/a'])
             ->count();
 
         $quotationsGrowth = $this->calculateGrowth($activeQuotations, $activeQuotationsLastMonth);
         $quotationsInsight = $this->getInsightText('quotations', $quotationsGrowth);
 
-        // PO stats
+        return [
+            'count' => $activeQuotations,
+            'growth' => $quotationsGrowth,
+            'insight' => $quotationsInsight,
+        ];
+    }
+
+    /**
+     * Get statistics for purchase orders
+     * 
+     * @param Carbon $currentMonthStart
+     * @param Carbon $lastMonthStart
+     * @param Carbon $lastMonthEnd
+     * @return array
+     */
+    private function getPurchaseOrdersStatistics($currentMonthStart, $lastMonthStart, $lastMonthEnd)
+    {
         $poQuery = PurchaseOrder::query();
 
         $posThisMonth = $poQuery->clone()
@@ -64,78 +210,47 @@ class DashboardController extends Controller
         $posGrowth = $this->calculateGrowth($posThisMonth, $posLastMonth);
         $posInsight = $this->getInsightText('pos', $posGrowth);
 
-        // Expired Quotations
-        $expiredQuotationsQuery = Quotation::query();
-
-        $expiredQuotationsThisMonth = $expiredQuotationsQuery->clone()
-            ->whereDate('quotations.due_date', '<', now())
-            ->whereDate('quotations.due_date', '>=', $currentMonthStart)
-            ->whereNotIn('quotations.status', ['clsd'])
-            ->count();
-
-        $expiredQuotationsLastMonth = $expiredQuotationsQuery->clone()
-            ->whereDate('quotations.due_date', '<', $lastMonthStart)
-            ->whereDate('quotations.due_date', '>=', $lastMonthStart->copy()->subMonth())
-            ->whereNotIn('quotations.status', ['clsd'])
-            ->count();
-
-        $expiredGrowth = $this->calculateGrowth($expiredQuotationsThisMonth, $expiredQuotationsLastMonth);
-        $expiredInsight = $this->getInsightText('expired', $expiredGrowth);
-
-        // Get all business units for frontend filtering
-        $businessUnits = BusinessUnit::select('id', 'name')->get()
-            ->map(function ($unit) {
-                return [
-                    'id' => $unit->id,
-                    'name' => $unit->name,
-                ];
-            });
-
-        // Prepare data for client-side filtering
-        $companyGrowthData = $this->prepareCompanyGrowthData($sixMonthsAgo, $businessUnits);
-        $topCustomersData = $this->prepareTopCustomersData($businessUnits);
-        $companyGrowthSellingData = $this->prepareCompanyGrowthSellingData();
-        $cumulativeCompanyGrowthSellingData = $this->prepareCompanyGrowthSellingCumulative(); // New method
-        $poDetailData = $this->preparePODetailData($businessUnits);
-
-        $totalPOCount = PurchaseOrder::count();
-        $totalPOValue = PurchaseOrder::sum('amount') / 1000000000; // Convert to billions
-
-        return Inertia::render('Dashboard/Index', [
-            'statistics' => [
-                'inquiries' => [
-                    'count' => $inquiriesThisMonth,
-                    'growth' => $inquiriesGrowth,
-                    'insight' => $inquiriesInsight,
-                ],
-                'activeQuotations' => [
-                    'count' => $activeQuotations,
-                    'growth' => $quotationsGrowth,
-                    'insight' => $quotationsInsight,
-                ],
-                'purchaseOrders' => [
-                    'count' => $posThisMonth,
-                    'growth' => $posGrowth,
-                    'insight' => $posInsight,
-                ],
-                'expiredQuotations' => [
-                    'count' => $expiredQuotationsThisMonth,
-                    'growth' => $expiredGrowth,
-                    'insight' => $expiredInsight,
-                ],
-            ],
-            'chartData' => [
-                'companyGrowthData' => $companyGrowthData,
-                'topCustomersData' => $topCustomersData,
-                'companyGrowthSellingData' => $companyGrowthSellingData,
-                'cumulativeCompanyGrowthSellingData' => $cumulativeCompanyGrowthSellingData, // New data
-                'poDetailData' => $poDetailData,
-                'businessUnits' => $businessUnits,
-                'totalPOCount' => $totalPOCount,
-                'totalPOValue' => $totalPOValue,
-            ]
-        ]);
+        return [
+            'count' => $posThisMonth,
+            'growth' => $posGrowth,
+            'insight' => $posInsight,
+        ];
     }
+
+    /**
+     * Get statistics for quotations approaching their due date (next 7 days)
+     * 
+     * @param Carbon $currentMonthStart
+     * @param Carbon $lastMonthStart
+     * @param Carbon $lastMonthEnd
+     * @return array
+     */
+    private function getDueDateQuotationsStatistics($lastMonthStart)
+    {
+        $dueDateQuotationsQuery = Quotation::query();
+
+        $dueDateQuotationsThisMonth = $dueDateQuotationsQuery->clone()
+            ->whereDate('quotations.due_date', '>=', now())
+            ->whereDate('quotations.due_date', '<=', now()->addDays(7))
+            ->whereNotIn('quotations.status', ['clsd', 'wip'])
+            ->count();
+
+        $dueDateQuotationsLastMonth = $dueDateQuotationsQuery->clone()
+            ->whereDate('quotations.due_date', '>=', $lastMonthStart)
+            ->whereDate('quotations.due_date', '<=', $lastMonthStart->copy()->addDays(7))
+            ->whereNotIn('quotations.status', ['clsd', 'wip'])
+            ->count();
+
+        $dueDateGrowth = $this->calculateGrowth($dueDateQuotationsThisMonth, $dueDateQuotationsLastMonth);
+        $dueDateInsight = $this->getInsightText('duedate', $dueDateGrowth);
+
+        return [
+            'count' => $dueDateQuotationsThisMonth,
+            'growth' => $dueDateGrowth,
+            'insight' => $dueDateInsight,
+        ];
+    }
+
     // Add this function to ensure we have data for all months in order
     private function prepareCompanyGrowthSellingCumulative()
     {
@@ -455,11 +570,11 @@ class DashboardController extends Controller
                     return "$trendText $absGrowth% → perlu evaluasi strategi penjualan.";
                 }
 
-            case 'expired':
+            case 'duedate':
                 if ($growth > 0) {
-                    return "$trendText $absGrowth% → perlu diperhatikan.";
+                    return "$trendText $absGrowth% → perlu tindakan segera untuk follow-up.";
                 } else {
-                    return "$trendText $absGrowth% → performa tim sales membaik.";
+                    return "$trendText $absGrowth% → jumlah quotation mendekati deadline berkurang.";
                 }
 
             default:

@@ -6,6 +6,7 @@ import type {
     BusinessUnit,
     CompanyGrowthData,
     CompanyGrowthSellingData,
+    DueDateQuotationData,
     PageProps,
     PurchaseOrderDetail,
     TopCustomerData,
@@ -24,6 +25,7 @@ import {
 import StatsCard from "@/Components/StatsCard";
 import { motion } from "framer-motion";
 import DashboardCharts from "@/Components/DashboardChart";
+import DueDateQuotationsTable from "@/Components/DueDateQuotationsTable";
 
 interface Statistics {
     inquiries: {
@@ -41,7 +43,7 @@ interface Statistics {
         growth: number;
         insight: string;
     };
-    expiredQuotations: {
+    dueDateQuotations: {
         count: number;
         growth: number;
         insight: string;
@@ -60,13 +62,19 @@ interface ChartData {
     selectedBusinessUnit?: string;
 }
 
+interface TableData {
+    dueDateQuotationsData: DueDateQuotationData[];
+}
+
 interface DashboardProps extends PageProps {
     statistics: Statistics;
     chartData: ChartData;
+    tableData: TableData;
 }
 
 const DashboardIndex = () => {
-    const { statistics, chartData, auth } = usePage<DashboardProps>().props;
+    const { statistics, chartData, tableData, auth } =
+        usePage<DashboardProps>().props;
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString("id-ID", {
         weekday: "long",
@@ -211,20 +219,27 @@ const DashboardIndex = () => {
                             />
 
                             <StatsCard
-                                title="Expired Quotations"
-                                value={statistics.expiredQuotations.count}
+                                title="Due Date Quotations"
+                                value={statistics.dueDateQuotations.count}
                                 icon={<Clock className="w-6 h-6" />}
                                 iconBg="bg-red-100"
                                 iconColor="text-red-600"
-                                trend={statistics.expiredQuotations.growth}
+                                trend={statistics.dueDateQuotations.growth}
                                 description={
-                                    statistics.expiredQuotations.insight
+                                    statistics.dueDateQuotations.insight
                                 }
                                 isPositiveBetter={false}
                             />
                         </motion.div>
                     </div>
-
+                    <div className="mt-8">
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <DueDateQuotationsTable
+                                quotations={tableData.dueDateQuotationsData}
+                                businessUnits={chartData.businessUnits}
+                            />
+                        </div>
+                    </div>
                     {/* Charts Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
