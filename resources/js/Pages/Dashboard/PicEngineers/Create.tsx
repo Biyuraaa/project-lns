@@ -55,7 +55,7 @@ const PicEngineersCreate = () => {
             return;
         }
 
-        post(route("pic-engineers.store"));
+        post(route("picEngineers.store"));
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

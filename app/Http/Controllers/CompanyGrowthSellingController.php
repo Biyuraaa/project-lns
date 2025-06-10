@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCompanyGrowthSellingRequest;
 use App\Models\CompanyGrowthSelling;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateCompanyGrowthSellingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\BusinessUnit;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CompanyGrowthSellingController extends Controller
@@ -17,32 +19,31 @@ class CompanyGrowthSellingController extends Controller
      */
     public function index()
     {
-        // Get all unique month and year combinations
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-company-growth-selling')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view company growth selling records.');
+        }
         $uniquePeriods = CompanyGrowthSelling::select('month', 'year')
             ->distinct()
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->get();
 
-        // Create summary data structure
         $summaryData = [];
 
         foreach ($uniquePeriods as $period) {
-            // Get all records for this month/year
             $records = CompanyGrowthSelling::where('month', $period->month)
                 ->where('year', $period->year)
                 ->with('businessUnit:id,name')
                 ->get();
-
-            // Calculate totals
             $totalTarget = $records->sum('target');
             $totalActual = $records->sum('actual');
             $totalDifference = $totalActual - $totalTarget;
             $totalPercentage = $totalTarget > 0 ? round(($totalActual / $totalTarget) * 100, 2) : 0;
-
-            // Create summary record
             $summary = [
-                'id' => "{$period->year}-{$period->month}", // Create a unique ID for the summary
+                'id' => "{$period->year}-{$period->month}",
                 'month' => $period->month,
                 'year' => $period->year,
                 'target' => $totalTarget,
@@ -64,11 +65,9 @@ class CompanyGrowthSellingController extends Controller
                     ];
                 })
             ];
-
             $summaryData[] = $summary;
         }
 
-        // Get all business units for filtering
         $businessUnits = BusinessUnit::select('id', 'name')->get();
 
         return Inertia::render('Dashboard/CompanyGrowthSelling/Index', [
@@ -82,15 +81,17 @@ class CompanyGrowthSellingController extends Controller
      */
     public function create()
     {
-        // Get all existing month-year combinations
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-company-growth-selling')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create company growth selling records.');
+        }
+
         $existingRecords = CompanyGrowthSelling::select('month', 'year')->get();
-
-        // Create an array of available months for each year (2023-2025)
         $availableMonths = $this->getAvailableMonths($existingRecords);
-
         $businessUnits = BusinessUnit::select('id', 'name')->get();
 
-        // Render the form for creating a new Dashboard/CompanyGrowthSelling record
         return Inertia::render('Dashboard/CompanyGrowthSelling/Create', [
             'availableMonths' => $availableMonths,
             'businessUnits' => $businessUnits,
@@ -100,36 +101,19 @@ class CompanyGrowthSellingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreCompanyGrowthSellingRequest $request)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2000|max:2050',
-            'uniformTarget' => 'required_if:useUniformTargets,true|nullable|numeric|min:0',
-            'businessUnitTargets' => 'required_if:useUniformTargets,false|array',
-            'businessUnitTargets.*' => 'required_if:useUniformTargets,false|numeric|min:0',
-            'useUniformTargets' => 'required|boolean',
-        ]);
-
-        // Get all business units
+        $validatedData = $request->validated();
         $businessUnits = BusinessUnit::all();
 
-        // Start a transaction to ensure all operations complete successfully
         DB::beginTransaction();
 
         try {
-            // Process based on whether uniform targets are used
             if ($validatedData['useUniformTargets']) {
-                // When using uniform targets, ignore businessUnitTargets and apply the uniform value
-                $targetValue = $validatedData['uniformTarget'];
+                // Convert to the appropriate scale (assuming we're storing in millions)
+                $targetValue = (float)$validatedData['uniformTarget'];
 
-                // Create records for all business units with the same target
                 foreach ($businessUnits as $businessUnit) {
-                    // Check if a record already exists for this month/year/business unit
                     $existingRecord = CompanyGrowthSelling::where('month', $validatedData['month'])
                         ->where('year', $validatedData['year'])
                         ->where('business_unit_id', $businessUnit->id)
@@ -140,19 +124,19 @@ class CompanyGrowthSellingController extends Controller
                             'month' => $validatedData['month'],
                             'year' => $validatedData['year'],
                             'target' => $targetValue,
-                            'actual' => 0, // Default value, will be updated later
-                            'difference' => 0 - $targetValue, // Initial difference (0 - target)
-                            'percentage' => 0, // Initial percentage
+                            'actual' => 0,
+                            'difference' => 0 - $targetValue,
+                            'percentage' => 0,
                             'business_unit_id' => $businessUnit->id,
                         ]);
                     }
                 }
             } else {
-                // When using custom targets, ignore uniformTarget and use individual values
                 foreach ($validatedData['businessUnitTargets'] as $businessUnitId => $targetValue) {
-                    // Check if the business unit exists
                     if ($businessUnits->contains('id', $businessUnitId)) {
-                        // Check if a record already exists for this month/year/business unit
+                        // Convert to the appropriate scale
+                        $targetValue = (float)$targetValue;
+
                         $existingRecord = CompanyGrowthSelling::where('month', $validatedData['month'])
                             ->where('year', $validatedData['year'])
                             ->where('business_unit_id', $businessUnitId)
@@ -163,18 +147,16 @@ class CompanyGrowthSellingController extends Controller
                                 'month' => $validatedData['month'],
                                 'year' => $validatedData['year'],
                                 'target' => $targetValue,
-                                'actual' => 0, // Default value, will be updated later
-                                'difference' => 0 - $targetValue, // Initial difference (0 - target)
-                                'percentage' => 0, // Initial percentage
+                                'actual' => 0,
+                                'difference' => 0 - $targetValue,
+                                'percentage' => 0,
                                 'business_unit_id' => $businessUnitId,
                             ]);
                         }
                     }
                 }
             }
-
             DB::commit();
-
             return redirect()->route('targetSales.index')
                 ->with('success', 'Sales targets created successfully.');
         } catch (\Exception $e) {
@@ -196,12 +178,15 @@ class CompanyGrowthSellingController extends Controller
      */
     public function edit(CompanyGrowthSelling $targetSale)
     {
-        // Get all existing month-year combinations except the current one
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-company-growth-selling')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit company growth selling records.');
+        }
         $existingRecords = CompanyGrowthSelling::where('id', '!=', $targetSale->id)
             ->select('month', 'year')
             ->get();
-
-        // Create an array of available months for each year (2023-2025)
         $availableMonths = $this->getAvailableMonths($existingRecords, $targetSale->month, $targetSale->year);
 
         return Inertia::render('Dashboard/CompanyGrowthSelling/Edit', [
@@ -217,8 +202,6 @@ class CompanyGrowthSellingController extends Controller
     {
         try {
             $validatedData = $request->validated();
-
-            // Check if trying to update to a month-year that already exists (and is not the current record)
             if ($targetSale->month != $validatedData['month'] || $targetSale->year != $validatedData['year']) {
                 $exists = CompanyGrowthSelling::where('month', $validatedData['month'])
                     ->where('year', $validatedData['year'])
@@ -231,8 +214,6 @@ class CompanyGrowthSellingController extends Controller
                     ])->withInput();
                 }
             }
-
-            // Calculate difference and percentage
             if (isset($validatedData['target']) && isset($validatedData['actual'])) {
                 $validatedData['difference'] = $validatedData['actual'] - $validatedData['target'];
                 $validatedData['percentage'] = $validatedData['target'] > 0
@@ -253,6 +234,12 @@ class CompanyGrowthSellingController extends Controller
      */
     public function destroy(CompanyGrowthSelling $companyGrowthSelling)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-company-growth-selling')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete company growth selling records.');
+        }
         try {
             $companyGrowthSelling->delete();
             return redirect()->route('targetSales.index')->with('success', 'Company Growth Selling record deleted successfully.');
@@ -266,15 +253,12 @@ class CompanyGrowthSellingController extends Controller
      */
     private function getAvailableMonths($existingRecords, $currentMonth = null, $currentYear = null)
     {
-        // Initialize available months for years 2023-2025
         $years = [2023, 2024, 2025, 2026, 2027];
         $availableMonths = [];
 
         foreach ($years as $year) {
             $availableMonths[$year] = range(1, 12);
         }
-
-        // Remove months that already have records
         foreach ($existingRecords as $record) {
             $month = $record->month;
             $year = $record->year;
@@ -286,16 +270,12 @@ class CompanyGrowthSellingController extends Controller
                 }
             }
         }
-
-        // Add back the current month for the edit case
         if ($currentMonth && $currentYear) {
             if (!in_array($currentMonth, $availableMonths[$currentYear])) {
                 $availableMonths[$currentYear][] = $currentMonth;
                 sort($availableMonths[$currentYear]);
             }
         }
-
-        // Convert to associative array with month names
         $monthNames = [
             1 => 'January',
             2 => 'February',

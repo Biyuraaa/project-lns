@@ -23,15 +23,5 @@ class UserSeeder extends Seeder
             ->count(10)
             ->picEngineer()
             ->create();
-
-        User::factory(
-            [
-                'name' => 'Admin',
-                'email' => 'admin@admin.com',
-                'password' => bcrypt('admin'),
-            ]
-        )
-            ->admin()
-            ->create();
     }
 }

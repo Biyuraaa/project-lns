@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -16,6 +17,12 @@ class CustomerController extends Controller
     public function index()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-customer')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view customers.');
+        }
         return Inertia::render('Dashboard/Customers/Index', [
             'customers' => Customer::all()
         ]);
@@ -27,6 +34,12 @@ class CustomerController extends Controller
     public function create()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-customer')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create customers.');
+        }
         return Inertia::render('Dashboard/Customers/Create');
     }
 
@@ -58,6 +71,12 @@ class CustomerController extends Controller
     public function edit(Customer $customer)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-customer')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit customers.');
+        }
         return Inertia::render('Dashboard/Customers/Edit', [
             'customer' => $customer
         ]);
@@ -83,6 +102,12 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-customer')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete customers.');
+        }
         try {
             $customer->delete();
             return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');

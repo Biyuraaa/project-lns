@@ -24,7 +24,6 @@ Route::get('/', function () {
 
 Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-
     Route::resource('customers', CustomerController::class);
     Route::resource('sales', SalesController::class)->parameters([
         'sales' => 'sales'
@@ -32,21 +31,18 @@ Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () 
     Route::resource('picEngineers', PicEngineerController::class)->parameters([
         'picEngineer' => 'picEngineer'
     ]);
-
     Route::prefix('inquiries/{inquiry}/quotations')->controller(InquiryController::class)->group(function () {
         Route::get('create', 'createQuotation')->name('inquiries.quotations.create');
         Route::post('/',  'storeQuotation')->name('inquiries.quotations.store');
         Route::get('edit',  'editQuotation')->name('inquiries.quotations.edit');
         Route::patch('/',  'updateQuotation')->name('inquiries.quotations.update');
     });
-
     Route::prefix('quotations/{quotation}/negotiations')->controller(QuotationController::class)->group(function () {
         Route::get('create', 'createNegotiation')->name('quotations.negotiations.create');
         Route::post('/',  'storeNegotiation')->name('quotations.negotiations.store');
         Route::get('edit',  'editNegotiation')->name('quotations.negotiations.edit');
         Route::patch('/',  'updateNegotiation')->name('quotations.negotiations.update');
     });
-
     Route::resource('inquiries', InquiryController::class);
     Route::resource('quotations', QuotationController::class);
     Route::resource('purchaseOrders', PurchaseOrderController::class);

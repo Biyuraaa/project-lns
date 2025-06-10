@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class StoreInquiryRequest extends FormRequest
 {
@@ -11,7 +12,9 @@ class StoreInquiryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $user->hasPermissionTo('create-inquiry');
     }
 
     /**

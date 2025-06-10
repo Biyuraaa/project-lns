@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateCompanyGrowthSellingRequest extends FormRequest
 {
@@ -11,7 +12,9 @@ class UpdateCompanyGrowthSellingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $user->hasPermissionTo('update-company-growth-selling');
     }
 
     /**

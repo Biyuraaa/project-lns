@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\StoreSalesRequest;
 use App\Http\Requests\UpdateSalesRequest;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -16,7 +17,12 @@ class SalesController extends Controller
      */
     public function index()
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-sales')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view sales users.');
+        }
         $sales = User::role('sales')->get();
 
         return Inertia::render('Dashboard/Sales/Index', [
@@ -30,13 +36,19 @@ class SalesController extends Controller
     public function create()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-sales')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create sales users.');
+        }
         return Inertia::render('Dashboard/Sales/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreUserRequest $request)
+    public function store(StoreSalesRequest $request)
     {
         //
         try {
@@ -79,6 +91,12 @@ class SalesController extends Controller
     public function edit(User $sales)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-sales')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit sales users.');
+        }
         return Inertia::render('Dashboard/Sales/Edit', [
             'sales' => $sales
         ]);
@@ -152,6 +170,12 @@ class SalesController extends Controller
     {
         //
         try {
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            if (!$user->hasPermissionTo('delete-sales')) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'You do not have permission to delete sales users.');
+            }
             if ($sales->image) {
                 $oldImagePath = public_path('storage/images/sales/' . $sales->image);
                 if (file_exists($oldImagePath)) {

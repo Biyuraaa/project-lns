@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\BusinessUnit;
 use App\Models\Quotation;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class InquiryController extends Controller
@@ -23,6 +24,12 @@ class InquiryController extends Controller
     public function index()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-inquiry')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view inquiries.');
+        }
         $inquiries = Inquiry::select('inquiries.*')
             ->with([
                 'customer:id,name',
@@ -42,6 +49,12 @@ class InquiryController extends Controller
     public function create()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-inquiry')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create inquiries.');
+        }
         return Inertia::render('Dashboard/Inquiries/Create', [
             'customers' => Customer::all(),
             'picEngineers' => User::role('pic-engineer')->get(),
@@ -57,14 +70,12 @@ class InquiryController extends Controller
     {
         try {
             $validatedData = $request->validated();
-
-            // Handle file upload
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
-                $filename = time() . '.' . $extension; // Changed since code not available yet
+                $filename = time() . '.' . $extension;
                 $file->storeAs('files/inquiries', $filename, 'public');
-                $validatedData['file'] = $filename; // Store as file in database
+                $validatedData['file'] = $filename;
             }
 
             if ($request->boolean('new_customer')) {
@@ -76,8 +87,6 @@ class InquiryController extends Controller
                 ]);
                 $validatedData['customer_id'] = $customer->id;
             }
-
-            // Create the inquiry without specifying the code
             $inquiry = Inquiry::create([
                 'customer_id' => $validatedData['customer_id'],
                 'description' => $validatedData['description'],
@@ -92,8 +101,6 @@ class InquiryController extends Controller
                 'sales_id' => $validatedData['sales_id'] ?? null,
                 'file' => $validatedData['file'] ?? null
             ]);
-
-            // Get current month in Roman numerals
             $month = date('n');
             $romanMonths = [
                 1 => 'I',
@@ -110,14 +117,8 @@ class InquiryController extends Controller
                 12 => 'XII'
             ];
             $romanMonth = $romanMonths[$month];
-
-            // Get current year
             $year = date('Y');
-
-            // Generate inquiry code using the format: {id}/I/LNS/{MONTH_IN_ROMAN}/{YEAR}
             $code = $inquiry->id . '/I/LNS/' . $romanMonth . '/' . $year;
-
-            // Update the inquiry with the generated code
             $inquiry->update(['code' => $code]);
 
             return redirect()->route('inquiries.index')->with('success', 'Inquiry created successfully.');
@@ -132,6 +133,12 @@ class InquiryController extends Controller
     public function show(Inquiry $inquiry)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-inquiry')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view this inquiry.');
+        }
         $inquiry->load([
             'customer',
             'picEngineer',
@@ -150,6 +157,13 @@ class InquiryController extends Controller
      */
     public function edit(Inquiry $inquiry)
     {
+        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-inquiry')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit this inquiry.');
+        }
         $inquiry->load(['customer', 'picEngineer', 'sales', 'businessUnit']);
 
         return Inertia::render('Dashboard/Inquiries/Edit', [
@@ -168,26 +182,19 @@ class InquiryController extends Controller
     {
         try {
             $validatedData = $request->validated();
-
-            // Handle file upload if a new file is provided
             if ($request->hasFile('file')) {
-                // Delete old file if exists
                 if ($inquiry->file) {
                     $oldFilePath = storage_path('app/public/files/inquiries/' . $inquiry->file);
                     if (file_exists($oldFilePath)) {
                         unlink($oldFilePath);
                     }
                 }
-
-                // Store new file
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
                 $filename = Str::slug($validatedData['code']) . '-' . time() . '.' . $extension;
                 $file->storeAs('files/inquiries', $filename, 'public');
                 $validatedData['file'] = $filename;
             }
-
-            // Update the inquiry with validated data
             $inquiry->update([
                 'code' => $validatedData['code'],
                 'customer_id' => $validatedData['customer_id'],
@@ -219,8 +226,14 @@ class InquiryController extends Controller
      */
     public function destroy(Inquiry $inquiry)
     {
+        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-inquiry')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete this inquiry.');
+        }
         try {
-            // Delete associated file if exists
             if ($inquiry->file) {
                 $filePath = storage_path('app/public/files/inquiries/' . $inquiry->file);
                 if (file_exists($filePath)) {
@@ -241,6 +254,12 @@ class InquiryController extends Controller
 
     public function createQuotation(Inquiry $inquiry)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create quotations.');
+        }
         $inquiry->load([
             'customer:id,name',
             'picEngineer:id,name',
@@ -254,30 +273,28 @@ class InquiryController extends Controller
 
     public function storeQuotation(Request $request, Inquiry $inquiry)
     {
-        // Validate the request
-        // Validate the request
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create quotations.');
+        }
         $validatedData = $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
             'due_date' => 'required|date',
         ]);
 
         try {
-            // Generate file name and process file upload
             $filename = null;
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
-                // Use inquiry id instead of non-existent 'code'
                 $filename = 'quotation-inquiry-' . $inquiry->id . '-' . time() . '.' . $extension;
                 $file->storeAs('files/quotations', $filename, 'public');
             }
-
-            // Get date information for code generation
             $dueDate = new \DateTime($validatedData['due_date']);
             $year = $dueDate->format('Y');
             $month = (int)$dueDate->format('n');
-
-            // Convert month to Roman numeral
             $romanMonths = [
                 1 => 'I',
                 2 => 'II',
@@ -293,27 +310,17 @@ class InquiryController extends Controller
                 12 => 'XII'
             ];
             $romanMonth = $romanMonths[$month];
-
-            // Count existing quotations for this inquiry
             $quotationCount = Quotation::where('inquiry_id', $inquiry->id)->count();
-
-            // Generate the correct code format
             if ($quotationCount > 0) {
-                // This is a revision
                 $code = "{$inquiry->id}/Q{$quotationCount}/LNS/{$romanMonth}/{$year}";
             } else {
-                // This is the first quotation
                 $code = "{$inquiry->id}/Q/LNS/{$romanMonth}/{$year}";
             }
-
-            // Create the quotation
             $inquiry->quotation()->create([
                 'code' => $code,
                 'file' => $filename,
                 'due_date' => $validatedData['due_date'],
             ]);
-
-            // Update the inquiry status to 'process'
             $inquiry->update(['status' => 'process']);
 
             return redirect()->route('inquiries.show', $inquiry)

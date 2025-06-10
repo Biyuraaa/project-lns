@@ -129,12 +129,6 @@ const Navbar = () => {
                                                 Dashboard
                                             </Link>
                                             <Link
-                                                href="/profile"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
-                                            >
-                                                Profile
-                                            </Link>
-                                            <Link
                                                 href="/logout"
                                                 method="post"
                                                 as="button"
@@ -215,13 +209,6 @@ const Navbar = () => {
                                         onClick={toggleMenu}
                                     >
                                         Dashboard
-                                    </Link>
-                                    <Link
-                                        href="/profile"
-                                        className="block py-3 px-4 text-base font-medium rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-800"
-                                        onClick={toggleMenu}
-                                    >
-                                        Profile
                                     </Link>
                                     <Link
                                         href="/logout"

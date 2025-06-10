@@ -43,8 +43,6 @@ interface CreateProps extends PageProps {
 const CompanyGrowthSellingCreate = () => {
     const { availableMonths, businessUnits } = usePage<CreateProps>().props;
     const currentYear = new Date().getFullYear();
-
-    // Find years with available months
     const availableYears = Object.keys(availableMonths)
         .filter(
             (year) =>
@@ -53,27 +51,19 @@ const CompanyGrowthSellingCreate = () => {
         )
         .map((year) => Number(year))
         .sort();
-
-    // Default to the first available year, or current year if available
     const defaultYear = availableYears.includes(currentYear)
         ? currentYear
         : availableYears.length > 0
         ? availableYears[0]
         : currentYear;
-
-    // Default to the first available month for the selected year
     const defaultMonth =
         availableMonths[defaultYear] && availableMonths[defaultYear].length > 0
             ? availableMonths[defaultYear][0].value
             : 1;
-
-    // State for uniform targets toggle
     const [useUniformTargets, setUseUniformTargets] = useState(true);
     const [activeTab, setActiveTab] = useState<string>(
         businessUnits.length > 0 ? businessUnits[0].id.toString() : "0"
     );
-
-    // Initialize business unit targets
     const initialBusinessUnitTargets = businessUnits.reduce((acc, unit) => {
         acc[unit.id] = "";
         return acc;
@@ -113,18 +103,12 @@ const CompanyGrowthSellingCreate = () => {
             setData("uniformTarget", 0);
         }
     }, [useUniformTargets]);
-
-    // Generate year options
     const yearOptions = availableYears.map((year) => ({
         value: year,
         label: year.toString(),
     }));
-
-    // Handle uniform target change
     const handleUniformTargetChange = (value: string) => {
         setData("uniformTarget", Number(value));
-
-        // Also update all business unit targets with the same value for preview
         const updatedTargets = { ...data.businessUnitTargets };
         Object.keys(updatedTargets).forEach((id) => {
             updatedTargets[Number(id)] = value;
@@ -132,8 +116,6 @@ const CompanyGrowthSellingCreate = () => {
 
         setData("businessUnitTargets", updatedTargets);
     };
-
-    // Handle individual business unit target change
     const handleBusinessUnitTargetChange = (unitId: number, value: string) => {
         const updatedTargets = { ...data.businessUnitTargets };
         updatedTargets[unitId] = value;
@@ -479,8 +461,8 @@ const CompanyGrowthSellingCreate = () => {
                                                     </p>
                                                 )}
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    This target will be applied
-                                                    to all business units
+                                                    Enter the full amount in
+                                                    Indonesian Rupiah (IDR).
                                                 </p>
                                             </div>
 

@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateQuotationRequest;
 use App\Models\Inquiry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class QuotationController extends Controller
 {
@@ -17,7 +18,12 @@ class QuotationController extends Controller
      */
     public function index()
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view quotations.');
+        }
         $quotations = Quotation::select('quotations.*')
             ->with([
                 'inquiry',
@@ -36,6 +42,12 @@ class QuotationController extends Controller
      */
     public function create()
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create quotations.');
+        }
         $inquiries = Inquiry::where('status', 'pending')->whereDoesntHave('quotation', function ($query) {
             $query->where('status', 'wip');
         })
@@ -55,28 +67,19 @@ class QuotationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreQuotationRequest $request)
     {
         try {
             $validatedData = $request->validated();
-
-            // Handle file upload
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('files/quotations', $filename, 'public');
                 $validatedData['file'] = $filename;
             }
-
-            // Get year and month from due_date
             $dueDate = new \DateTime($validatedData['due_date']);
             $year = $dueDate->format('Y');
             $month = (int)$dueDate->format('n');
-
-            // Convert month to Roman numeral
             $romanMonths = [
                 1 => 'I',
                 2 => 'II',
@@ -92,22 +95,13 @@ class QuotationController extends Controller
                 12 => 'XII'
             ];
             $romanMonth = $romanMonths[$month];
-
             $inquiry = Inquiry::findOrFail($validatedData['inquiry_id']);
-
-            // Count quotations related to this inquiry to determine revision number
             $quotationCount = Quotation::where('inquiry_id', $inquiry->id)->count();
-
-            // Generate the correct code format
             if ($quotationCount > 0) {
-                // This is a revision
                 $code = "{$inquiry->id}/Q{$quotationCount}/LNS/{$romanMonth}/{$year}";
             } else {
-                // This is the first quotation
                 $code = "{$inquiry->id}/Q/LNS/{$romanMonth}/{$year}";
             }
-
-            // Create the quotation with default status
             Quotation::create([
                 'code' => $code,
                 'status' => 'val',
@@ -116,8 +110,6 @@ class QuotationController extends Controller
                 'inquiry_id' => $validatedData['inquiry_id'],
                 'file' => $validatedData['file'] ?? null,
             ]);
-
-            // Update the inquiry status to 'process'
             $inquiry->update(['status' => 'process']);
 
             return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
@@ -131,6 +123,12 @@ class QuotationController extends Controller
     public function show(Quotation $quotation)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view this quotation.');
+        }
         $quotation->load([
             'inquiry',
             'inquiry.customer',
@@ -150,6 +148,12 @@ class QuotationController extends Controller
     public function edit(Quotation $quotation)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit this quotation.');
+        }
         $quotation->load([
             'inquiry',
             'inquiry.customer',
@@ -171,18 +175,13 @@ class QuotationController extends Controller
         //
         try {
             $validatedData = $request->validated();
-
-            // Handle file upload if a new file is provided
             if ($request->hasFile('file')) {
-                // Delete old file if exists
                 if ($quotation->file) {
                     $oldFilePath = storage_path('app/public/files/quotations/' . $quotation->file);
                     if (file_exists($oldFilePath)) {
                         unlink($oldFilePath);
                     }
                 }
-
-                // Store new file
                 $file = $request->file('file');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('files/quotations', $filename, 'public');
@@ -206,7 +205,12 @@ class QuotationController extends Controller
      */
     public function destroy(Quotation $quotation)
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-quotation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete this quotation.');
+        }
         try {
             // Delete the quotation file if it exists
             if ($quotation->file) {
@@ -230,6 +234,12 @@ class QuotationController extends Controller
      */
     public function createNegotiation(Quotation $quotation)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-negotiation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create negotiations.');
+        }
         $quotation->load([
             'inquiry',
             'inquiry.customer',
@@ -248,6 +258,12 @@ class QuotationController extends Controller
      */
     public function storeNegotiation(Request $request, Quotation $quotation)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-negotiation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create negotiations.');
+        }
         try {
             $validatedData = $request->validate([
                 'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:2048',
@@ -271,8 +287,6 @@ class QuotationController extends Controller
             $today = now();
             $year = $today->format('Y');
             $month = (int)$today->format('n');
-
-            // Convert month to Roman numeral
             $romanMonths = [
                 1 => 'I',
                 2 => 'II',
@@ -288,11 +302,7 @@ class QuotationController extends Controller
                 12 => 'XII'
             ];
             $romanMonth = $romanMonths[$month];
-
-            // Generate the revised code - always include revision number since this is a negotiation
             $revisedCode = "{$inquiry->id}/Q{$negotiationCount}/LNS/{$romanMonth}/{$year}";
-
-            // Update the quotation with the new revision code
             $quotation->update([
                 'code' => $revisedCode,
                 'amount' => $validatedData['amount'],

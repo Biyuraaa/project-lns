@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class StorePurchaseOrderRequest extends FormRequest
+class StorePicEngineerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -14,7 +14,7 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        return $user->hasPermissionTo('create-purchase-order');
+        return $user->hasPermissionTo('create-pic-engineer');
     }
 
     /**
@@ -26,13 +26,12 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         return [
             //
-            'code' => 'nullable|string|max:50|unique:purchase_orders,code',
-            'quotation_id' => 'nullable|exists:quotations,id',
-            'amount' => 'nullable|integer|min:1',
-            'status' => 'nullable|string|in:wip,ar,ibt,clsd',
-            'contract_number' => 'nullable|string|max:50',
-            'job_number' => 'nullable|string|max:50',
-            'date' => 'nullable|date',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

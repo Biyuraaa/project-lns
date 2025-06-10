@@ -8,10 +8,10 @@ use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Http\Requests\UpdatePurchaseOrderRequest;
 use App\Models\BusinessUnit;
 use Inertia\Inertia;
-use App\Models\Inquiry;
 use Illuminate\Support\Facades\Log;
 use App\Models\Quotation;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseOrderController extends Controller
 {
@@ -21,6 +21,12 @@ class PurchaseOrderController extends Controller
     public function index()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-any-purchase-order')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view Purchase Orders.');
+        }
         $purchaseOrders = PurchaseOrder::select('purchase_orders.*')
             ->with([
                 'quotation:id,code,inquiry_id',
@@ -30,7 +36,6 @@ class PurchaseOrderController extends Controller
             ])
             ->get();
         $businessUnits = BusinessUnit::all();
-
         return Inertia::render('Dashboard/PurchaseOrders/Index', [
             'purchaseOrders' => $purchaseOrders,
             'businessUnits' => $businessUnits
@@ -43,6 +48,12 @@ class PurchaseOrderController extends Controller
     public function create()
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('create-purchase-order')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to create Purchase Orders.');
+        }
         $quotations = Quotation::select('quotations.*')
             ->with([
                 'inquiry:id,code,customer_id',
@@ -61,7 +72,6 @@ class PurchaseOrderController extends Controller
      */
     public function store(StorePurchaseOrderRequest $request)
     {
-        //
         try {
             $validatedData = $request->validated();
             if ($request->hasFile('file')) {
@@ -81,7 +91,6 @@ class PurchaseOrderController extends Controller
                 'job_number' => $validatedData['job_number'],
                 'date' => $validatedData['date'],
             ]);
-
             return redirect()->route('purchaseOrders.index')->with('success', 'Purchase Order created successfully.');
         } catch (\Exception $e) {
             // Handle the exception
@@ -95,6 +104,12 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-purchase-order')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view this Purchase Order.');
+        }
         $purchaseOrder->load([
             'quotation:id,code,inquiry_id',
             'quotation.inquiry.customer',
@@ -109,7 +124,12 @@ class PurchaseOrderController extends Controller
      */
     public function edit(PurchaseOrder $purchaseOrder)
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('update-purchase-order')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to edit this Purchase Order.');
+        }
         $quotations = Quotation::select('quotations.*')
             ->with([
                 'inquiry:id,code,customer_id',
@@ -129,18 +149,15 @@ class PurchaseOrderController extends Controller
      */
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder)
     {
-        //
         try {
             $validatedData = $request->validated();
             if ($request->hasFile('file')) {
-                // Delete old file if exists
                 if ($purchaseOrder->file) {
                     $oldFilePath = storage_path('app/public/files/purchase-orders/' . $purchaseOrder->file);
                     if (file_exists($oldFilePath)) {
                         unlink($oldFilePath);
                     }
                 }
-                // Store new file
                 $file = $request->file('file');
                 $extension = $file->getClientOriginalExtension();
                 $filename = Str::slug($validatedData['code']) . '-' . time() . '.' . $extension;
@@ -173,8 +190,13 @@ class PurchaseOrderController extends Controller
     public function destroy(PurchaseOrder $purchaseOrder)
     {
         //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-purchase-order')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete this Purchase Order.');
+        }
         try {
-            // Delete the file if it exists
             if ($purchaseOrder->file) {
                 $oldFilePath = storage_path('app/public/files/purchase-orders/' . $purchaseOrder->file);
                 if (file_exists($oldFilePath)) {
@@ -182,7 +204,7 @@ class PurchaseOrderController extends Controller
                 }
             }
             $purchaseOrder->delete();
-            return redirect()->route('purchase-orders.index')->with('success', 'Purchase Order deleted successfully.');
+            return redirect()->route('purchaseOrders.index')->with('success', 'Purchase Order deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to delete purchase order: ' . $e->getMessage());
         }

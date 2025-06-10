@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import {
     Users,
@@ -22,96 +21,161 @@ import {
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 import { motion, AnimatePresence } from "framer-motion";
+import { PageProps } from "@/types"; // Import PageProps
 
 interface SidebarProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
 }
 
+// Define types for menu items
+interface MenuItem {
+    name: string;
+    icon?: React.ReactNode;
+    route?: string;
+    active?: boolean;
+    permission?: string;
+    children?: ChildMenuItem[];
+}
+
+interface ChildMenuItem {
+    name: string;
+    route: string;
+    active: boolean;
+    permission?: string;
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-    const { url } = usePage();
-    const user = usePage().props.auth.user;
+    const { url, props } = usePage<PageProps>();
+
+    const { auth } = props;
+
+    console.log("Sidebar props:", auth.user.permissions);
+    const userPermissions = useMemo(
+        () => new Set(auth.user?.permissions || []),
+        [auth.user]
+    );
+
     const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const allMenuItems = useMemo(
+        () =>
+            [
+                {
+                    name: "Dashboard",
+                    route: route("dashboard"),
+                    icon: <Home size={20} />,
+                    active: url === route("dashboard"),
+                    permission: "view-dashboard",
+                },
+                {
+                    name: "Organization",
+                    icon: <Users size={20} />,
+                    children: [
+                        {
+                            name: "Customers",
+                            route: route("customers.index"),
+                            active: url.startsWith("/customers"),
+                            permission: "view-any-customer",
+                        },
+                        {
+                            name: "Sales",
+                            route: route("sales.index"),
+                            active: url.startsWith("/sales"),
+                            permission: "view-any-sales",
+                        },
+                        {
+                            name: "PIC Engineers",
+                            route: route("picEngineers.index"),
+                            active: url.startsWith("/picEngineers"),
+                            permission: "view-any-pic-engineer",
+                        },
+                    ],
+                },
+                {
+                    name: "Inquiries",
+                    icon: <Mail size={20} />,
+                    route: route("inquiries.index"),
+                    active: url.startsWith("/inquiries"),
+                    permission: "view-any-inquiry",
+                },
+                {
+                    name: "Quotations",
+                    icon: <FileText size={20} />,
+                    route: route("quotations.index"),
+                    active: url.startsWith("/quotations"),
+                    permission: "view-any-quotation",
+                },
+                {
+                    name: "Purchase Orders",
+                    icon: <CreditCard size={20} />,
+                    route: route("purchaseOrders.index"),
+                    active: url.startsWith("/purchaseOrders"),
+                    permission: "view-any-purchase-order",
+                },
+                {
+                    name: "Target Sales",
+                    icon: <LineChart size={20} />,
+                    route: route("targetSales.index"), // Adjust with your route name
+                    active: url.startsWith("/targetSales"),
+                    permission: "view-any-company-growth-selling",
+                },
+            ] as MenuItem[],
+        [url]
+    );
 
-    // Auto-open submenu based on active route
+    // Filter menu based on user permissions
+    const accessibleMenuItems = useMemo(() => {
+        const filterItems = (items: MenuItem[]): MenuItem[] => {
+            return items
+                .map((item) => {
+                    // If item has submenu (children)
+                    if (item.children) {
+                        const accessibleChildren = filterItems(
+                            item.children as MenuItem[]
+                        );
+                        // Show parent if at least one child is accessible
+                        if (accessibleChildren.length > 0) {
+                            return { ...item, children: accessibleChildren };
+                        }
+                        return null;
+                    }
+
+                    // If item doesn't have permission requirement, show it
+                    if (!item.permission) {
+                        return item;
+                    }
+
+                    // Show item if user has the appropriate permission
+                    if (userPermissions.has(item.permission)) {
+                        return item;
+                    }
+
+                    return null;
+                })
+                .filter(Boolean) as MenuItem[]; // Remove null items
+        };
+
+        return filterItems(allMenuItems);
+    }, [userPermissions, allMenuItems]);
+
     useEffect(() => {
-        const activeMenuItem = menuItems.find((item) =>
+        const activeMenuItem = accessibleMenuItems.find((item) =>
             item.children?.some((child) => child.active)
         );
-
         if (activeMenuItem) {
             setOpenSubmenu(activeMenuItem.name);
         }
-    }, [url]);
-
-    // Menu items with nested structure
-    const menuItems = [
-        {
-            name: "Dashboard",
-            route: route("dashboard"),
-            icon: <Home size={20} />,
-            active: url === route("dashboard"),
-        },
-        {
-            name: "Organization",
-            icon: <Users size={20} />,
-            children: [
-                {
-                    name: "Customers",
-                    route: route("customers.index"),
-                    active: url.startsWith("/customers"),
-                },
-                {
-                    name: "Sales",
-                    route: route("sales.index"),
-                    active: url.startsWith("/sales"),
-                },
-                {
-                    name: "PIC Engineers",
-                    route: route("picEngineers.index"),
-                    active: url.startsWith("/pic-engineers"),
-                },
-            ],
-        },
-        {
-            name: "Inquiries",
-            icon: <Mail size={20} />,
-            route: route("inquiries.index"),
-            active: url.startsWith("/inquiries"),
-        },
-        {
-            name: "Quotations",
-            icon: <FileText size={20} />,
-            route: route("quotations.index"),
-            active: url.startsWith("/quotations"),
-        },
-        {
-            name: "Purchase Orders",
-            icon: <CreditCard size={20} />,
-            route: route("purchaseOrders.index"),
-            active: url.startsWith("/purchaseOrders"),
-        },
-        {
-            name: "Target Sales",
-            icon: <LineChart size={20} />,
-            route: route("targetSales.index"),
-            active: url.startsWith("/targetSales"),
-        },
-    ];
+    }, [url, accessibleMenuItems]);
 
     const toggleSubmenu = (name: string) => {
-        if (openSubmenu === name) {
-            setOpenSubmenu(null);
-        } else {
-            setOpenSubmenu(name);
-        }
+        setOpenSubmenu(openSubmenu === name ? null : name);
     };
 
-    // Filter menu items based on search query
+    // Filter menu based on search
     const filteredMenuItems = searchQuery
-        ? menuItems.filter(
+        ? accessibleMenuItems.filter(
               (item) =>
                   item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   item.children?.some((child) =>
@@ -120,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                           .includes(searchQuery.toLowerCase())
                   )
           )
-        : menuItems;
+        : accessibleMenuItems;
 
     return (
         <>
@@ -141,9 +205,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             {/* Sidebar */}
             <motion.div
                 className={`
-          fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-30
-          w-64 lg:translate-x-0 shadow-lg lg:shadow-none
-        `}
+                  fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-30
+                  w-64 lg:translate-x-0 shadow-lg lg:shadow-none
+                `}
                 initial={{ x: -320 }}
                 animate={{ x: isOpen ? 0 : -320 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -172,14 +236,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <div className="px-4 py-4 border-b border-gray-200">
                     <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                            {user?.name?.charAt(0).toUpperCase() || "U"}
+                            {auth.user?.name?.charAt(0).toUpperCase() || "U"}
                         </div>
                         <div className="ml-3">
                             <p className="text-sm font-medium text-gray-900">
-                                {user?.name || "User Name"}
+                                {auth.user?.name || "User Name"}
                             </p>
                             <p className="text-xs text-gray-500">
-                                {user?.email || "user@example.com"}
+                                {auth.user?.email || "user@example.com"}
                             </p>
                         </div>
                     </div>
@@ -207,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     </div>
                 </div>
 
-                {/* Navigation Menu - Using SidebarItem component */}
+                {/* Navigation Menu */}
                 <nav className="mt-2 px-2 overflow-y-auto flex-grow h-[calc(100vh-14.5rem)]">
                     <AnimatePresence>
                         {filteredMenuItems.length > 0 ? (
@@ -237,9 +301,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                 className="py-8 text-center text-gray-500"
                             >
                                 <p className="text-sm">No menu items found</p>
-                                <p className="text-xs mt-1">
-                                    Try a different search term
-                                </p>
                             </motion.div>
                         )}
                     </AnimatePresence>
