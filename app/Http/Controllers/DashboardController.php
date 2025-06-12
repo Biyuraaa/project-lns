@@ -11,6 +11,7 @@ use App\Models\PurchaseOrder;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -20,10 +21,17 @@ class DashboardController extends Controller
     /**
      * Display the dashboard index page with statistics and charts
      *
-     * @return \Inertia\Response
+     * @return \Inertia\Response | \Illuminate\Http\RedirectResponse
      */
     public function index()
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('view-dashboard')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to view the dashboard.');
+        }
+
         $currentMonthStart = now()->startOfMonth();
         $lastMonthStart = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->endOfMonth();

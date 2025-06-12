@@ -25,6 +25,7 @@ class RolePermissionSeeder extends Seeder
             'pic-engineer',
             'inquiry',
             'quotation',
+            'negotiation',
             'purchase-order',
             'user',
             'company-growth-selling'
@@ -39,6 +40,8 @@ class RolePermissionSeeder extends Seeder
                 'update-' . $model,
                 'delete-' . $model
             ];
+
+            $permissionNames[] = 'view-dashboard';
 
             foreach ($permissionNames as $permissionName) {
                 Permission::firstOrCreate(['name' => $permissionName]);

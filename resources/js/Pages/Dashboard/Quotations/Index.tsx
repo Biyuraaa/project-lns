@@ -98,7 +98,7 @@ const QuotationsIndex = () => {
                 );
             case "val":
                 return (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
                         <CheckCircle className="h-3 w-3" />
                         <span>Validated</span>
                     </Badge>
@@ -112,7 +112,7 @@ const QuotationsIndex = () => {
                 );
             case "wip":
                 return (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         <span>Work in Progress</span>
                     </Badge>
