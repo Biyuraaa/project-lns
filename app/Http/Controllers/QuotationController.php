@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQuotationRequest;
 use App\Http\Requests\UpdateQuotationRequest;
 use App\Models\Inquiry;
+use App\Models\Negotiation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -312,6 +313,34 @@ class QuotationController extends Controller
             return redirect()->route('quotations.show', $quotation)->with('success', 'Negotiation created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Failed to create negotiation: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a negotiation from the quotation.
+     */
+    public function destroyNegotiation(Quotation $quotation, Negotiation $negotiation)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionTo('delete-negotiation')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to delete negotiations.');
+        }
+
+        try {
+            $negotiation = $quotation->negotiations()->findOrFail($negotiation->id);
+            if ($negotiation->file) {
+                $oldFilePath = storage_path('app/public/files/negotiations/' . $negotiation->file);
+                if (file_exists($oldFilePath)) {
+                    unlink($oldFilePath);
+                }
+            }
+            $negotiation->delete();
+
+            return redirect()->route('quotations.show', $quotation)->with('success', 'Negotiation deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete negotiation: ' . $e->getMessage());
         }
     }
 }

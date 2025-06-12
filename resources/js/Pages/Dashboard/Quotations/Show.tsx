@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { PageProps, Quotation } from "@/types";
+import { Negotiation, PageProps, Quotation } from "@/types";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Breadcrumb } from "@/Components/Breadcrumb";
 import {
@@ -13,7 +13,6 @@ import {
     FileSpreadsheet,
     FileText,
     FileWarning,
-    Layers,
     Mail,
     MapPin,
     Phone,
@@ -25,7 +24,6 @@ import {
     CreditCard,
     HardHat,
     UserCircle,
-    Plus,
     Briefcase,
     MessageSquare,
     ClockIcon,
@@ -34,9 +32,10 @@ import {
     DollarSign,
     Building,
     ArrowLeft,
-    Trash2,
     ChevronDown,
     ChevronUp,
+    AlertCircle,
+    Trash2,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import {
@@ -53,8 +52,15 @@ import { useForm } from "@inertiajs/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { motion } from "framer-motion";
-import { cn, formatCurrency } from "@/lib/utils";
-
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/Components/ui/dialog";
 interface ShowQuotationProps extends PageProps {
     quotation: Quotation;
 }
@@ -62,6 +68,10 @@ interface ShowQuotationProps extends PageProps {
 const QuotationShow = () => {
     const { quotation } = usePage<ShowQuotationProps>().props;
     const { delete: destroy } = useForm({});
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [negotiationToDelete, setNegotiationToDelete] =
+        useState<Negotiation | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Get file icon based on filename
     const getFileIcon = (filename: string) => {
@@ -83,25 +93,29 @@ const QuotationShow = () => {
         }
     };
 
-    const handleDeleteNegotiation = (id: number) => {
-        if (
-            confirm(
-                "Are you sure you want to delete this negotiation document?"
-            )
-        ) {
-            destroy(route("negotiations.destroy", id), {
+    const handleDeleteNegotiation = () => {
+        if (!negotiationToDelete) return;
+
+        setIsDeleting(true);
+
+        destroy(
+            route("quotations.negotiations.destroy", {
+                quotation: quotation.id,
+                negotiation: negotiationToDelete.id,
+            }),
+            {
                 preserveScroll: true,
                 onSuccess: () => {
+                    setIsDeleteModalOpen(false);
+                    setNegotiationToDelete(null);
+                    setIsDeleting(false);
                     console.log("Negotiation deleted successfully");
                 },
-            });
-        }
-    };
-
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A";
-        return format(parseISO(dateString), "MMMM d, yyyy");
+                onError: () => {
+                    setIsDeleting(false);
+                },
+            }
+        );
     };
 
     // Format time for display
@@ -126,18 +140,9 @@ const QuotationShow = () => {
         return differenceInDays(dueDate, today);
     };
 
-    // Get status badge variant
-    const getStatusBadgeVariant = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "pending":
-                return "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200";
-            case "approved":
-                return "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200";
-            case "rejected":
-                return "bg-red-100 text-red-800 border-red-200 hover:bg-red-200";
-            default:
-                return "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200";
-        }
+    const openDeleteModal = (negotiation: Negotiation) => {
+        setNegotiationToDelete(negotiation);
+        setIsDeleteModalOpen(true);
     };
 
     // Get status icon
@@ -169,6 +174,76 @@ const QuotationShow = () => {
     return (
         <AuthenticatedLayout>
             <Head title={`Quotation: ${quotation.code}`} />
+
+            <Dialog
+                open={isDeleteModalOpen}
+                onOpenChange={setIsDeleteModalOpen}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                            Delete Negotiation Document
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this negotiation
+                            document? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="bg-red-50 border border-red-100 rounded-md p-4 my-4">
+                        <div className="flex items-center">
+                            <div className="mr-4 bg-white p-2 rounded-md border border-red-200">
+                                {getFileIcon(negotiationToDelete?.file || "")}
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-900">
+                                    {negotiationToDelete?.file
+                                        ?.split("/")
+                                        .pop() || "Negotiation Document"}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Created on:{" "}
+                                    {negotiationToDelete
+                                        ? formatDate(
+                                              negotiationToDelete.created_at ||
+                                                  ""
+                                          )
+                                        : ""}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter className="sm:justify-start gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDeleteNegotiation}
+                            disabled={isDeleting}
+                            className="gap-2"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    Deleting...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete Negotiation
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1354,8 +1429,8 @@ const QuotationShow = () => {
                                                                                 size="sm"
                                                                                 className="text-xs px-2 py-1 h-auto font-normal text-red-600 hover:text-red-700 hover:bg-red-50"
                                                                                 onClick={() =>
-                                                                                    handleDeleteNegotiation(
-                                                                                        negotiation.id
+                                                                                    openDeleteModal(
+                                                                                        negotiation
                                                                                     )
                                                                                 }
                                                                             >

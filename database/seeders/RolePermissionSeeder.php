@@ -62,18 +62,22 @@ class RolePermissionSeeder extends Seeder
             'view-inquiry',
             'create-inquiry',
             'update-inquiry',
+            'delete-inquiry',
             'view-any-negotiation',
             'view-negotiation',
             'create-negotiation',
             'update-negotiation',
+            'delete-negotiation',
             'view-any-quotation',
             'view-quotation',
             'create-quotation',
             'update-quotation',
+            'delete-quotation',
             'view-any-purchase-order',
             'view-purchase-order',
             'create-purchase-order',
             'update-purchase-order',
+            'delete-purchase-order',
         ];
 
         $salesRole->syncPermissions($salesPermissions);
