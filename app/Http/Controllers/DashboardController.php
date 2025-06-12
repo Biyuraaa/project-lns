@@ -687,7 +687,7 @@ class DashboardController extends Controller
                 })
                 ->toArray();
 
-            $standardizedStatuses = ['WIP', 'AR', 'IST', 'CLSD'];
+            $standardizedStatuses = ['WIP', 'AR', 'IBT'];
 
             foreach ($poData as &$po) {
                 if (empty($po['status'])) {

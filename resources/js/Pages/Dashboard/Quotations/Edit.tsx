@@ -230,13 +230,6 @@ const QuotationEdit = () => {
                         <span>Lost</span>
                     </Badge>
                 );
-            case "clsd":
-                return (
-                    <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span>Closed</span>
-                    </Badge>
-                );
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }

@@ -561,9 +561,6 @@ const PurchaseOrdersEdit = () => {
                                                     <SelectItem value="ibt">
                                                         IBT (Income Before Tax)
                                                     </SelectItem>
-                                                    <SelectItem value="clsd">
-                                                        Closed
-                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             {errors.status && (

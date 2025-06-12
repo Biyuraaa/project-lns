@@ -47,7 +47,6 @@ const STATUS_COLORS = {
     wip: "#3b82f6",
     ar: "#f59e0b",
     ibt: "#a855f7",
-    clsd: "#10b981",
     other: "#6b7280",
 };
 
@@ -232,7 +231,7 @@ export const PurchaseOrderStatusChart = ({
 
         filteredPOs.forEach((po) => {
             let status = po.status.toLowerCase();
-            if (!["wip", "ar", "ibt", "clsd"].includes(status)) {
+            if (!["wip", "ar", "ibt"].includes(status)) {
                 status = "other";
             }
 
@@ -276,7 +275,6 @@ export const PurchaseOrderStatusChart = ({
             wip: "Work in Progress",
             ar: "Account Receivable",
             ibt: "Income Before Tax",
-            clsd: "Selesai",
             other: "Status Lain",
         };
 

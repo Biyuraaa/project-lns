@@ -81,13 +81,6 @@ const PurchaseOrdersIndex = () => {
                         <span>IBT</span>
                     </Badge>
                 );
-            case "clsd":
-                return (
-                    <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        <span>Closed</span>
-                    </Badge>
-                );
             default:
                 return (
                     <Badge className="bg-slate-100 text-slate-800 border-slate-200">
@@ -540,9 +533,6 @@ const PurchaseOrdersIndex = () => {
                                                 </option>
                                                 <option value="ibt">
                                                     IBT (Income Before Tax)
-                                                </option>
-                                                <option value="clsd">
-                                                    Closed
                                                 </option>
                                             </select>
                                         </div>

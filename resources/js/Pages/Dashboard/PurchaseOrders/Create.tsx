@@ -495,9 +495,6 @@ const PurchaseOrdersCreate = () => {
                                                         IBT (Inter-Branch
                                                         Transfer)
                                                     </SelectItem>
-                                                    <SelectItem value="clsd">
-                                                        Closed
-                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             {errors.status && (

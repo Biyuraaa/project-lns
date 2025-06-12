@@ -17,13 +17,12 @@ return new class extends Migration
             $table->foreignId('quotation_id')->constrained('quotations')->onDelete('cascade');
             $table->integer('amount');
             $table->string('file')->nullable();
-            $table->enum('status', ['wip', 'ar', 'ibt', 'clsd'])->default('wip');
+            $table->enum('status', ['wip', 'ar', 'ibt'])->default('wip');
             $table->string('contract_number')->nullable();
             $table->string('job_number')->nullable();
             $table->date('date')->nullable();
             $table->timestamps();
         });
-        
     }
 
     /**
