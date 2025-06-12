@@ -47,7 +47,7 @@ const CreateNegotiation = () => {
         e.preventDefault();
         post(
             route("quotations.negotiations.store", {
-                quotation: quotation.id,
+                quotation: quotation,
             }),
             {
                 forceFormData: true,

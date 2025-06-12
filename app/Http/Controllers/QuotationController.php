@@ -264,6 +264,7 @@ class QuotationController extends Controller
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to create negotiations.');
         }
+
         try {
             $validatedData = $request->validate([
                 'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:2048',
