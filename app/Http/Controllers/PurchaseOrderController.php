@@ -130,17 +130,13 @@ class PurchaseOrderController extends Controller
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to edit this Purchase Order.');
         }
-        $quotations = Quotation::select('quotations.*')
-            ->with([
-                'inquiry:id,code,customer_id',
-                'inquiry.customer:id,name,email,phone',
-            ])
-            ->where('status', 'val')
-            ->whereDoesntHave('purchaseOrder')
-            ->get();
+
+        $purchaseOrder->load([
+            'quotation',
+            'quotation.inquiry.customer',
+        ]);
         return Inertia::render('Dashboard/PurchaseOrders/Edit', [
             'purchaseOrder' => $purchaseOrder,
-            'quotations' => $quotations,
         ]);
     }
 
@@ -167,7 +163,6 @@ class PurchaseOrderController extends Controller
 
             $purchaseOrder->update([
                 'code' => $validatedData['code'],
-                'quotation_id' => $validatedData['quotation_id'],
                 'file' => $validatedData['file'] ?? null,
                 'amount' => $validatedData['amount'],
                 'status' => $validatedData['status'],

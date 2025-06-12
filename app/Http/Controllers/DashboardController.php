@@ -28,7 +28,7 @@ class DashboardController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         if (!$user->hasPermissionTo('view-dashboard')) {
-            return redirect()->route('dashboard')
+            return redirect()->route('customers.index')
                 ->with('error', 'You do not have permission to view the dashboard.');
         }
 

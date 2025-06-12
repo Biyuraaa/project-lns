@@ -25,9 +25,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
             'code' => 'nullable|string|max:255',
-            'quotation_id' => 'nullable|exists:quotations,id',
             'amount' => 'nullable|numeric',
             'status' => 'nullable|in:wip,ar,ibt',
             'contract_number' => 'nullable|string|max:255',
