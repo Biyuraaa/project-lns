@@ -49,8 +49,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const { url, props } = usePage<PageProps>();
 
     const { auth } = props;
-
-    console.log("Sidebar props:", auth.user.permissions);
     const userPermissions = useMemo(
         () => new Set(auth.user?.permissions || []),
         [auth.user]
@@ -236,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <div className="px-4 py-4 border-b border-gray-200">
                     <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                            {auth.user?.name?.charAt(0).toUpperCase() || "U"}
+                                {auth.user?.name?.charAt(0).toUpperCase() || "U"}
                         </div>
                         <div className="ml-3">
                             <p className="text-sm font-medium text-gray-900">
