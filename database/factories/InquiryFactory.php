@@ -55,7 +55,7 @@ class InquiryFactory extends Factory
             'file' => null,
             'pic_engineer_id' => User::role('pic-engineer')->inRandomOrder()->first()->id ?? null,
             'sales_id' => User::role('sales')->inRandomOrder()->first()->id ?? null,
-            'status' => $this->faker->randomElement(['pending', 'process', 'canceled']),
+            'status' => $this->faker->randomElement(['pending', 'process', 'no_quot']),
             'created_at' => $inquiryDate,
         ];
     }
@@ -75,15 +75,15 @@ class InquiryFactory extends Factory
     }
 
     /**
-     * Indicate that the inquiry is canceled.
+     * Indicate that the inquiry is no_quot.
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
-    public function canceled()
+    public function noQuot()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => 'canceled',
+                'status' => 'no_quot',
             ];
         });
     }

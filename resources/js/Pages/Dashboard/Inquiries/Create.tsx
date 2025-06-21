@@ -29,6 +29,7 @@ import {
     Upload,
     Check,
     Info,
+    Briefcase,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -102,6 +103,7 @@ const InquiriesCreate = () => {
             email: string;
             phone: string;
             address: string;
+            position: string;
         }[],
         status: "pending",
         file: null as File | null,
@@ -194,6 +196,10 @@ const InquiriesCreate = () => {
                     formData.append(
                         `endUsers[${index}][address]`,
                         endUser.address || ""
+                    );
+                    formData.append(
+                        `endUsers[${index}][position]`,
+                        endUser.position || ""
                     );
                 }
             });
@@ -1058,12 +1064,12 @@ const InquiriesCreate = () => {
                                         </div>
                                     </div>
                                 </div>
-                                {/* End User Information Section */}
+                                {/* User Information Section */}
                                 <div className="py-8">
                                     <div className="flex items-center justify-between mb-4">
                                         <h2 className="text-lg font-medium text-gray-900 flex items-center">
                                             <Users className="w-5 h-5 mr-2 text-blue-600" />
-                                            End Users Information
+                                            Users Information
                                             <span className="text-sm font-normal text-gray-500 ml-2">
                                                 (Optional)
                                             </span>
@@ -1078,6 +1084,7 @@ const InquiriesCreate = () => {
                                                         email: "",
                                                         phone: "",
                                                         address: "",
+                                                        position: "",
                                                     },
                                                 ];
                                                 setData(
@@ -1090,7 +1097,7 @@ const InquiriesCreate = () => {
                                             className="flex items-center gap-1 border-blue-200 text-blue-600 hover:bg-blue-50"
                                         >
                                             <Plus className="h-4 w-4" />
-                                            Add End User
+                                            Add User
                                         </Button>
                                     </div>
 
@@ -1138,17 +1145,17 @@ const InquiriesCreate = () => {
 
                                                     <h3 className="text-base font-medium mb-4 text-gray-800 flex items-center">
                                                         <UserCircle className="mr-2 h-5 w-5 text-blue-500" />
-                                                        End User #{index + 1}
+                                                        User #{index + 1}
                                                     </h3>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {/* End User Name Field */}
+                                                        {/* User Name Field */}
                                                         <div className="space-y-1">
                                                             <Label
                                                                 htmlFor={`end_user_name_${index}`}
                                                                 className="text-sm font-medium"
                                                             >
-                                                                End User Name
+                                                                User Name
                                                             </Label>
                                                             <div className="relative">
                                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1189,7 +1196,7 @@ const InquiriesCreate = () => {
                                                                 htmlFor={`end_user_email_${index}`}
                                                                 className="text-sm font-medium"
                                                             >
-                                                                End User Email
+                                                                User Email
                                                             </Label>
                                                             <div className="relative">
                                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1229,7 +1236,7 @@ const InquiriesCreate = () => {
                                                                 htmlFor={`end_user_phone_${index}`}
                                                                 className="text-sm font-medium"
                                                             >
-                                                                End User Phone
+                                                                User Phone
                                                             </Label>
                                                             <div className="relative">
                                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1262,13 +1269,53 @@ const InquiriesCreate = () => {
                                                                 />
                                                             </div>
                                                         </div>
+
+                                                        {/* End User Position Field */}
+                                                        <div className="space-y-1">
+                                                            <Label
+                                                                htmlFor={`end_users_position_${index}`}
+                                                                className="text-sm font-medium"
+                                                            >
+                                                                Position
+                                                            </Label>
+                                                            <div className="relative">
+                                                                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
+                                                                    <Briefcase className="h-4 w-4 text-gray-400" />
+                                                                </div>
+                                                                <Input
+                                                                    id={`end_user_position_${index}`}
+                                                                    type="text"
+                                                                    value={
+                                                                        endUser.position
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const newEndUsers =
+                                                                            [
+                                                                                ...data.endUsers,
+                                                                            ];
+                                                                        newEndUsers[
+                                                                            index
+                                                                        ].position =
+                                                                            e.target.value;
+                                                                        setData(
+                                                                            "endUsers",
+                                                                            newEndUsers
+                                                                        );
+                                                                    }}
+                                                                    className={`pl-10 border-gray-200 focus:ring-blue-500 focus:border-blue-500`}
+                                                                    placeholder="Enter end user position"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                         {/* End User Address Field */}
                                                         <div className="space-y-1">
                                                             <Label
                                                                 htmlFor={`end_user_address_${index}`}
                                                                 className="text-sm font-medium"
                                                             >
-                                                                End User Address
+                                                                User Address
                                                             </Label>
                                                             <div className="relative">
                                                                 <div className="absolute top-3 left-3 flex items-start pointer-events-none">
@@ -1314,7 +1361,7 @@ const InquiriesCreate = () => {
                                             </h3>
                                             <p className="text-gray-400 mb-4">
                                                 Click the button above to add
-                                                end users to this inquiry
+                                                users to this inquiry
                                             </p>
                                             <Button
                                                 type="button"
@@ -1326,6 +1373,7 @@ const InquiriesCreate = () => {
                                                             email: "",
                                                             phone: "",
                                                             address: "",
+                                                            position: "",
                                                         },
                                                     ];
                                                     setData(
@@ -1338,7 +1386,7 @@ const InquiriesCreate = () => {
                                                 className="border-blue-200 text-blue-600 hover:bg-blue-50"
                                             >
                                                 <Plus className="h-4 w-4 mr-2" />
-                                                Add First End User
+                                                Add First User
                                             </Button>
                                         </div>
                                     )}
@@ -1736,7 +1784,6 @@ const InquiriesCreate = () => {
                             </div>
                         </form>
                     </motion.div>
-
                     {/* Help Text */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

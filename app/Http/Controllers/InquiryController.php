@@ -124,6 +124,10 @@ class InquiryController extends Controller
 
             return redirect()->route('inquiries.index')->with('success', 'Inquiry created successfully.');
         } catch (\Exception $e) {
+            Log::error('Failed to create inquiry: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'exception' => $e,
+            ]);
             return redirect()->back()->withInput()->with('error', 'Failed to create inquiry: ' . $e->getMessage());
         }
     }
@@ -165,6 +169,10 @@ class InquiryController extends Controller
         if (!$user->hasPermissionTo('update-inquiry')) {
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to edit this inquiry.');
+        }
+        if ($inquiry->status === 'no_quot') {
+            return redirect()->route('inquiries.index')
+                ->with('error', 'This inquiry will not be quoted. You cannot edit it.');
         }
         $inquiry->load(['customer', 'picEngineer', 'sales', 'businessUnit', 'endUsers']);
 

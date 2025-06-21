@@ -18,6 +18,7 @@ class EndUser extends Model
         'email',
         'phone',
         'address',
+        'position',
     ];
 
     protected $casts = [

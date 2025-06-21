@@ -39,7 +39,8 @@ class UpdateInquiryRequest extends FormRequest
             'endUsers.*.email' => 'nullable|email|max:255',
             'endUsers.*.phone' => 'nullable|string|max:20',
             'endUsers.*.address' => 'nullable|string|max:500',
-            'status' => 'required|in:pending,process,canceled',
+            'endUsers.*.position' => 'nullable|string|max:255',
+            'status' => 'required|in:pending,process,no_quot',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ];
     }

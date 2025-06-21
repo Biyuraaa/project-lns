@@ -66,7 +66,7 @@ const InquiriesShow = () => {
                 return <Clock3 className="h-3.5 w-3.5 mr-1.5" />;
             case "resolved":
                 return <CheckCircle className="h-3.5 w-3.5 mr-1.5" />;
-            case "canceled":
+            case "no_quot":
                 return <XCircle className="h-3.5 w-3.5 mr-1.5" />;
             default:
                 return <Clock className="h-3.5 w-3.5 mr-1.5" />;
@@ -631,8 +631,7 @@ const InquiriesShow = () => {
                                                             <div className="bg-blue-100 p-1.5 rounded-md">
                                                                 <Users className="h-5 w-5 text-blue-600" />
                                                             </div>
-                                                            End Users
-                                                            Information
+                                                            Users Information
                                                         </CardTitle>
                                                         <CardDescription>
                                                             People or
@@ -745,20 +744,39 @@ const InquiriesShow = () => {
                                                                             </p>
                                                                         </div>
                                                                     </div>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                        {/* Email */}
+                                                                        <div className="mt-4 bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                                            <h3 className="text-sm font-medium text-muted-foreground">
+                                                                                Address
+                                                                            </h3>
+                                                                            <p className="mt-1 flex items-start text-base">
+                                                                                <MapPin className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                                                <span>
+                                                                                    {endUser.address ||
+                                                                                        "Not specified"}
+                                                                                </span>
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Phone */}
+                                                                        <div className="mt-4 bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                                            <h3 className="text-sm font-medium text-muted-foreground">
+                                                                                Position
+                                                                            </h3>
+                                                                            <p className="mt-1 flex items-start text-base">
+                                                                                <User className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                                                <span>
+                                                                                    {endUser.position ||
+                                                                                        "Not specified"}
+                                                                                </span>
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
 
                                                                     {/* Address */}
-                                                                    <div className="mt-4 bg-muted/20 p-4 rounded-lg border border-border/40">
-                                                                        <h3 className="text-sm font-medium text-muted-foreground">
-                                                                            Address
-                                                                        </h3>
-                                                                        <p className="mt-1 flex items-start text-base">
-                                                                            <MapPin className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                                            <span>
-                                                                                {endUser.address ||
-                                                                                    "Not specified"}
-                                                                            </span>
-                                                                        </p>
-                                                                    </div>
+
+                                                                    {/* Position */}
                                                                 </div>
                                                             )
                                                         )}

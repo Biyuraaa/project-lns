@@ -29,6 +29,7 @@ import {
     Check,
     Factory,
     Plus,
+    Briefcase,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -84,6 +85,7 @@ const InquiriesEdit = () => {
                       email: string;
                       phone: string;
                       address: string;
+                      position: string;
                   }[])
                 : [],
         status: inquiry.status,
@@ -127,7 +129,7 @@ const InquiriesEdit = () => {
     const addEndUser = () => {
         setData("endUsers", [
             ...data.endUsers,
-            { name: "", email: "", phone: "", address: "" },
+            { name: "", email: "", phone: "", address: "", position: "" },
         ]);
     };
 
@@ -183,6 +185,10 @@ const InquiriesEdit = () => {
                 formData.append(
                     `endUsers[${index}][address]`,
                     endUser.address || ""
+                );
+                formData.append(
+                    `endUsers[${index}][position]`,
+                    endUser.position || ""
                 );
             });
         } else {
@@ -745,8 +751,8 @@ const InquiriesEdit = () => {
                                                     <option value="process">
                                                         In Process
                                                     </option>
-                                                    <option value="canceled">
-                                                        Canceled
+                                                    <option value="no_quot">
+                                                        No Quotation
                                                     </option>
                                                 </select>
                                             </div>
@@ -859,7 +865,7 @@ const InquiriesEdit = () => {
                                 <div className="py-8">
                                     <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                                         <User className="w-5 h-5 mr-2 text-amber-600" />
-                                        End User Information
+                                        User Information
                                         <span className="text-sm font-normal text-gray-500 ml-2">
                                             (Optional)
                                         </span>
@@ -869,11 +875,11 @@ const InquiriesEdit = () => {
                                         <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                                             <UserCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                                             <h3 className="text-gray-500 text-lg font-medium mb-2">
-                                                No End Users Added
+                                                No Users Added
                                             </h3>
                                             <p className="text-gray-400 mb-4">
                                                 Click the button below to add
-                                                end users to this inquiry
+                                                users to this inquiry
                                             </p>
                                             <Button
                                                 type="button"
@@ -883,7 +889,7 @@ const InquiriesEdit = () => {
                                                 className="border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                                             >
                                                 <Plus className="h-4 w-4 mr-2" />
-                                                Add First End User
+                                                Add First User
                                             </Button>
                                         </div>
                                     ) : (
@@ -896,7 +902,7 @@ const InquiriesEdit = () => {
                                                     >
                                                         <div className="flex justify-between items-center mb-4">
                                                             <h3 className="text-sm font-medium text-gray-700">
-                                                                End User #
+                                                                User #
                                                                 {index + 1}
                                                             </h3>
                                                             {data.endUsers
@@ -925,8 +931,7 @@ const InquiriesEdit = () => {
                                                                     htmlFor={`endUsers.${index}.name`}
                                                                     className="text-sm font-medium"
                                                                 >
-                                                                    End User
-                                                                    Name{" "}
+                                                                    User Name{" "}
                                                                     <span className="text-red-500">
                                                                         *
                                                                     </span>
@@ -964,8 +969,7 @@ const InquiriesEdit = () => {
                                                                     htmlFor={`endUsers.${index}.email`}
                                                                     className="text-sm font-medium"
                                                                 >
-                                                                    End User
-                                                                    Email{" "}
+                                                                    User Email{" "}
                                                                     <span className="text-red-500">
                                                                         *
                                                                     </span>
@@ -1003,8 +1007,7 @@ const InquiriesEdit = () => {
                                                                     htmlFor={`endUsers.${index}.phone`}
                                                                     className="text-sm font-medium"
                                                                 >
-                                                                    End User
-                                                                    Phone
+                                                                    User Phone
                                                                 </Label>
                                                                 <div className="relative">
                                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1033,15 +1036,48 @@ const InquiriesEdit = () => {
                                                                     />
                                                                 </div>
                                                             </div>
+                                                            <div className="space-y-1">
+                                                                <Label
+                                                                    htmlFor={`endUsers.${index}.position`}
+                                                                    className="text-sm font-medium text-gray-700"
+                                                                >
+                                                                    User
+                                                                    Position
+                                                                </Label>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                        <Briefcase className="h-4 w-4 text-gray-400" />
+                                                                    </div>
+                                                                    <Input
+                                                                        id={`endUsers.${index}.position`}
+                                                                        value={
+                                                                            endUser.position ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateEndUser(
+                                                                                index,
+                                                                                "position",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className={`pl-10 border-gray-200 focus:ring-amber-500 focus:border-amber-500`}
+                                                                        placeholder="Enter user position"
+                                                                    />
+                                                                </div>
+                                                            </div>
 
-                                                            {/* End User Address Field */}
+                                                            {/* User Address Field */}
                                                             <div className="space-y-1">
                                                                 <Label
                                                                     htmlFor={`endUsers.${index}.address`}
                                                                     className="text-sm font-medium"
                                                                 >
-                                                                    End User
-                                                                    Address
+                                                                    User Address
                                                                 </Label>
                                                                 <div className="relative">
                                                                     <div className="absolute top-3 left-3 flex items-start pointer-events-none">
@@ -1083,7 +1119,7 @@ const InquiriesEdit = () => {
                                                     className="border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                                                 >
                                                     <Plus className="h-4 w-4 mr-2" />
-                                                    Add Another End User
+                                                    Add Another User
                                                 </Button>
                                             </div>
                                         </>

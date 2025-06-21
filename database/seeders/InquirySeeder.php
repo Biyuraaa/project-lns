@@ -87,7 +87,7 @@ class InquirySeeder extends Seeder
 
                 // Simple status distribution: 70% pending, 30% process
                 // Note: The QuotationSeeder will later convert some 'pending' to 'process' when adding quotations
-                $status = $this->faker->randomElement(['pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'canceled', 'process', 'process', 'process']);
+                $status = $this->faker->randomElement(['pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'no_quot', 'process', 'process', 'process']);
 
                 // Create the inquiry
                 Inquiry::factory()->create([

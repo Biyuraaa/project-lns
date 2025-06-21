@@ -83,6 +83,7 @@ export interface EndUser {
     email: string;
     phone?: string;
     address?: string;
+    position?: string;
     created_at?: string;
     updated_at?: string;
     inquiries: Inquiry;

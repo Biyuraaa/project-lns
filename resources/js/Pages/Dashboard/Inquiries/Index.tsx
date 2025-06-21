@@ -138,7 +138,7 @@ const InquiriesIndex = () => {
                 return "bg-yellow-100 text-yellow-800 border-yellow-200";
             case "process":
                 return "bg-green-100 text-green-800 border-green-200";
-            case "canceled":
+            case "no_quot":
                 return "bg-red-100 text-red-800 border-red-200";
             default:
                 return "bg-blue-100 text-blue-800 border-blue-200";
@@ -151,7 +151,7 @@ const InquiriesIndex = () => {
                 return <Clock className="h-3.5 w-3.5 mr-1" />;
             case "process":
                 return <Check className="h-3.5 w-3.5 mr-1" />;
-            case "canceled":
+            case "no_quot":
                 return <Lock className="h-3.5 w-3.5 mr-1" />;
             default:
                 return null;
@@ -287,7 +287,7 @@ const InquiriesIndex = () => {
                                         </option>
                                         <option value="pending">Pending</option>
                                         <option value="process">Process</option>
-                                        <option value="canceled">
+                                        <option value="no_quot">
                                             Canceled
                                         </option>
                                     </select>
@@ -729,20 +729,24 @@ const InquiriesIndex = () => {
                                                                         Details
                                                                     </Link>
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    asChild
-                                                                >
-                                                                    <Link
-                                                                        href={route(
-                                                                            "inquiries.edit",
-                                                                            inquiry.id
-                                                                        )}
-                                                                        className="cursor-pointer flex items-center w-full"
+                                                                {inquiry.status !==
+                                                                    "no_quot" && (
+                                                                    <DropdownMenuItem
+                                                                        asChild
                                                                     >
-                                                                        <Edit className="h-4 w-4 mr-2" />
-                                                                        Edit
-                                                                    </Link>
-                                                                </DropdownMenuItem>
+                                                                        <Link
+                                                                            href={route(
+                                                                                "inquiries.edit",
+                                                                                inquiry.id
+                                                                            )}
+                                                                            className="cursor-pointer flex items-center w-full"
+                                                                        >
+                                                                            <Edit className="h-4 w-4 mr-2" />
+                                                                            Edit
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                )}
+
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem
                                                                     className="text-red-600 focus:text-red-700 cursor-pointer"

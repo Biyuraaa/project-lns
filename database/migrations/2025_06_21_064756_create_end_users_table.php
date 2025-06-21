@@ -16,8 +16,9 @@ return new class extends Migration
             $table->foreignId('inquiry_id')->constrained('inquiries')->onDelete('cascade');
             $table->string('name');
             $table->string('email');
-            $table->string('phone');
-            $table->string('address');
+            $table->string('phone')->nullable();
+            $table->string('address')->nullable();
+            $table->string('position')->nullable();
             $table->timestamps();
         });
     }
