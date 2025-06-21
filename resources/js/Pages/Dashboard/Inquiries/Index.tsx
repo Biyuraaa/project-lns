@@ -287,9 +287,7 @@ const InquiriesIndex = () => {
                                         </option>
                                         <option value="pending">Pending</option>
                                         <option value="process">Process</option>
-                                        <option value="no_quot">
-                                            Canceled
-                                        </option>
+                                        <option value="no_quot">No Quot</option>
                                     </select>
                                 </div>
 
