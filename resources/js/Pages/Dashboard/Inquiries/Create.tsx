@@ -45,6 +45,7 @@ import type {
     PicEngineer,
     Sales,
 } from "@/types";
+
 import {
     cn,
     formatFileSize,
@@ -96,10 +97,12 @@ const InquiriesCreate = () => {
         customer_email: "",
         customer_phone: "",
         customer_address: "",
-        end_user_name: "",
-        end_user_email: "",
-        end_user_phone: "",
-        end_user_address: "",
+        endUsers: [] as {
+            name: string;
+            email: string;
+            phone: string;
+            address: string;
+        }[],
         status: "pending",
         file: null as File | null,
     });
@@ -172,6 +175,29 @@ const InquiriesCreate = () => {
                 }
             }
         });
+
+        if (Array.isArray(data.endUsers)) {
+            data.endUsers.forEach((endUser, index) => {
+                if (endUser) {
+                    formData.append(
+                        `endUsers[${index}][name]`,
+                        endUser.name || ""
+                    );
+                    formData.append(
+                        `endUsers[${index}][email]`,
+                        endUser.email || ""
+                    );
+                    formData.append(
+                        `endUsers[${index}][phone]`,
+                        endUser.phone || ""
+                    );
+                    formData.append(
+                        `endUsers[${index}][address]`,
+                        endUser.address || ""
+                    );
+                }
+            });
+        }
 
         // Add the file if it exists
         if (data.file && data.file instanceof File) {
@@ -1032,172 +1058,291 @@ const InquiriesCreate = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 {/* End User Information Section */}
                                 <div className="py-8">
-                                    <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                                        <User className="w-5 h-5 mr-2 text-blue-600" />
-                                        End User Information
-                                        <span className="text-sm font-normal text-gray-500 ml-2">
-                                            (Optional)
-                                        </span>
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* End User Name Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_name"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Name
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <User className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_name"
-                                                    type="text"
-                                                    value={data.end_user_name}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_name",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_name
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="Enter end user name"
-                                                />
-                                            </div>
-                                            {errors.end_user_name && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_name}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* End User Email Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_email"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Email
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Mail className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_email"
-                                                    type="email"
-                                                    value={data.end_user_email}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_email",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_email
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="enduser@example.com"
-                                                />
-                                            </div>
-                                            {errors.end_user_email && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_email}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* End User Phone Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_phone"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Phone
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Phone className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_phone"
-                                                    type="text"
-                                                    value={data.end_user_phone}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_phone",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_phone
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="+1 (123) 456-7890"
-                                                />
-                                            </div>
-                                            {errors.end_user_phone && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_phone}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* End User Address Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_address"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Address
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
-                                                    <MapPin className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Textarea
-                                                    id="end_user_address"
-                                                    value={
-                                                        data.end_user_address
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_address",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 min-h-[80px] ${
-                                                        errors.end_user_address
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                                                    }`}
-                                                    placeholder="Enter end user address"
-                                                />
-                                            </div>
-                                            {errors.end_user_address && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_address}
-                                                </p>
-                                            )}
-                                        </div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                                            <Users className="w-5 h-5 mr-2 text-blue-600" />
+                                            End Users Information
+                                            <span className="text-sm font-normal text-gray-500 ml-2">
+                                                (Optional)
+                                            </span>
+                                        </h2>
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                const newEndUsers = [
+                                                    ...data.endUsers,
+                                                    {
+                                                        name: "",
+                                                        email: "",
+                                                        phone: "",
+                                                        address: "",
+                                                    },
+                                                ];
+                                                setData(
+                                                    "endUsers",
+                                                    newEndUsers
+                                                );
+                                            }}
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex items-center gap-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                            Add End User
+                                        </Button>
                                     </div>
-                                </div>
 
+                                    <AnimatePresence initial={false}>
+                                        {data.endUsers.map((endUser, index) => (
+                                            <motion.div
+                                                key={index}
+                                                initial={{
+                                                    opacity: 0,
+                                                    height: 0,
+                                                }}
+                                                animate={{
+                                                    opacity: 1,
+                                                    height: "auto",
+                                                }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="relative mb-6 border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
+                                                    <div className="absolute top-4 right-4">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const newEndUsers =
+                                                                    [
+                                                                        ...data.endUsers,
+                                                                    ];
+                                                                newEndUsers.splice(
+                                                                    index,
+                                                                    1
+                                                                );
+                                                                setData(
+                                                                    "endUsers",
+                                                                    newEndUsers
+                                                                );
+                                                            }}
+                                                            className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <X className="h-5 w-5" />
+                                                        </Button>
+                                                    </div>
+
+                                                    <h3 className="text-base font-medium mb-4 text-gray-800 flex items-center">
+                                                        <UserCircle className="mr-2 h-5 w-5 text-blue-500" />
+                                                        End User #{index + 1}
+                                                    </h3>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        {/* End User Name Field */}
+                                                        <div className="space-y-1">
+                                                            <Label
+                                                                htmlFor={`end_user_name_${index}`}
+                                                                className="text-sm font-medium"
+                                                            >
+                                                                End User Name
+                                                            </Label>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                    <User className="h-4 w-4 text-gray-400" />
+                                                                </div>
+                                                                <Input
+                                                                    id={`end_user_name_${index}`}
+                                                                    type="text"
+                                                                    value={
+                                                                        endUser.name
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const newEndUsers =
+                                                                            [
+                                                                                ...data.endUsers,
+                                                                            ];
+                                                                        newEndUsers[
+                                                                            index
+                                                                        ].name =
+                                                                            e.target.value;
+                                                                        setData(
+                                                                            "endUsers",
+                                                                            newEndUsers
+                                                                        );
+                                                                    }}
+                                                                    className={`pl-10 border-gray-200 focus:ring-blue-500 focus:border-blue-500`}
+                                                                    placeholder="Enter end user name"
+                                                                />
+                                                            </div>
+                                                            {/* Using optional chaining and type safety for errors */}
+                                                        </div>
+
+                                                        {/* End User Email Field */}
+                                                        <div className="space-y-1">
+                                                            <Label
+                                                                htmlFor={`end_user_email_${index}`}
+                                                                className="text-sm font-medium"
+                                                            >
+                                                                End User Email
+                                                            </Label>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                    <Mail className="h-4 w-4 text-gray-400" />
+                                                                </div>
+                                                                <Input
+                                                                    id={`end_user_email_${index}`}
+                                                                    type="email"
+                                                                    value={
+                                                                        endUser.email
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const newEndUsers =
+                                                                            [
+                                                                                ...data.endUsers,
+                                                                            ];
+                                                                        newEndUsers[
+                                                                            index
+                                                                        ].email =
+                                                                            e.target.value;
+                                                                        setData(
+                                                                            "endUsers",
+                                                                            newEndUsers
+                                                                        );
+                                                                    }}
+                                                                    className={`pl-10 border-gray-200 focus:ring-blue-500 focus:border-blue-500`}
+                                                                    placeholder="enduser@example.com"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* End User Phone Field */}
+                                                        <div className="space-y-1">
+                                                            <Label
+                                                                htmlFor={`end_user_phone_${index}`}
+                                                                className="text-sm font-medium"
+                                                            >
+                                                                End User Phone
+                                                            </Label>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                    <Phone className="h-4 w-4 text-gray-400" />
+                                                                </div>
+                                                                <Input
+                                                                    id={`end_user_phone_${index}`}
+                                                                    type="text"
+                                                                    value={
+                                                                        endUser.phone
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const newEndUsers =
+                                                                            [
+                                                                                ...data.endUsers,
+                                                                            ];
+                                                                        newEndUsers[
+                                                                            index
+                                                                        ].phone =
+                                                                            e.target.value;
+                                                                        setData(
+                                                                            "endUsers",
+                                                                            newEndUsers
+                                                                        );
+                                                                    }}
+                                                                    className={`pl-10 border-gray-200 focus:ring-blue-500 focus:border-blue-500`}
+                                                                    placeholder="+1 (123) 456-7890"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {/* End User Address Field */}
+                                                        <div className="space-y-1">
+                                                            <Label
+                                                                htmlFor={`end_user_address_${index}`}
+                                                                className="text-sm font-medium"
+                                                            >
+                                                                End User Address
+                                                            </Label>
+                                                            <div className="relative">
+                                                                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
+                                                                    <MapPin className="h-4 w-4 text-gray-400" />
+                                                                </div>
+                                                                <Textarea
+                                                                    id={`end_user_address_${index}`}
+                                                                    value={
+                                                                        endUser.address
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const newEndUsers =
+                                                                            [
+                                                                                ...data.endUsers,
+                                                                            ];
+                                                                        newEndUsers[
+                                                                            index
+                                                                        ].address =
+                                                                            e.target.value;
+                                                                        setData(
+                                                                            "endUsers",
+                                                                            newEndUsers
+                                                                        );
+                                                                    }}
+                                                                    className={`pl-10 min-h-[80px] border-gray-200 focus:ring-blue-500 focus:border-blue-500}`}
+                                                                    placeholder="Enter end user address"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+
+                                    {data.endUsers.length === 0 && (
+                                        <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                            <UserCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                            <h3 className="text-gray-500 text-lg font-medium mb-2">
+                                                No End Users Added
+                                            </h3>
+                                            <p className="text-gray-400 mb-4">
+                                                Click the button above to add
+                                                end users to this inquiry
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newEndUsers = [
+                                                        ...data.endUsers,
+                                                        {
+                                                            name: "",
+                                                            email: "",
+                                                            phone: "",
+                                                            address: "",
+                                                        },
+                                                    ];
+                                                    setData(
+                                                        "endUsers",
+                                                        newEndUsers
+                                                    );
+                                                }}
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add First End User
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                                 {/* File Upload Section */}
                                 <div className="py-8">
                                     <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">

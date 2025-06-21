@@ -22,10 +22,6 @@ class Inquiry extends Model
         'sales_id',
         'description',
         'inquiry_date',
-        'end_user_name',
-        'end_user_email',
-        'end_user_phone',
-        'end_user_address',
         'file',
         'due_date',
         'status',
@@ -86,6 +82,11 @@ class Inquiry extends Model
         ];
 
         return $romans[$month];
+    }
+
+    public function endUsers()
+    {
+        return $this->hasMany(EndUser::class);
     }
 
     public function customer()

@@ -39,6 +39,7 @@ import {
     AlertCircle,
     Briefcase,
     MessageSquare,
+    Users,
 } from "lucide-react";
 import { Separator } from "@/Components/ui/separator";
 import {
@@ -171,24 +172,6 @@ const InquiriesShow = () => {
                                                 </p>
                                                 <p className="text-amber-100 text-xs">
                                                     {inquiry.customer.email}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 flex-1 min-w-[180px]">
-                                        <p className="text-amber-100 text-xs font-medium mb-1">
-                                            End User
-                                        </p>
-                                        <div className="flex items-center gap-2">
-                                            <div>
-                                                <p className="text-white font-medium">
-                                                    {inquiry.end_user_name ||
-                                                        "Not specified"}
-                                                </p>
-                                                <p className="text-amber-100 text-xs">
-                                                    {inquiry.end_user_email ||
-                                                        "No email"}
                                                 </p>
                                             </div>
                                         </div>
@@ -642,98 +625,164 @@ const InquiriesShow = () => {
                                     >
                                         <Card className="overflow-hidden border-border">
                                             <CardHeader className="pb-3 bg-muted/40">
-                                                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                                                    <div className="bg-blue-100 p-1.5 rounded-md">
-                                                        <User className="h-5 w-5 text-blue-600" />
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                                            <div className="bg-blue-100 p-1.5 rounded-md">
+                                                                <Users className="h-5 w-5 text-blue-600" />
+                                                            </div>
+                                                            End Users
+                                                            Information
+                                                        </CardTitle>
+                                                        <CardDescription>
+                                                            People or
+                                                            organizations that
+                                                            will use the product
+                                                            or service
+                                                        </CardDescription>
                                                     </div>
-                                                    End User Information
-                                                </CardTitle>
-                                                <CardDescription>
-                                                    Details about the end user
-                                                    for this inquiry
-                                                </CardDescription>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="bg-blue-50 border-blue-200 text-blue-700"
+                                                    >
+                                                        {inquiry.end_users
+                                                            ?.length || 0}{" "}
+                                                        End Users
+                                                    </Badge>
+                                                </div>
                                             </CardHeader>
                                             <CardContent className="p-6">
-                                                <div className="bg-gradient-to-r from-blue-50 to-blue-50/30 rounded-lg p-5 border border-blue-100 mb-6">
-                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                            <User className="h-6 w-6 text-blue-600" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-lg font-medium">
-                                                                {inquiry.end_user_name ||
-                                                                    "Not specified"}
-                                                            </h3>
-                                                            <p className="text-sm text-muted-foreground mt-1">
-                                                                End user for
-                                                                inquiry #
-                                                                {inquiry.code}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {/* Email */}
-                                                    <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
-                                                        <h3 className="text-sm font-medium text-muted-foreground">
-                                                            Email
-                                                        </h3>
-                                                        <p className="mt-1 flex items-center text-base">
-                                                            <Mail className="h-4 w-4 text-blue-500 mr-2" />
-                                                            {inquiry.end_user_email ? (
-                                                                <a
-                                                                    href={`mailto:${inquiry.end_user_email}`}
-                                                                    className="text-blue-600 hover:underline flex items-center"
-                                                                >
-                                                                    {
-                                                                        inquiry.end_user_email
+                                                {inquiry.end_users &&
+                                                inquiry.end_users.length > 0 ? (
+                                                    <div className="space-y-6">
+                                                        {inquiry.end_users.map(
+                                                            (
+                                                                endUser,
+                                                                index
+                                                            ) => (
+                                                                <div
+                                                                    key={
+                                                                        endUser.id
                                                                     }
-                                                                    <ExternalLink className="h-3 w-3 ml-1" />
-                                                                </a>
-                                                            ) : (
-                                                                "Not specified"
-                                                            )}
+                                                                    className={`${
+                                                                        index >
+                                                                        0
+                                                                            ? "pt-6 border-t border-gray-100"
+                                                                            : ""
+                                                                    }`}
+                                                                >
+                                                                    <div className="bg-gradient-to-r from-blue-50 to-blue-50/30 rounded-lg p-5 border border-blue-100 mb-4">
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                                                <User className="h-6 w-6 text-blue-600" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <h3 className="text-lg font-medium">
+                                                                                    {endUser.name ||
+                                                                                        "Not specified"}
+                                                                                </h3>
+                                                                                <p className="text-sm text-muted-foreground mt-1">
+                                                                                    End
+                                                                                    User
+                                                                                    #
+                                                                                    {index +
+                                                                                        1}{" "}
+                                                                                    for
+                                                                                    inquiry
+                                                                                    #
+                                                                                    {
+                                                                                        inquiry.code
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                        {/* Email */}
+                                                                        <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                                            <h3 className="text-sm font-medium text-muted-foreground">
+                                                                                Email
+                                                                            </h3>
+                                                                            <p className="mt-1 flex items-center text-base">
+                                                                                <Mail className="h-4 w-4 text-blue-500 mr-2" />
+                                                                                {endUser.email ? (
+                                                                                    <a
+                                                                                        href={`mailto:${endUser.email}`}
+                                                                                        className="text-blue-600 hover:underline flex items-center"
+                                                                                    >
+                                                                                        {
+                                                                                            endUser.email
+                                                                                        }
+                                                                                        <ExternalLink className="h-3 w-3 ml-1" />
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    "Not specified"
+                                                                                )}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Phone */}
+                                                                        <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                                            <h3 className="text-sm font-medium text-muted-foreground">
+                                                                                Phone
+                                                                            </h3>
+                                                                            <p className="mt-1 flex items-center text-base">
+                                                                                <Phone className="h-4 w-4 text-blue-500 mr-2" />
+                                                                                {endUser.phone ? (
+                                                                                    <a
+                                                                                        href={`tel:${endUser.phone}`}
+                                                                                        className="text-blue-600 hover:underline flex items-center"
+                                                                                    >
+                                                                                        {
+                                                                                            endUser.phone
+                                                                                        }
+                                                                                        <ExternalLink className="h-3 w-3 ml-1" />
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    "Not specified"
+                                                                                )}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Address */}
+                                                                    <div className="mt-4 bg-muted/20 p-4 rounded-lg border border-border/40">
+                                                                        <h3 className="text-sm font-medium text-muted-foreground">
+                                                                            Address
+                                                                        </h3>
+                                                                        <p className="mt-1 flex items-start text-base">
+                                                                            <MapPin className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                                            <span>
+                                                                                {endUser.address ||
+                                                                                    "Not specified"}
+                                                                            </span>
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                                        <div className="bg-blue-100 rounded-full p-3 w-14 h-14 flex items-center justify-center mx-auto mb-4">
+                                                            <Users className="h-8 w-8 text-blue-600" />
+                                                        </div>
+                                                        <h3 className="text-gray-700 text-lg font-medium mb-2">
+                                                            No End Users
+                                                            Specified
+                                                        </h3>
+                                                        <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                                                            This inquiry doesn't
+                                                            have any end users
+                                                            specified. End users
+                                                            are the people or
+                                                            organizations that
+                                                            will use the product
+                                                            or service.
                                                         </p>
                                                     </div>
-
-                                                    {/* Phone */}
-                                                    <div className="bg-muted/20 p-4 rounded-lg border border-border/40">
-                                                        <h3 className="text-sm font-medium text-muted-foreground">
-                                                            Phone
-                                                        </h3>
-                                                        <p className="mt-1 flex items-center text-base">
-                                                            <Phone className="h-4 w-4 text-blue-500 mr-2" />
-                                                            {inquiry.end_user_phone ? (
-                                                                <a
-                                                                    href={`tel:${inquiry.end_user_phone}`}
-                                                                    className="text-blue-600 hover:underline flex items-center"
-                                                                >
-                                                                    {
-                                                                        inquiry.end_user_phone
-                                                                    }
-                                                                    <ExternalLink className="h-3 w-3 ml-1" />
-                                                                </a>
-                                                            ) : (
-                                                                "Not specified"
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Address */}
-                                                <div className="mt-6 bg-muted/20 p-4 rounded-lg border border-border/40">
-                                                    <h3 className="text-sm font-medium text-muted-foreground">
-                                                        Address
-                                                    </h3>
-                                                    <p className="mt-1 flex items-start text-base">
-                                                        <MapPin className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                        <span>
-                                                            {inquiry.end_user_address ||
-                                                                "Not specified"}
-                                                        </span>
-                                                    </p>
-                                                </div>
+                                                )}
                                             </CardContent>
                                         </Card>
                                     </motion.div>

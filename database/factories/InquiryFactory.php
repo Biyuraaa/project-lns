@@ -52,11 +52,7 @@ class InquiryFactory extends Factory
             'description' => $this->faker->paragraph(3),
             'business_unit_id' => BusinessUnit::inRandomOrder()->first()->id ?? null,
             'inquiry_date' => $inquiryDate,
-            'end_user_name' => $this->faker->name(),
-            'end_user_email' => $this->faker->safeEmail(),
-            'end_user_phone' => $this->faker->phoneNumber(),
-            'end_user_address' => $this->faker->address(),
-            'file' => null, // Leave file as null since we're not generating actual files
+            'file' => null,
             'pic_engineer_id' => User::role('pic-engineer')->inRandomOrder()->first()->id ?? null,
             'sales_id' => User::role('sales')->inRandomOrder()->first()->id ?? null,
             'status' => $this->faker->randomElement(['pending', 'process']),

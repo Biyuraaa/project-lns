@@ -93,14 +93,15 @@ class InquiryController extends Controller
                 'business_unit_id' => $validatedData['business_unit_id'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'due_date' => $validatedData['due_date'] ?? null,
-                'end_user_name' => $validatedData['end_user_name'] ?? null,
-                'end_user_email' => $validatedData['end_user_email'] ?? null,
-                'end_user_phone' => $validatedData['end_user_phone'] ?? null,
-                'end_user_address' => $validatedData['end_user_address'] ?? null,
                 'pic_engineer_id' => $validatedData['pic_engineer_id'] ?? null,
                 'sales_id' => $validatedData['sales_id'] ?? null,
                 'file' => $validatedData['file'] ?? null
             ]);
+
+            if ($request->has('endUsers')) {
+                $inquiry->endUsers()->createMany($request->endUsers);
+            }
+
             $month = date('n');
             $romanMonths = [
                 1 => 'I',
@@ -144,6 +145,7 @@ class InquiryController extends Controller
             'picEngineer',
             'sales',
             'businessUnit',
+            'endUsers'
         ]);
 
         return Inertia::render('Dashboard/Inquiries/Show', [
@@ -164,7 +166,7 @@ class InquiryController extends Controller
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to edit this inquiry.');
         }
-        $inquiry->load(['customer', 'picEngineer', 'sales', 'businessUnit']);
+        $inquiry->load(['customer', 'picEngineer', 'sales', 'businessUnit', 'endUsers']);
 
         return Inertia::render('Dashboard/Inquiries/Edit', [
             'inquiry' => $inquiry,
@@ -202,15 +204,16 @@ class InquiryController extends Controller
                 'business_unit_id' => $validatedData['business_unit_id'],
                 'inquiry_date' => $validatedData['inquiry_date'],
                 'due_date' => $validatedData['due_date'] ?? $inquiry->due_date,
-                'end_user_name' => $validatedData['end_user_name'] ?? $inquiry->end_user_name,
-                'end_user_email' => $validatedData['end_user_email'] ?? $inquiry->end_user_email,
-                'end_user_phone' => $validatedData['end_user_phone'] ?? $inquiry->end_user_phone,
-                'end_user_address' => $validatedData['end_user_address'] ?? $inquiry->end_user_address,
                 'pic_engineer_id' => $validatedData['pic_engineer_id'] ?? $inquiry->pic_engineer_id,
                 'sales_id' => $validatedData['sales_id'] ?? $inquiry->sales_id,
                 'status' => $validatedData['status'],
                 'file' => $validatedData['file'] ?? $inquiry->file
             ]);
+
+            if ($request->has('endUsers')) {
+                $inquiry->endUsers()->delete();
+                $inquiry->endUsers()->createMany($request->endUsers);
+            }
 
             return redirect()->route('inquiries.index')
                 ->with('success', 'Inquiry updated successfully.');

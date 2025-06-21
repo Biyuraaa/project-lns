@@ -18,10 +18,6 @@ return new class extends Migration
             $table->text('description');
             $table->foreignId('business_unit_id')->nullable()->constrained('business_units')->onDelete('set null');
             $table->date('inquiry_date')->nullable();
-            $table->string('end_user_name')->nullable();
-            $table->string('end_user_email')->nullable();
-            $table->string('end_user_phone')->nullable();
-            $table->string('end_user_address')->nullable();
             $table->string('file')->nullable();
             $table->date('due_date')->nullable();
             $table->foreignId('pic_engineer_id')->nullable()->constrained('users')->onDelete('set null');

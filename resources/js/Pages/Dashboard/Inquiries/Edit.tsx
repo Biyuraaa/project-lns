@@ -28,6 +28,7 @@ import {
     Upload,
     Check,
     Factory,
+    Plus,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -43,6 +44,7 @@ import type {
     Sales,
     Inquiry,
     BusinessUnit,
+    EndUser,
 } from "@/types";
 import { cn, formatDateForInput } from "@/lib/utils";
 
@@ -62,7 +64,7 @@ const InquiriesEdit = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Initialize form with existing inquiry data
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         code: inquiry.code,
         customer_id: inquiry.customer.id.toString(),
         pic_engineer_id: inquiry.pic_engineer
@@ -75,13 +77,18 @@ const InquiriesEdit = () => {
             : "",
         inquiry_date: inquiry.inquiry_date,
         due_date: inquiry.due_date || "",
-        end_user_name: inquiry.end_user_name || "",
-        end_user_email: inquiry.end_user_email || "",
-        end_user_phone: inquiry.end_user_phone || "",
-        end_user_address: inquiry.end_user_address || "",
+        endUsers:
+            inquiry.endUsers && inquiry.endUsers.length > 0
+                ? (inquiry.endUsers as {
+                      name: string;
+                      email: string;
+                      phone: string;
+                      address: string;
+                  }[])
+                : [],
         status: inquiry.status,
         file: null as File | null,
-        _method: "PUT", // For Laravel method spoofing
+        _method: "PUT",
     });
 
     // State for tracking if the file has been changed
@@ -104,6 +111,33 @@ const InquiriesEdit = () => {
     const [businessUnitDropdownOpen, setBusinessUnitDropdownOpen] =
         useState(false);
 
+    const updateEndUser = (
+        index: number,
+        field: keyof EndUser,
+        value: string
+    ) => {
+        const updatedEndUsers = [...data.endUsers];
+        updatedEndUsers[index] = {
+            ...updatedEndUsers[index],
+            [field]: value,
+        };
+        setData("endUsers", updatedEndUsers);
+    };
+
+    const addEndUser = () => {
+        setData("endUsers", [
+            ...data.endUsers,
+            { name: "", email: "", phone: "", address: "" },
+        ]);
+    };
+
+    const removeEndUser = (index: number) => {
+        if (data.endUsers.length === 1) {
+            return; // Pertahankan minimal 1 end user
+        }
+        const updatedEndUsers = data.endUsers.filter((_, i) => i !== index);
+        setData("endUsers", updatedEndUsers);
+    };
     // Filtered results based on search terms
     const filteredCustomers = customers.filter((customer) =>
         customer.name.toLowerCase().includes(customerSearch.toLowerCase())
@@ -123,15 +157,38 @@ const InquiriesEdit = () => {
         // Create FormData for handling file upload
         const formData = new FormData();
 
-        // Add all regular form fields to FormData
+        // Add all regular form fields to FormData except endUsers and file
         Object.keys(data).forEach((key) => {
-            if (key !== "file") {
+            if (key !== "file" && key !== "endUsers") {
                 formData.append(
                     key,
                     data[key as keyof typeof data]?.toString() || ""
                 );
             }
         });
+
+        // Handle endUsers correctly by appending each item individually
+        // Ini adalah kunci perbaikannya - menambahkan setiap endUser dengan indeks array
+        if (data.endUsers && data.endUsers.length > 0) {
+            data.endUsers.forEach((endUser, index) => {
+                formData.append(`endUsers[${index}][name]`, endUser.name || "");
+                formData.append(
+                    `endUsers[${index}][email]`,
+                    endUser.email || ""
+                );
+                formData.append(
+                    `endUsers[${index}][phone]`,
+                    endUser.phone || ""
+                );
+                formData.append(
+                    `endUsers[${index}][address]`,
+                    endUser.address || ""
+                );
+            });
+        } else {
+            // Jika tidak ada endUsers, tambahkan array kosong
+            formData.append("endUsers", JSON.stringify([]));
+        }
 
         // Add the file if it exists
         if (data.file && data.file instanceof File) {
@@ -147,9 +204,6 @@ const InquiriesEdit = () => {
             forceFormData: true,
         });
     };
-
-    const [isCodeValid, setIsCodeValid] = useState(true);
-    const [isPickingDate, setIsPickingDate] = useState(false);
 
     const validateForm = () => {
         // Basic required fields validation
@@ -807,160 +861,230 @@ const InquiriesEdit = () => {
                                             (Optional)
                                         </span>
                                     </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* End User Name Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_name"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Name
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <User className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_name"
-                                                    type="text"
-                                                    value={data.end_user_name}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_name",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_name
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    placeholder="Enter end user name"
-                                                />
-                                            </div>
-                                            {errors.end_user_name && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_name}
-                                                </p>
-                                            )}
-                                        </div>
 
-                                        {/* End User Email Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_email"
-                                                className="text-sm font-medium"
+                                    {data.endUsers.length === 0 ? (
+                                        <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                            <UserCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                            <h3 className="text-gray-500 text-lg font-medium mb-2">
+                                                No End Users Added
+                                            </h3>
+                                            <p className="text-gray-400 mb-4">
+                                                Click the button below to add
+                                                end users to this inquiry
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                onClick={addEndUser}
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                                             >
-                                                End User Email
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Mail className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_email"
-                                                    type="email"
-                                                    value={data.end_user_email}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_email",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_email
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    placeholder="enduser@example.com"
-                                                />
-                                            </div>
-                                            {errors.end_user_email && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_email}
-                                                </p>
-                                            )}
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add First End User
+                                            </Button>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {data.endUsers.map(
+                                                (endUser, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="mb-6 pb-6 border-b border-gray-100"
+                                                    >
+                                                        <div className="flex justify-between items-center mb-4">
+                                                            <h3 className="text-sm font-medium text-gray-700">
+                                                                End User #
+                                                                {index + 1}
+                                                            </h3>
+                                                            {data.endUsers
+                                                                .length > 1 && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        removeEndUser(
+                                                                            index
+                                                                        )
+                                                                    }
+                                                                    className="text-red-500 border-red-200 hover:bg-red-50"
+                                                                >
+                                                                    <X className="h-3.5 w-3.5 mr-1" />{" "}
+                                                                    Remove
+                                                                </Button>
+                                                            )}
+                                                        </div>
 
-                                        {/* End User Phone Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_phone"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Phone
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Phone className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Input
-                                                    id="end_user_phone"
-                                                    type="text"
-                                                    value={data.end_user_phone}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_phone",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 ${
-                                                        errors.end_user_phone
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    placeholder="+1 (123) 456-7890"
-                                                />
-                                            </div>
-                                            {errors.end_user_phone && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_phone}
-                                                </p>
-                                            )}
-                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            {/* End User Name Field */}
+                                                            <div className="space-y-1">
+                                                                <Label
+                                                                    htmlFor={`endUsers.${index}.name`}
+                                                                    className="text-sm font-medium"
+                                                                >
+                                                                    End User
+                                                                    Name{" "}
+                                                                    <span className="text-red-500">
+                                                                        *
+                                                                    </span>
+                                                                </Label>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                        <User className="h-4 w-4 text-gray-400" />
+                                                                    </div>
+                                                                    <Input
+                                                                        id={`endUsers.${index}.name`}
+                                                                        type="text"
+                                                                        value={
+                                                                            endUser.name
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateEndUser(
+                                                                                index,
+                                                                                "name",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className={`pl-10 border-gray-200 focus:ring-amber-500 focus:border-amber-500`}
+                                                                        placeholder="Enter end user name"
+                                                                    />
+                                                                </div>
+                                                            </div>
 
-                                        {/* End User Address Field */}
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="end_user_address"
-                                                className="text-sm font-medium"
-                                            >
-                                                End User Address
-                                            </Label>
-                                            <div className="relative">
-                                                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
-                                                    <MapPin className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                                <Textarea
-                                                    id="end_user_address"
-                                                    value={
-                                                        data.end_user_address
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "end_user_address",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className={`pl-10 min-h-[80px] ${
-                                                        errors.end_user_address
-                                                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                                            : "border-gray-200 focus:ring-amber-500 focus:border-amber-500"
-                                                    }`}
-                                                    placeholder="Enter end user address"
-                                                />
-                                            </div>
-                                            {errors.end_user_address && (
-                                                <p className="text-red-500 text-xs mt-1 flex items-center">
-                                                    <AlertCircle className="h-3 w-3 mr-1" />
-                                                    {errors.end_user_address}
-                                                </p>
+                                                            {/* End User Email Field */}
+                                                            <div className="space-y-1">
+                                                                <Label
+                                                                    htmlFor={`endUsers.${index}.email`}
+                                                                    className="text-sm font-medium"
+                                                                >
+                                                                    End User
+                                                                    Email{" "}
+                                                                    <span className="text-red-500">
+                                                                        *
+                                                                    </span>
+                                                                </Label>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                        <Mail className="h-4 w-4 text-gray-400" />
+                                                                    </div>
+                                                                    <Input
+                                                                        id={`endUsers.${index}.email`}
+                                                                        type="email"
+                                                                        value={
+                                                                            endUser.email
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateEndUser(
+                                                                                index,
+                                                                                "email",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className={`pl-10 border-gray-200 focus:ring-amber-500 focus:border-amber-500`}
+                                                                        placeholder="enduser@example.com"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* End User Phone Field */}
+                                                            <div className="space-y-1">
+                                                                <Label
+                                                                    htmlFor={`endUsers.${index}.phone`}
+                                                                    className="text-sm font-medium"
+                                                                >
+                                                                    End User
+                                                                    Phone
+                                                                </Label>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                        <Phone className="h-4 w-4 text-gray-400" />
+                                                                    </div>
+                                                                    <Input
+                                                                        id={`endUsers.${index}.phone`}
+                                                                        type="text"
+                                                                        value={
+                                                                            endUser.phone ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateEndUser(
+                                                                                index,
+                                                                                "phone",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className={`pl-10 border-gray-200 focus:ring-amber-500 focus:border-amber-500`}
+                                                                        placeholder="+1 (123) 456-7890"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* End User Address Field */}
+                                                            <div className="space-y-1">
+                                                                <Label
+                                                                    htmlFor={`endUsers.${index}.address`}
+                                                                    className="text-sm font-medium"
+                                                                >
+                                                                    End User
+                                                                    Address
+                                                                </Label>
+                                                                <div className="relative">
+                                                                    <div className="absolute top-3 left-3 flex items-start pointer-events-none">
+                                                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                                                    </div>
+                                                                    <Textarea
+                                                                        id={`endUsers.${index}.address`}
+                                                                        value={
+                                                                            endUser.address ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateEndUser(
+                                                                                index,
+                                                                                "address",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className={`pl-10 min-h-[80px] border-gray-200 focus:ring-amber-500 focus:border-amber-500`}
+                                                                        placeholder="Enter end user address"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
                                             )}
-                                        </div>
-                                    </div>
+
+                                            {/* Add More End User Button */}
+                                            <div className="mt-4">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={addEndUser}
+                                                    className="border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                                >
+                                                    <Plus className="h-4 w-4 mr-2" />
+                                                    Add Another End User
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* File Upload Section */}

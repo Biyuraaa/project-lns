@@ -29,24 +29,15 @@ class StoreInquiryRequest extends FormRequest
             'business_unit_id' => 'required|exists:business_units,id',
             'inquiry_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:inquiry_date',
-            'end_user_name' => 'nullable|string|max:255',
-            'end_user_email' => 'nullable|email|max:255',
-            'end_user_phone' => 'nullable|string|max:20',
-            'end_user_address' => 'nullable|string|max:500',
+            'endUsers' => 'nullable|array',
+            'endUsers.*.name' => 'nullable|string|max:255',
+            'endUsers.*.email' => 'nullable|email|max:255',
+            'endUsers.*.phone' => 'nullable|string|max:20',
+            'endUsers.*.address' => 'nullable|string|max:500',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
-            'new_customer' => 'boolean',
             'pic_engineer_id' => 'nullable|exists:users,id',
             'sales_id' => 'nullable|exists:users,id',
         ];
-
-        if ($this->boolean('new_customer')) {
-            $rules['customer_name'] = 'required|string|max:255';
-            $rules['customer_email'] = 'required|email|max:255';
-            $rules['customer_phone'] = 'nullable|string|max:20';
-            $rules['customer_address'] = 'nullable|string|max:500';
-        } else {
-            $rules['customer_id'] = 'required|exists:customers,id';
-        }
 
         return $rules;
     }

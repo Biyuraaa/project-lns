@@ -62,22 +62,30 @@ export interface CompanyGrowthSelling {
 export interface Inquiry {
     id: number;
     code: string;
-    customer: Customer;
-    pic_engineer: PicEngineer;
-    sales: Sales;
-    quotation: Quotation;
     description: string;
-    business_unit: BusinessUnit;
     inquiry_date: string;
     due_date: string;
-    end_user_name: string;
-    end_user_email: string;
-    end_user_phone: string;
-    end_user_address: string;
     file: string;
     status: string;
     created_at?: string;
     updated_at?: string;
+    customer: Customer;
+    pic_engineer: PicEngineer;
+    sales: Sales;
+    quotation: Quotation;
+    business_unit: BusinessUnit;
+    endUsers: EndUser[];
+}
+
+export interface EndUser {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    created_at?: string;
+    updated_at?: string;
+    inquiries: Inquiry;
 }
 
 export interface BusinessUnit {
