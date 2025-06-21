@@ -745,6 +745,9 @@ const InquiriesEdit = () => {
                                                     <option value="process">
                                                         In Process
                                                     </option>
+                                                    <option value="canceled">
+                                                        Canceled
+                                                    </option>
                                                 </select>
                                             </div>
                                             {errors.status && (

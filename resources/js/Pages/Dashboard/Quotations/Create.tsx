@@ -755,15 +755,7 @@ const QuotationsCreate = () => {
                                                         }
                                                     </p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">
-                                                        End User
-                                                    </p>
-                                                    <p className="text-sm text-gray-900">
-                                                        {selectedInquiry.end_user_name ||
-                                                            "Not specified"}
-                                                    </p>
-                                                </div>
+                         
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-700">
                                                         Inquiry Date

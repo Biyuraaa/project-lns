@@ -63,9 +63,6 @@ const InquiriesIndex = () => {
             inquiry.description
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
-            inquiry.end_user_name
-                ?.toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
             (inquiry.pic_engineer?.name &&
                 inquiry.pic_engineer.name
                     .toLowerCase()
@@ -141,6 +138,8 @@ const InquiriesIndex = () => {
                 return "bg-yellow-100 text-yellow-800 border-yellow-200";
             case "process":
                 return "bg-green-100 text-green-800 border-green-200";
+            case "canceled":
+                return "bg-red-100 text-red-800 border-red-200";
             default:
                 return "bg-blue-100 text-blue-800 border-blue-200";
         }
@@ -152,6 +151,8 @@ const InquiriesIndex = () => {
                 return <Clock className="h-3.5 w-3.5 mr-1" />;
             case "process":
                 return <Check className="h-3.5 w-3.5 mr-1" />;
+            case "canceled":
+                return <Lock className="h-3.5 w-3.5 mr-1" />;
             default:
                 return null;
         }
@@ -285,8 +286,9 @@ const InquiriesIndex = () => {
                                             All Statuses
                                         </option>
                                         <option value="pending">Pending</option>
-                                        <option value="process">
-                                            Process
+                                        <option value="process">Process</option>
+                                        <option value="canceled">
+                                            Canceled
                                         </option>
                                     </select>
                                 </div>

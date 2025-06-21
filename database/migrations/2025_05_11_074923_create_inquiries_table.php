@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->foreignId('pic_engineer_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('sales_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('status', ['pending', 'process'])->default('pending');
+            $table->enum('status', ['pending', 'process', 'canceled'])->default('pending');
             $table->timestamps();
             $table->softDeletes();
         });

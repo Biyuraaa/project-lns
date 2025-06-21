@@ -819,16 +819,6 @@ const QuotationEdit = () => {
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-gray-100">
                                                 <span className="text-sm text-gray-500">
-                                                    End User
-                                                </span>
-                                                <span className="text-sm font-medium">
-                                                    {quotation.inquiry
-                                                        .end_user_name ||
-                                                        "Not specified"}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between py-2 border-b border-gray-100">
-                                                <span className="text-sm text-gray-500">
                                                     Inquiry Date
                                                 </span>
                                                 <span className="text-sm font-medium">

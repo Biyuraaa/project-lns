@@ -468,15 +468,6 @@ const QuotationsCreate = () => {
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-border/60">
                                                 <span className="text-sm text-muted-foreground">
-                                                    End User
-                                                </span>
-                                                <span className="text-sm font-medium">
-                                                    {inquiry.end_user_name ||
-                                                        "Not specified"}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between py-2 border-b border-border/60">
-                                                <span className="text-sm text-muted-foreground">
                                                     Inquiry Date
                                                 </span>
                                                 <span className="text-sm font-medium">
